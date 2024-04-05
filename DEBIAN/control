@@ -1,0 +1,5 @@
+Package: rkaiq-camera-engine
+Version: 5.0x4.1
+Maintainer: Peyton Howe
+Architecture: arm64
+Description: rkaiq v5.0x4.1 for rk3588 devices
