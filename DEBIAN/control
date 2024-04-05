@@ -1,4 +1,4 @@
-Package: rkaiq-camera-engine
+Package: camera-engine-rkaiq
 Version: 5.0x4.1
 Maintainer: Peyton Howe
 Architecture: arm64
