@@ -1,0 +1,242 @@
+From a61f26435657ba00127e4798d9ed331d08537f7b Mon Sep 17 00:00:00 2001
+From: Joshua Riek <jjriek@verizon.net>
+Date: Sat, 22 Jun 2024 19:04:03 -0400
+Subject: [PATCH] fix compile errors
+
+---
+ CMakeLists.txt                      |  3 +++
+ rkaiq/cmake/CompileOptions.cmake    | 15 ++++++++++++---
+ rkaiq/hwi/isp20/Stream.cpp          |  1 +
+ rkaiq/ipc_server/MessageParser.hpp  |  1 +
+ rkaiq/iq_parser_v2/CMakeLists.txt   |  3 ---
+ rkaiq/tools/iq_check/CMakeLists.txt |  2 --
+ rkaiq/tools/j2s4b/CMakeLists.txt    |  5 +----
+ rkaiq_3A_server/CMakeLists.txt      | 23 +++++++++++++++++++----
+ rkaiq_3A_server/rkaiq_3A.service    | 11 +++++++++++
+ rkisp_parser_demo/CMakeLists.txt    |  3 ---
+ 10 files changed, 48 insertions(+), 19 deletions(-)
+ create mode 100644 rkaiq_3A_server/rkaiq_3A.service
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b3cbbf9c5857..c64a590020b8 100755
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -23,3 +23,6 @@ add_subdirectory(rkaiq_tool_server)
+ if(EXISTS ${PROJECT_SOURCE_DIR}/rkaiq_3A_server)
+     add_subdirectory(rkaiq_3A_server)
+ endif()
++
++install(DIRECTORY rkaiq/iqfiles/isp3x/ DESTINATION ../etc/iqfiles
++        PATTERN "*")
+diff --git a/rkaiq/cmake/CompileOptions.cmake b/rkaiq/cmake/CompileOptions.cmake
+index 3d4b670e5dfe..cbac51b70e29 100644
+--- a/rkaiq/cmake/CompileOptions.cmake
++++ b/rkaiq/cmake/CompileOptions.cmake
+@@ -11,7 +11,16 @@ set(CMAKE_CXX_STANDARD 11)
+ set(CMAKE_C_EXTENSIONS ON)
+ set(CMAKE_CXX_EXTENSIONS ON)
+ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+-
++add_link_options( 
++    -Wno-error=stringop-overflow
++    -Wno-error=odr
++    -Wno-error
++    -Wno-error=maybe-uninitialized
++)
++add_compile_options(
++    -Wno-error=stringop-overflow
++    -Wno-error=odr
++    )
+ if (ARCH STREQUAL "arm")
+     add_compile_options(
+         -march=armv7-a
+@@ -26,8 +35,8 @@ endif()
+ 
+ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+     if (ARCH STREQUAL "arm")
+-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mthumb -mthumb-interwork")
+-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthumb -mthumb-interwork")
++        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
++        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+     endif()
+     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11")
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+diff --git a/rkaiq/hwi/isp20/Stream.cpp b/rkaiq/hwi/isp20/Stream.cpp
+index b4f2368e9889..ec2e63976b94 100644
+--- a/rkaiq/hwi/isp20/Stream.cpp
++++ b/rkaiq/hwi/isp20/Stream.cpp
+@@ -515,6 +515,7 @@ bool RKStatsStream::set_rx_handle_dev(CamHwIsp20* dev)
+     return true;
+ }
+ 
++
+ SmartPtr<VideoBuffer>
+ RKStatsStream::new_video_buffer(SmartPtr<V4l2Buffer> buf,
+                                        SmartPtr<V4l2Device> dev)
+diff --git a/rkaiq/ipc_server/MessageParser.hpp b/rkaiq/ipc_server/MessageParser.hpp
+index c3a86689a526..3dce819c3ca4 100644
+--- a/rkaiq/ipc_server/MessageParser.hpp
++++ b/rkaiq/ipc_server/MessageParser.hpp
+@@ -19,6 +19,7 @@
+ 
+ #include <stdlib.h>
+ #include <string.h>
++#include <stdio.h>
+ 
+ #include <condition_variable>
+ #include <memory>
+diff --git a/rkaiq/iq_parser_v2/CMakeLists.txt b/rkaiq/iq_parser_v2/CMakeLists.txt
+index fd33a8bfb1f5..d65d8c0d667d 100644
+--- a/rkaiq/iq_parser_v2/CMakeLists.txt
++++ b/rkaiq/iq_parser_v2/CMakeLists.txt
+@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8...3.22)
+ 
+ if (ARCH STREQUAL "arm")
+     set(J2S_HOST_CFLAGS -m32 -std=gnu99 -malign-double)
+-elseif (ARCH STREQUAL "aarch64")
+-    set(J2S_HOST_CFLAGS -m64 -std=gnu99 -malign-double)
+ endif()
+ 
+ set(J2S_SRC
+@@ -162,7 +160,6 @@ add_custom_target(
+     -B"host_tool"
+     -H"${rk_aiq_SOURCE_DIR}/tools/j2s4b"
+     COMMAND ${CMAKE_COMMAND} --build host_tool
+-    COMMAND make -C host_tool install
+ 	DEPENDS j2s_parser
+     )
+ 
+diff --git a/rkaiq/tools/iq_check/CMakeLists.txt b/rkaiq/tools/iq_check/CMakeLists.txt
+index dfc3515bff82..f279dc7b281e 100644
+--- a/rkaiq/tools/iq_check/CMakeLists.txt
++++ b/rkaiq/tools/iq_check/CMakeLists.txt
+@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8...3.22)
+ 
+ if (ARCH STREQUAL "arm")
+     set(J2S_HOST_CFLAGS -m32 -std=gnu99 -malign-double)
+-elseif (ARCH STREQUAL "aarch64")
+-    set(J2S_HOST_CFLAGS -m64 -std=gnu99 -malign-double)
+ endif()
+ 
+ project(j2s)
+diff --git a/rkaiq/tools/j2s4b/CMakeLists.txt b/rkaiq/tools/j2s4b/CMakeLists.txt
+index 2cd0a2e8c06e..d2a305f00b2f 100644
+--- a/rkaiq/tools/j2s4b/CMakeLists.txt
++++ b/rkaiq/tools/j2s4b/CMakeLists.txt
+@@ -91,7 +91,6 @@ foreach(IQPATH ${RKAIQ_IQFILES})
+         BYPRODUCTS ${TAGT_NAME}
+         DEPENDS j2s4b
+         )
+-    install(PROGRAMS "${CMAKE_BINARY_DIR}/${TAGT_NAME}" DESTINATION usr/share/iqfiles)
+ endforeach()
+ 
+ foreach(IQPATH ${RKAIQ_AINR_IQFILES})
+@@ -107,13 +106,11 @@ foreach(IQPATH ${RKAIQ_AINR_IQFILES})
+         BYPRODUCTS ${TAGT_AINR_NAME}
+         DEPENDS j2s4b
+         )
+-    install(PROGRAMS "${CMAKE_BINARY_DIR}/${TAGT_AINR_NAME}" DESTINATION
+-		usr/share/iqfiles/ainr RENAME ${TAGT_NAME})
+ endforeach()
+ endif()
+ 
+ if (NOT RKAIQ_J2S4B_DEV)
+-install(TARGETS j2s4b RUNTIME DESTINATION host)
++install(TARGETS j2s4b RUNTIME DESTINATION bin)
+ else()
+ install(TARGETS j2s4b_dev RUNTIME DESTINATION bin)
+ endif()
+diff --git a/rkaiq_3A_server/CMakeLists.txt b/rkaiq_3A_server/CMakeLists.txt
+index b8e0fcaff0c3..6ed2dba042c4 100644
+--- a/rkaiq_3A_server/CMakeLists.txt
++++ b/rkaiq_3A_server/CMakeLists.txt
+@@ -40,6 +40,16 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
+ #set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
+ 
+ set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -fPIC")
++include_directories(
++${PROJECT_SOURCE_DIR}/../rkaiq/include
++${PROJECT_SOURCE_DIR}/../rkaiq/include/uAPI2
++${PROJECT_SOURCE_DIR}/../rkaiq/include/common
++${PROJECT_SOURCE_DIR}/../rkaiq/include/xcore
++${PROJECT_SOURCE_DIR}/../rkaiq/include/algos
++${PROJECT_SOURCE_DIR}/../rkaiq/include/isp
++${PROJECT_SOURCE_DIR}/../rkaiq/include/iq_parser_v2
++${PROJECT_SOURCE_DIR}/../rkaiq/include/iq_parser
++)
+ 
+ #set ADD_RK_AIQ
+ set(ADD_RK_AIQ true)
+@@ -100,6 +110,8 @@ ${RK_AIQ_HEADER_DIR}
+ include/common/mediactl
+ ./
+ ./common/
++${PROJECT_SOURCE_DIR}/rkaiq/include
++${PROJECT_SOURCE_DIR}/rkaiq/include/uAPI2
+ )
+ 
+ if(GENMESH_ONLINE)
+@@ -121,24 +133,27 @@ ADD_EXECUTABLE(rkaiq_3A_server rkaiq_3A_server.cpp common/mediactl/mediactl.c)
+ 
+ target_link_libraries(rkaiq_3A_server ${RK_AIQ_LIB} pthread dl)
+ 
++set(SERVICE_NAME rkaiq_3A.service)
++install(FILES rkaiq_3A.service DESTINATION ../lib/systemd/system/)
++
+ #FIXME: buildroot and ipc sdk shall use the same setting
+ if(BUILDROOT_BUILD_PROJECT)
+ 	install(TARGETS rkaiq_3A_server
+-		RUNTIME DESTINATION /usr/bin
++		RUNTIME DESTINATION /bin
+ 		LIBRARY DESTINATION /usr/lib
+ 		)
+ 
+-	install(FILES S40rkaiq_3A DESTINATION /etc/init.d/
++	install(FILES S40rkaiq_3A DESTINATION ../etc/init.d/
+ 		PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+ 		GROUP_EXECUTE GROUP_READ
+ 		WORLD_EXECUTE WORLD_READ)
+ else()
+ 	install(TARGETS rkaiq_3A_server
+-		RUNTIME DESTINATION "usr/bin"
++		RUNTIME DESTINATION "bin"
+ 		LIBRARY DESTINATION "usr/lib"
+ 		)
+ 
+-	install(FILES S40rkaiq_3A DESTINATION "etc/init.d"
++	install(FILES S40rkaiq_3A DESTINATION "../etc/init.d"
+ 		PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+ 		GROUP_EXECUTE GROUP_READ
+ 		WORLD_EXECUTE WORLD_READ)
+diff --git a/rkaiq_3A_server/rkaiq_3A.service b/rkaiq_3A_server/rkaiq_3A.service
+new file mode 100644
+index 000000000000..374a1b0ccb3e
+--- /dev/null
++++ b/rkaiq_3A_server/rkaiq_3A.service
+@@ -0,0 +1,11 @@
++[Unit]
++Description=Enable Rockchip camera engine rkaiq
++DefaultDependencies=no
++
++[Service]
++Type=forking
++ExecStart=/etc/init.d/S40rkaiq_3A start
++ExecStop=/etc/init.d/S40rkaiq_3A stop
++
++[Install]
++WantedBy=sysinit.target
+diff --git a/rkisp_parser_demo/CMakeLists.txt b/rkisp_parser_demo/CMakeLists.txt
+index 149e10121389..b13f84732522 100644
+--- a/rkisp_parser_demo/CMakeLists.txt
++++ b/rkisp_parser_demo/CMakeLists.txt
+@@ -94,7 +94,4 @@ target_link_libraries(rkisp_parser ${RK_AIQ_LIB} ${LINK_ASAN})
+ if(ARCH STREQUAL "m32")
+ message("arch m32")
+ set_target_properties(rkisp_parser PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+-else()
+-message("arch m64")
+-set_target_properties(rkisp_parser PROPERTIES COMPILE_FLAGS "-m64" LINK_FLAGS "-m64")
+ endif()
+-- 
+2.25.1
+

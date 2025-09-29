@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8...3.22)
 
 if (ARCH STREQUAL "arm")
     set(J2S_HOST_CFLAGS -m32 -std=gnu99 -malign-double)
-elseif (ARCH STREQUAL "aarch64")
-    set(J2S_HOST_CFLAGS -m64 -std=gnu99 -malign-double)
 endif()
 
 set(J2S_SRC
@@ -200,7 +198,6 @@ add_custom_target(
     -B"host_tool"
     -H"${rk_aiq_SOURCE_DIR}/tools/j2s4b"
     COMMAND ${CMAKE_COMMAND} --build host_tool
-    COMMAND make -C host_tool install
 	DEPENDS j2s_parser
     )
 

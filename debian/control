@@ -1,0 +1,26 @@
+Source: camera-engine-rkaiq-rk3588
+Priority: optional
+Maintainer: Caesar Wang <wxt@rock-chips.com>
+Build-Depends: debhelper (>= 9),
+               meson,
+               pkg-config,
+               dh-exec,
+               xxd,
+               gcc,
+               cmake,
+               make,
+               ninja-build
+Standards-Version: 3.9.8
+Section: libs
+Homepage: https://github.com/rockchip-linux/camera_engine_rkaiq
+Vcs-Git: https://github.com/rockchip-linux/camera_engine_rkaiq
+Vcs-Browser: https://github.com/rockchip-linux/camera_engine_rkaiq
+
+Package: camera-engine-rkaiq-rk3588
+Architecture: arm64
+Depends: systemd
+Description: 3A libraries match Rockchip rkisp v30(rk3588).
+Provides: camera-engine-rkaiq-rk3588
+Conflicts: camera-engine-rkaiq-rk3588
+Replaces: camera-engine-rkaiq-rk3588
+

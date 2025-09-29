@@ -1,0 +1,7 @@
+.debhelper
+debhelper-build-stamp
+files
+camera-engine-rkaiq-rk3588
+*.substvars
+*.debhelper
+*.log
