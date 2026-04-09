@@ -36,6 +36,7 @@ static int silent = 0;
 static int width = 2688;
 static int height = 1520;
 static int has_mul_cam = 0;
+static const char fake_name[32] = "FakeCamera";
 
 struct rkaiq_media_info {
     char sd_isp_path[RKAIQ_FILE_PATH_LEN];
@@ -125,7 +126,7 @@ int rkaiq_get_media_info(struct rkaiq_media_info *media_info)
     }
 
     sensor_name = rk_aiq_uapi2_sysctl_getBindedSnsEntNmByVd(media_info->mainpath);
-    if (sensor_name == NULL || strlen(sensor_name) == 0) {
+    if (sensor_name == NULL || strlen(sensor_name) == 0 || !(strstr(sensor_name, fake_name) == NULL)) {
         fprintf(stderr, "ERR: No sensor attached to %s\n", media_info->mdev_path);
         media_device_unref (device);
         return -EINVAL;
@@ -290,10 +291,10 @@ void *engine_thread(void *arg)
     subscrible_stream_event(media_info, isp_fd, true);
 
     for (;;) {
+        start_engine(media_info);
         DBG("%s: wait stream start event...\n", media_info->mdev_path);
         wait_stream_event(isp_fd, CIFISP_V4L2_EVENT_STREAM_START, -1);
         DBG("%s: wait stream start event success ...\n", media_info->mdev_path);
-        start_engine(media_info);
 
         DBG("%s: wait stream stop event...\n", media_info->mdev_path);
         wait_stream_event(isp_fd, CIFISP_V4L2_EVENT_STREAM_STOP, -1);
