@@ -1079,6 +1079,8 @@ SensorHw::handle_sof(int64_t time, uint32_t frameid)
     LOGV_CAMHW_SUBM(SENSOR_SUBM, "%s:cam%d frameid=%u, exp_list size=%d, gain_list size=%d",
                     __FUNCTION__, mCamPhyId, frameid, _exp_list.size(), _delayed_gain_list.size());
 
+    struct rkcif_exp _rkcif_exp;
+    struct rkcif_effect_exp _rkcif_effect_map;
     SmartPtr<RkAiqSensorExpParamsProxy> exp_time = nullptr;
     SmartPtr<RkAiqSensorExpParamsProxy> exp_gain = nullptr;
     SmartPtr<RkAiqSensorExpParamsProxy> dcg_gain_mode = nullptr;
@@ -1121,37 +1123,51 @@ SensorHw::handle_sof(int64_t time, uint32_t frameid)
                     __FUNCTION__, mCamPhyId, _working_mode, frameid, set_time, set_gain);
 
     if (set_time || set_gain || set_dcg_gain_mode) {
-        RKAiqAecExpInfo_t *ptr_new_exp = NULL, new_exp;
-        if (_dcg_gain_mode_delayed) {
-            // _gain_delayed should be false
-            composeExpParam(&exp_time->data()->aecExpInfo,
-                            &exp_time->data()->aecExpInfo,
-                            &dcg_gain_mode->data()->aecExpInfo,
-                            &new_exp);
-            ptr_new_exp = &new_exp;
+        if (mVicapExpFd >= 0) {
+            _rkcif_exp.time =
+                exp_time->data()->aecExpInfo.LinearExp.exp_sensor_params.coarse_integration_time;
+            _rkcif_exp.gain =
+                exp_time->data()->aecExpInfo.LinearExp.exp_sensor_params.analog_gain_code_global;
+            LOGV_CAMHW_SUBM(SENSOR_SUBM, "%s:cam%d sof_id[%d], time: %d, a-gain: %d\n",
+                            __FUNCTION__, mCamPhyId, frameid, _rkcif_exp.time, _rkcif_exp.gain);
+            if (xcam_device_ioctl(mVicapExpFd, RKCIF_CMD_SET_EXPOSURE, &_rkcif_exp) < 0) {
+                _mutex.unlock();
+                LOGE_CAMHW_SUBM(SENSOR_SUBM, "failed to set rkcif_exp!");
+                return XCAM_RETURN_ERROR_IOCTL;
+            }
         } else {
-            if (_gain_delayed) {
-                if (_dcg_gain_mode_with_time)
-                    dcg_gain_mode = exp_time;
-                else
-                    dcg_gain_mode = exp_gain;
+            RKAiqAecExpInfo_t *ptr_new_exp = NULL, new_exp;
+            if (_dcg_gain_mode_delayed) {
+                // _gain_delayed should be false
                 composeExpParam(&exp_time->data()->aecExpInfo,
-                                &exp_gain->data()->aecExpInfo,
+                                &exp_time->data()->aecExpInfo,
                                 &dcg_gain_mode->data()->aecExpInfo,
                                 &new_exp);
                 ptr_new_exp = &new_exp;
             } else {
-                ptr_new_exp = &exp_time->data()->aecExpInfo;
+                if (_gain_delayed) {
+                    if (_dcg_gain_mode_with_time)
+                        dcg_gain_mode = exp_time;
+                    else
+                        dcg_gain_mode = exp_gain;
+                    composeExpParam(&exp_time->data()->aecExpInfo,
+                                    &exp_gain->data()->aecExpInfo,
+                                    &dcg_gain_mode->data()->aecExpInfo,
+                                    &new_exp);
+                    ptr_new_exp = &new_exp;
+                } else {
+                    ptr_new_exp = &exp_time->data()->aecExpInfo;
+                }
             }
-        }
 
-        if(_working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
-            ret = setLinearSensorExposure(ptr_new_exp);
-        } else {
-            ret = setHdrSensorExposure(ptr_new_exp);
-        }
+            if (_working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
+                ret = setLinearSensorExposure(ptr_new_exp);
+            } else {
+                ret = setHdrSensorExposure(ptr_new_exp);
+            }
 
-        setSensorDpcc(&exp_time->data()->SensorDpccInfo);
+            setSensorDpcc(&exp_time->data()->SensorDpccInfo);
+        }
     }
     if (ret != XCAM_RETURN_NO_ERROR) {
         LOGE_CAMHW_SUBM(SENSOR_SUBM, "%s: sof_id[%u]: set exposure failed!!!\n",
@@ -1161,38 +1177,49 @@ SensorHw::handle_sof(int64_t time, uint32_t frameid)
 
     if(set_time) {
         _mutex.lock();
-
-        if(_gain_delayed) {
-            _delayed_gain_list.push_back(exp_time);
-        }
-
-        if(_dcg_gain_mode_delayed) {
-            _delayed_dcg_gain_mode_list.push_back(exp_time);
-        }
-        effecting_frame_id = frameid + _time_delay;
-        if (mPauseFlag && (mIsSingleMode || (frameid == mPauseId)) &&
-            _time_delay > 1) {
-            effecting_frame_id = frameid + 1;
-        }
-        _effecting_exp_map[effecting_frame_id] = exp_time;
-
-        if (_working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
+        if (mVicapExpFd >= 0) {
+            if (xcam_device_ioctl(mVicapExpFd, RKCIF_CMD_GET_EFFECT_EXPOSURE, &_rkcif_effect_map) < 0) {
+                _mutex.unlock();
+                LOGE_CAMHW_SUBM(SENSOR_SUBM, "failed to get rkcif_exp effecting map!");
+                return XCAM_RETURN_ERROR_FAILED;
+            }
+            _effecting_exp_map[_rkcif_effect_map.sequence] = exp_time;
             LOGV_CAMHW_SUBM(SENSOR_SUBM, "%s:cam%d sof_id[%d], _effecting_exp_map: add %d, a-gain: %d, time: %d, snr: %d\n",
-                            __FUNCTION__, mCamPhyId, frameid, effecting_frame_id,
-                            exp_time->data()->aecExpInfo.LinearExp.exp_sensor_params.analog_gain_code_global,
-                            exp_time->data()->aecExpInfo.LinearExp.exp_sensor_params.coarse_integration_time,
-                            exp_time->data()->aecExpInfo.CISFeature.SNR);
+                            __FUNCTION__, mCamPhyId, frameid, _rkcif_effect_map.sequence,
+                            _rkcif_effect_map.gain,
+                            _rkcif_effect_map.time);
         } else {
-            LOGV_CAMHW_SUBM(SENSOR_SUBM, "%s:cam%d sof_id[%d], _effecting_exp_map: add %d, lexp: 0x%x-0x%x, mexp: 0x%x-0x%x, sexp: 0x%x-0x%x\n",
-                            __FUNCTION__,  mCamPhyId, frameid, effecting_frame_id,
-                            exp_time->data()->aecExpInfo.HdrExp[2].exp_sensor_params.analog_gain_code_global,
-                            exp_time->data()->aecExpInfo.HdrExp[2].exp_sensor_params.coarse_integration_time,
-                            exp_time->data()->aecExpInfo.HdrExp[1].exp_sensor_params.analog_gain_code_global,
-                            exp_time->data()->aecExpInfo.HdrExp[1].exp_sensor_params.coarse_integration_time,
-                            exp_time->data()->aecExpInfo.HdrExp[0].exp_sensor_params.analog_gain_code_global,
-                            exp_time->data()->aecExpInfo.HdrExp[0].exp_sensor_params.coarse_integration_time);
-        }
+            if (_gain_delayed) {
+                _delayed_gain_list.push_back(exp_time);
+            }
 
+            if (_dcg_gain_mode_delayed) {
+                _delayed_dcg_gain_mode_list.push_back(exp_time);
+            }
+            effecting_frame_id = frameid + _time_delay;
+            if (mPauseFlag && (mIsSingleMode || (frameid == mPauseId)) &&
+                _time_delay > 1) {
+                effecting_frame_id = frameid + 1;
+            }
+            _effecting_exp_map[effecting_frame_id] = exp_time;
+
+            if (_working_mode == RK_AIQ_WORKING_MODE_NORMAL) {
+                LOGV_CAMHW_SUBM(SENSOR_SUBM, "%s:cam%d sof_id[%d], _effecting_exp_map: add %d, a-gain: %d, time: %d, snr: %d\n",
+                                __FUNCTION__, mCamPhyId, frameid, effecting_frame_id,
+                                exp_time->data()->aecExpInfo.LinearExp.exp_sensor_params.analog_gain_code_global,
+                                exp_time->data()->aecExpInfo.LinearExp.exp_sensor_params.coarse_integration_time,
+                                exp_time->data()->aecExpInfo.CISFeature.SNR);
+            } else {
+                LOGV_CAMHW_SUBM(SENSOR_SUBM, "%s:cam%d sof_id[%d], _effecting_exp_map: add %d, lexp: 0x%x-0x%x, mexp: 0x%x-0x%x, sexp: 0x%x-0x%x\n",
+                                __FUNCTION__, mCamPhyId, frameid, effecting_frame_id,
+                                exp_time->data()->aecExpInfo.HdrExp[2].exp_sensor_params.analog_gain_code_global,
+                                exp_time->data()->aecExpInfo.HdrExp[2].exp_sensor_params.coarse_integration_time,
+                                exp_time->data()->aecExpInfo.HdrExp[1].exp_sensor_params.analog_gain_code_global,
+                                exp_time->data()->aecExpInfo.HdrExp[1].exp_sensor_params.coarse_integration_time,
+                                exp_time->data()->aecExpInfo.HdrExp[0].exp_sensor_params.analog_gain_code_global,
+                                exp_time->data()->aecExpInfo.HdrExp[0].exp_sensor_params.coarse_integration_time);
+            }
+        }
         _mutex.unlock();
     }
 

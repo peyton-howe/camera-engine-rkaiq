@@ -231,8 +231,7 @@ void CalibrateDrcGainYV20(DrcProcRes_t* para, float DrcGain, float alpha, bool O
 bool DrcEnableSetting(AdrcContext_t* pAdrcCtx, RkAiqAdrcProcResult_t* pAdrcProcRes) {
     LOG1_ATMO("%s:enter!\n", __FUNCTION__);
 
-    if (pAdrcCtx->FrameNumber == HDR_2X_NUM || pAdrcCtx->FrameNumber == HDR_3X_NUM ||
-        pAdrcCtx->FrameNumber == SENSOR_MGE)
+    if (pAdrcCtx->FrameNumber == HDR_2X_NUM || pAdrcCtx->FrameNumber == HDR_3X_NUM)
         pAdrcProcRes->bDrcEn = true;
     else if (pAdrcCtx->FrameNumber == LINEAR_NUM) {
         if (pAdrcCtx->ablcV32_proc_res.blc_ob_enable)
@@ -792,25 +791,6 @@ void AdrcTuningParaProcessing(AdrcContext_t* pAdrcCtx, RkAiqAdrcProcResult_t* pA
                 pAdrcCtx->NextData.dynParams.Drc_v20.hw_adrc_luma2drcGain_setting
                     .sw_adrc_luma2drcGain_autoVal.sw_adrc_drcGain_maxLimit =
                     MAX(MAX_AE_DRC_GAIN / pAdrcCtx->ablcV32_proc_res.isp_ob_predgain, GAINMIN);
-        }
-    } else if (pAdrcCtx->FrameNumber == SENSOR_MGE) {
-        if (pow(2.0f, float(pAdrcCtx->compr_bit - ISP_HDR_BIT_NUM_MIN)) *
-                pAdrcCtx->NextData.dynParams.Drc_v20.hw_adrc_luma2drcGain_setting
-                    .sw_adrc_luma2drcGain_autoVal.sw_adrc_drcGain_maxLimit >
-            MAX_AE_DRC_GAIN) {
-            if (pow(2.0f, float(pAdrcCtx->compr_bit - ISP_HDR_BIT_NUM_MIN)) > MAX_AE_DRC_GAIN)
-                LOGE_ATMO("%s:  SensorMgeRatio > 256x!!!\n", __FUNCTION__);
-            else
-                pAdrcCtx->NextData.dynParams.Drc_v20.hw_adrc_luma2drcGain_setting
-                    .sw_adrc_luma2drcGain_autoVal.sw_adrc_drcGain_maxLimit = MAX(
-                    MAX_AE_DRC_GAIN / pow(2.0f, float(pAdrcCtx->compr_bit - ISP_HDR_BIT_NUM_MIN)),
-                    GAINMIN);
-            LOGI_ATMO(
-                "%s:  SensorMgeRatio*sw_adrc_drcGain_maxLimit > 256x, sw_adrc_drcGain_maxLimit "
-                "clip to %f!!!\n",
-                __FUNCTION__,
-                pAdrcCtx->NextData.dynParams.Drc_v20.hw_adrc_luma2drcGain_setting
-                    .sw_adrc_luma2drcGain_autoVal.sw_adrc_drcGain_maxLimit);
         }
     }
     // clip hw_adrc_compsGain_minLimit

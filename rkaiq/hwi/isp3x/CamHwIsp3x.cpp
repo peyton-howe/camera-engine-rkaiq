@@ -115,6 +115,8 @@ CamHwIsp3x::updateEffParams(void* params, void* ori_params) {
                                  lates_isp_params_ptr->meas.rawaf, dst_isp_params->meas.rawaf);\
         UPDATE_MODULE_EFF_PARAMS(ISP2X_MODULE_BLS, new_isp_params->others.bls_cfg, \
                                  lates_isp_params_ptr->others.bls_cfg, dst_isp_params->others.bls_cfg); \
+        UPDATE_MODULE_EFF_PARAMS(ISP2X_MODULE_AWB_GAIN, new_isp_params->others.awb_gain_cfg, \
+                                 lates_isp_params_ptr->others.awb_gain_cfg, dst_isp_params->others.awb_gain_cfg); \
 
         if (mIsMultiIspMode) {
             dst_isp_params = &_effecting_ispparam_map[effFrmId]->data()->result.isp_params_v3x[0];

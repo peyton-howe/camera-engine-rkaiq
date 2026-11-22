@@ -34,6 +34,9 @@
 #include "uAPI2_c/rk_aiq_api_private_c.h"
 #include "uAPI2/rk_aiq_user_api2_stats.h"
 #include "aiq_core_c/aiq_algo_handler.h"
+#include "hwi_c/aiq_ispParamsCvt.h"
+#include "modules/rk_aiq_isp32_modules.h"
+#include "modules/rk_aiq_module_btnr_common.h"
 
 static camgroup_uapi_t last_camindex;
 
@@ -2030,6 +2033,20 @@ rk_aiq_uapi2_query_algoInterpIsoInfo(const rk_aiq_sys_ctx_t *sys_ctx,
     return XCAM_RETURN_NO_ERROR;
 }
 
+#if USE_NEWSTRUCT
+XCamReturn rk_aiq_user_api2_btnr_QueryStats(const rk_aiq_sys_ctx_t* sys_ctx, btnr_stats_cp_t* stats)
+{
+    btnr_cvt_info_t *pBtnrInfo = &sys_ctx->_camHw->_mIspParamsCvt->mBtnrInfo;
+    int idx = 0;
+    for (uint8_t i = 0; i < pBtnrInfo->stats_buffer_cnt; i++) {
+        if (pBtnrInfo->mBtnrStats[i].id > pBtnrInfo->mBtnrStats[idx].id) {
+            idx = i;
+        }
+    }
+    memcpy(stats, &pBtnrInfo->mBtnrStats[idx], sizeof(btnr_stats_cp_t));
+    return XCAM_RETURN_NO_ERROR;
+}
+#endif
 
 rk_aiq_sys_ctx_t* rk_aiq_get_last_sysctx(rk_aiq_sys_ctx_t *sys_ctx) {
 #if RKAIQ_ENABLE_CAMGROUP

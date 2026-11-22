@@ -151,6 +151,7 @@ struct demo_ctx{
 #ifdef HAVE_RKAIQ
     rk_aiq_sys_ctx_t* aiqctx;
 #endif
+    bool isHdr;
 };
 
 static struct option long_options[] = {
@@ -168,6 +169,7 @@ static struct option long_options[] = {
     {"isp_driver", required_argument, 0, OptSetIspDriver},
     {"mainpath_out", required_argument, 0, OptSetMainpathOut},
     {"mainpath_fmt", required_argument, 0, OptSetMainpathFmt},
+    {"hdr", no_argument, 0, OptHDR},
     {0, 0, 0, 0}
 };
 
@@ -176,6 +178,7 @@ static void help_info() {
            "        --rkaiq             optional, enable aiq\n"
            "        --iqpath            optional, path of iqfile\n"
            "        --entity            optional, sensor entity name\n"
+           "        --hdr               optional, 2 frame hdr mode\n"
            "        --help              optional, help info\n"
            "        --mode              optional, rkrawstream_demo working mode: half, offline, rawcap\n"
            "        --vicap_fmt         optional, vicap format info\n"
@@ -351,6 +354,8 @@ int main(int argc, char **argv)
         case OptSetMainpathOut:
             ctx.mainpath_out = optarg;
             break;
+        case OptHDR:
+            ctx.isHdr = true;
         default:
             help_info();
             return 1;
@@ -414,9 +419,11 @@ static int start_rkaiq(struct demo_ctx *ctx)
         return 0;
     }
     sensor_name = (char *)rk_aiq_uapi2_sysctl_rawReproc_preInit(ctx->isp_driver, ctrl);
+    if (ctx->isHdr)
+        rk_aiq_uapi2_sysctl_preInit_scene(sensor_name, "hdr", "day");
     ctx->aiqctx = rk_aiq_uapi2_sysctl_init(sensor_name, ctx->iqpath, NULL, NULL);
     //rk_aiq_uapi2_sysctl_setUserSensorFormat(ctx->aiqctx, ctx->readback_w, ctx->readback_h, 0x300e);
-    rk_aiq_uapi2_sysctl_prepare(ctx->aiqctx, ctx->readback_w, ctx->readback_h, 0);
+    rk_aiq_uapi2_sysctl_prepare(ctx->aiqctx, ctx->readback_w, ctx->readback_h, ctx->isHdr ? RKRAWSTREAM_HDR_MODE_ISP_HDR2 : 0);
     rk_aiq_uapi2_sysctl_start(ctx->aiqctx);
     return 0;
 }
@@ -477,7 +484,7 @@ static int rawcap_test(struct demo_ctx *ctx)
     prepare_p.width = ctx->vicap_w;
     prepare_p.height = ctx->vicap_h;
     prepare_p.pix_fmt = ctx->vicap_pixfmt;
-    prepare_p.hdr_mode = 0;
+    prepare_p.hdr_mode = ctx->isHdr ? RKRAWSTREAM_HDR_MODE_ISP_HDR2 : 0;
     prepare_p.mem_mode = ctx->vicap_memtype;
     prepare_p.buf_memory_type = ctx->vicap_buftype;
     rkrawstream_vicap_prepare(ctx->victx, &prepare_p);
@@ -616,7 +623,7 @@ static int half_offline_test(struct demo_ctx *ctx)
     rkrawstream_readback_init(ctx->victx, &init_p);
 
     memset(&prepare_p, 0, sizeof(prepare_p));
-    prepare_p.hdr_mode = 0;
+    prepare_p.hdr_mode = ctx->isHdr ? RKRAWSTREAM_HDR_MODE_ISP_HDR2 : 0;
     prepare_p.width = ctx->vicap_w;
     prepare_p.height = ctx->vicap_h;
     prepare_p.pix_fmt = ctx->vicap_pixfmt;
@@ -673,14 +680,13 @@ static int half_offline_test(struct demo_ctx *ctx)
 
     rkrawstream_vicap_stop(ctx->victx);
     rkrawstream_readback_stop(ctx->victx);
-    /* clean up library. */
-    rkrawstream_uapi_deinit(ctx->victx);
-
     if (ctx->use_aiq) {
 #ifdef HAVE_RKAIQ
         stop_rkaiq(ctx);
 #endif
     }
+    /* clean up library. */
+    rkrawstream_uapi_deinit(ctx->victx);
     return 0;
 }
 
@@ -707,7 +713,7 @@ static int half_offline_test_with_mainpath_output(struct demo_ctx *ctx)
     rkrawstream_readback_init(ctx->victx, &init_p);
 
     memset(&prepare_p, 0, sizeof(prepare_p));
-    prepare_p.hdr_mode = 0;
+    prepare_p.hdr_mode = ctx->isHdr ? RKRAWSTREAM_HDR_MODE_ISP_HDR2 : 0;
     prepare_p.width = ctx->vicap_w;
     prepare_p.height = ctx->vicap_h;
     prepare_p.pix_fmt = ctx->vicap_pixfmt;
@@ -762,14 +768,14 @@ static int half_offline_test_with_mainpath_output(struct demo_ctx *ctx)
     rkrawstream_readback_stop(ctx->victx);
 
 
-    /* clean up library. */
-    rkrawstream_uapi_deinit(ctx->victx);
-
     if (ctx->use_aiq) {
 #ifdef HAVE_RKAIQ
         stop_rkaiq(ctx);
 #endif
     }
+    /* clean up library. */
+    rkrawstream_uapi_deinit(ctx->victx);
+
     return 0;
 }
 
@@ -859,7 +865,7 @@ static int offline_test(struct demo_ctx *ctx)
     rkrawstream_readback_init(ctx->victx, &init_p);
 
     memset(&prepare_p, 0, sizeof(prepare_p));
-    prepare_p.hdr_mode = 0;
+    prepare_p.hdr_mode = ctx->isHdr ? RKRAWSTREAM_HDR_MODE_ISP_HDR2 : 0;
     prepare_p.width = ctx->readback_w;
     prepare_p.height = ctx->readback_h;
     prepare_p.pix_fmt = ctx->readback_pixfmt;
@@ -914,6 +920,11 @@ static int offline_test(struct demo_ctx *ctx)
     }
 
     rkrawstream_readback_stop(ctx->victx);
+    if (ctx->use_aiq) {
+#ifdef HAVE_RKAIQ
+        stop_rkaiq(ctx);
+#endif
+    }
     /* clean up library. */
     rkrawstream_uapi_deinit(ctx->victx);
 
@@ -924,11 +935,6 @@ static int offline_test(struct demo_ctx *ctx)
     if (ctx->rkraw_buffer){
         free(ctx->rkraw_buffer);
         ctx->rkraw_buffer = NULL;
-    }
-    if (ctx->use_aiq) {
-#ifdef HAVE_RKAIQ
-        stop_rkaiq(ctx);
-#endif
     }
     return 0;
 }
@@ -949,7 +955,7 @@ static int offline_test_with_mainpath_output(struct demo_ctx *ctx)
     rkrawstream_readback_init(ctx->victx, &init_p);
 
     memset(&prepare_p, 0, sizeof(prepare_p));
-    prepare_p.hdr_mode = 0;
+    prepare_p.hdr_mode = ctx->isHdr ? RKRAWSTREAM_HDR_MODE_ISP_HDR2 : 0;
     prepare_p.width = ctx->readback_w;
     prepare_p.height = ctx->readback_h;
     prepare_p.pix_fmt = ctx->readback_pixfmt;
@@ -998,6 +1004,11 @@ static int offline_test_with_mainpath_output(struct demo_ctx *ctx)
     VI_stream_deinit(mp_ctx);
 
     rkrawstream_readback_stop(ctx->victx);
+    if (ctx->use_aiq) {
+#ifdef HAVE_RKAIQ
+        stop_rkaiq(ctx);
+#endif
+    }
     /* clean up library. */
     rkrawstream_uapi_deinit(ctx->victx);
 
@@ -1008,11 +1019,6 @@ static int offline_test_with_mainpath_output(struct demo_ctx *ctx)
     if (ctx->rkraw_buffer){
         free(ctx->rkraw_buffer);
         ctx->rkraw_buffer = NULL;
-    }
-    if (ctx->use_aiq) {
-#ifdef HAVE_RKAIQ
-        stop_rkaiq(ctx);
-#endif
     }
     return 0;
 }

@@ -29,8 +29,8 @@ void hwi_base_dump_mod_param(AiqCamHwBase_t* self, st_string* result) {
 
     aiq_info_dump_title(result, "base module param");
 
-    snprintf(buffer, MAX_LINE_LENGTH, "%-12s%-9s%-8s%-10s%-11s%-11s", "dev", "phy_chn", "mode",
-             "readback", "multi_isp", "use_aiisp");
+    snprintf(buffer, MAX_LINE_LENGTH, "%-12s%-9s%-8s%-10s%-11s%-11s%-7s%-11s%-8s", "dev", "phy_chn",
+             "mode", "readback", "multi_isp", "use_aiisp", "airms", "compr_bit", "fpn_en");
     aiq_string_printf(result, buffer);
     aiq_string_printf(result, "\n");
     memset(buffer, 0, MAX_LINE_LENGTH);
@@ -53,9 +53,13 @@ void hwi_base_dump_mod_param(AiqCamHwBase_t* self, st_string* result) {
         if (s_info) driver = s_info->isp_info->driver;
     }
 
-    snprintf(buffer, MAX_LINE_LENGTH, "%-12s%-9d%-8s%-10s%-11s%-11s", driver, self->mCamPhyId, mode,
-             self->mNoReadBack ? "N" : "Y", g_mIsMultiIspMode ? "Y" : "N",
-             self->use_aiisp ? "Y" : "N");
+    bool fpn_en = false;
+    if (self->mFpnStreamUnit) fpn_en = self->mFpnStreamUnit->_fpn_en;
+
+    snprintf(buffer, MAX_LINE_LENGTH, "%-12s%-9d%-8s%-10s%-11s%-11s%-7s%-11d%-8s", driver,
+             self->mCamPhyId, mode, self->mNoReadBack ? "N" : "Y", g_mIsMultiIspMode ? "Y" : "N",
+             self->use_aiisp ? "Y" : "N", self->_airms_en ? "Y" : "N", self->mSnsDes.compr_bit,
+             fpn_en ? "Y" : "N");
 
     aiq_string_printf(result, buffer);
     aiq_string_printf(result, "\n\n");

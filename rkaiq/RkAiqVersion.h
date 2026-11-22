@@ -894,10 +894,23 @@
  * v6.0x31.0
  * - Support btnr2, aiYnr, btnr memc, scene_cis
  * - isp driver should be v3.1.0 
+ * v6.0x32.0
+ * - iq: modify af,btnr attrib
+ * - isp driver should be v3.2.0
+ * - TB: add header struct size check
+ * - PDAF: update to v0.2.1
+ * - awb: fix earlier awb logic
+ * - fakecam: rk_aiq_frame_info_t add ispdgain
+ * - awb: fix tunning tool can't use api get awbgain cause by 4c52544
+ * v6.0x32.1
+ * - rv1126b support face ae/af
+ * - rv1126b support expander
+ * - support readback for serdes and one to multiple mode
+ * - Add API rk_aiq_uapi2_judgeNeedRawPipeCtrl
  */
 
-#define RK_AIQ_VERSION_REAL_V "v6.0x31.0"
-#define RK_AIQ_RELEASE_DATE "2025-08-01"
+#define RK_AIQ_VERSION_REAL_V "v6.0x32.1"
+#define RK_AIQ_RELEASE_DATE "2026-01-09"
 
 #define RK_AIQ_IQ_HEAD_VERSION_REAL_V "v1.0.2"
 

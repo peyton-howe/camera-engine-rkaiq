@@ -7,6 +7,10 @@
 #include "xcore_c/aiq_v4l2_buffer.h"
 #include "hwi_c/aiq_sensorHw.h"
 
+#include <sys/ioctl.h>
+#include <linux/dma-buf.h>
+#include <fcntl.h>
+
 #define RKAIQ_FPNSW_DEBUG 0
 
 #if RKAIQ_FPNSW_DEBUG
@@ -208,6 +212,40 @@ static int _get_int_default_frome_file(const char *path)
 
 #endif
 
+static void clear_fpn_proc_msg(AiqFpnSwStreamProcUnit_t* pFpnProc, fpn_proc_msg_t* msg, bool is_send)
+{
+    if (pFpnProc == NULL || msg == NULL) {
+        return;
+    }
+
+    if (msg->buf_s && is_send) {
+        if (pFpnProc->_memc_manager && pFpnProc->_send_sync_buf_func) {
+            pFpnProc->_send_sync_buf_func(pFpnProc->_memc_manager, msg->buf_s, msg->buf_m, msg->buf_l);
+        } else if (pFpnProc->_proc_stream) {
+            AiqRawStreamProcUnit_send_sync_buf(pFpnProc->_proc_stream, msg->buf_s, msg->buf_m, msg->buf_l);
+        } else {
+            LOGE_ANALYZER("no proc unit %s !", __func__);
+        }
+    }
+
+    if (msg->buf_s) {
+        AiqVideoBuffer_unref(msg->buf_s);
+        msg->buf_s = NULL;
+    }
+    if (msg->buf_m) {
+        AiqVideoBuffer_unref(msg->buf_m);
+        msg->buf_m = NULL;
+    }
+    if (msg->buf_l) {
+        AiqVideoBuffer_unref(msg->buf_l);
+        msg->buf_l = NULL;
+    }
+    if (msg->expParam) {
+        AIQ_REF_BASE_UNREF(&msg->expParam->_base._ref_base);
+        msg->expParam = NULL;
+    }
+}
+
 static bool fpnSwStreamProcTh_func(void *user_data)
 {
     AiqFpnSwStreamProcThread_t* pHdlTh = (AiqFpnSwStreamProcThread_t*)user_data;
@@ -231,27 +269,70 @@ static bool fpnSwStreamProcTh_func(void *user_data)
         return true;
     }
 
-    int cur_fps = msg.expParam->aecExpInfo.pixel_clock_freq_mhz * 1000000.0 /
-                   msg.expParam->aecExpInfo.frame_length_lines /
-                   msg.expParam->aecExpInfo.line_length_pixels;
+    // struct timeval t_st, t_ed;
+    // gettimeofday(&t_st, NULL);
 
-    if (pFpnProc->_fpn_init && pFpnProc->_fpn_attr->en && cur_fps <= pFpnProc->_fpn_attr->stAuto.sta.sw_fpnSw_fps_val) {
+    if (msg.expParam) {
+        pFpnProc->_last_iso = msg.expParam->aecExpInfo.LinearExp.exp_real_params.analog_gain *
+                                 msg.expParam->aecExpInfo.LinearExp.exp_real_params.digital_gain *
+                                 msg.expParam->aecExpInfo.LinearExp.exp_real_params.isp_dgain * 50;
+
+        pFpnProc->_last_gain = msg.expParam->aecExpInfo.LinearExp.exp_real_params.analog_gain *
+                                 msg.expParam->aecExpInfo.LinearExp.exp_real_params.digital_gain;
+    }
+
+    if (!pFpnProc->_fpn_attr || !pFpnProc->_fpn_init) {
+        clear_fpn_proc_msg(pFpnProc, &msg, true);
+        return true;
+    }
+
+    float first_part_ratio = 1.0f;
+    uint32_t do_fpn_iso = 50;
+    fpnSw_params_static_t *pSta = NULL;
+    if (pFpnProc->_fpn_attr->opMode == RK_AIQ_OP_MODE_AUTO) {
+        pSta = &pFpnProc->_fpn_attr->stAuto.sta;
+        do_fpn_iso = pFpnProc->_iso_list[pSta->sw_fpnSw_autoSwOn_thred];
+    } else {
+        pSta = &pFpnProc->_fpn_attr->stMan.sta;
+        do_fpn_iso = pFpnProc->_iso_list[pSta->sw_fpnSw_autoSwOn_thred];
+    }
+    first_part_ratio = pSta->sw_fpnSw_procInSegmFirst_val == 0 ? 1.0f : pSta->sw_fpnSw_procInSegmFirst_val;
+
+    uint32_t first_parth_h = 0;
+
+    if (pFpnProc->_last_iso >= do_fpn_iso && !pFpnProc->_fpn_attr->bypass) {
 #if RKAIQ_FPNSW_DEBUG
         LOGK("run here %s:%d time %s", __func__, __LINE__, timeString());
         if (!fpn_switch) {
 #endif
-        rk_fpn_correction_param_t fpn_proc;
-        fpn_proc.raw_wid         = pFpnProc->_width;
-        fpn_proc.raw_hgt         = pFpnProc->_height;
-        fpn_proc.sensor_gain     = msg.expParam->aecExpInfo.LinearExp.exp_real_params.analog_gain *
-                                   msg.expParam->aecExpInfo.LinearExp.exp_real_params.digital_gain;
-        fpn_proc.max_sensor_gain = pFpnProc->_csi_again_max * pFpnProc->_csi_dgain_max;
-        fpn_proc.fpn_offset      = pFpnProc->_fpn_attr->stAuto.sta.sw_fpnSw_off;
+
+        first_parth_h = pFpnProc->_height * first_part_ratio;
+
+        rk_fpn_correction_param_t *fpn_proc = &pFpnProc->_fpn_param;
+        fpn_proc->raw_wid         = pFpnProc->_width;
+        fpn_proc->raw_hgt         = first_parth_h;
+        fpn_proc->sensor_gain     = pFpnProc->_last_gain;
+        fpn_proc->max_sensor_gain = pFpnProc->_csi_again_max * pFpnProc->_csi_dgain_max;
+        fpn_proc->fpn_offset      = pSta->sw_fpnSw_offset;
+        fpn_proc->raw_format      = pFpnProc->_is_high_bw_mode ? 1 : 0;
+        fpn_proc->unpacked_shift  = 0;
 #if RKAIQ_FPNSW_DEBUG
-        fpn_proc.fpn_offset      = _get_int_default_frome_file("/data/fpn_offset");
+        fpn_proc->fpn_offset      = _get_int_default_frome_file("/data/fpn_offset");
 #endif
-        fpn_proc.current_raw_ptr = (uint8_t*)AiqV4l2Buffer_getExpbufUsrptr(msg.buf_s);
-        rk_fpn_correction_proc(&fpn_proc);
+        fpn_proc->current_raw_ptr = (uint8_t*)AiqV4l2Buffer_getExpbufUsrptr(msg.buf_s);
+        fpn_proc->fpn_raw_ptr     = (uint8_t*)pFpnProc->_fpn_correct_raw;
+
+        int dma_fd = AiqV4l2Buffer_getFd(msg.buf_s);
+
+        struct dma_buf_sync sync = { 0 };
+
+        sync.flags = DMA_BUF_SYNC_WRITE | DMA_BUF_SYNC_READ | DMA_BUF_SYNC_START;
+        ioctl(dma_fd, DMA_BUF_IOCTL_SYNC, &sync);
+
+        rk_fpn_correction_proc(fpn_proc);
+
+        sync.flags = DMA_BUF_SYNC_WRITE | DMA_BUF_SYNC_READ | DMA_BUF_SYNC_END;
+        ioctl(dma_fd, DMA_BUF_IOCTL_SYNC, &sync);
 
         // LOGK("run here %s:%d offset %d time %s", __func__, __LINE__, pFpnProc->_fpn_attr->stAuto.sta.sw_fpnSw_off, timeString());
 
@@ -434,21 +515,49 @@ static bool fpnSwStreamProcTh_func(void *user_data)
 #endif
     }
 
-    if (pFpnProc->_memc_manager && pFpnProc->_send_sync_buf_func) {
-        pFpnProc->_send_sync_buf_func(pFpnProc->_memc_manager, msg.buf_s, msg.buf_m, msg.buf_l);
-    } else if (pFpnProc->_proc_stream) {
-        AiqRawStreamProcUnit_send_sync_buf(pFpnProc->_proc_stream, msg.buf_s, msg.buf_m, msg.buf_l);
-    } else {
-        LOGE_ANALYZER("no proc unit %s !", __func__);
+    fpn_proc_msg_t tmp_msg = msg;
+    if (tmp_msg.buf_s) {
+        AiqVideoBuffer_ref(tmp_msg.buf_s);
     }
 
-    if (msg.expParam) {
-        AIQ_REF_BASE_UNREF(&msg.expParam->_base._ref_base);
+    clear_fpn_proc_msg(pFpnProc, &msg, true);
+
+    if (pFpnProc->_last_iso >= do_fpn_iso && !pFpnProc->_fpn_attr->bypass) {
+        rk_fpn_correction_param_t *fpn_proc = &pFpnProc->_fpn_param;
+        fpn_proc->raw_wid         = pFpnProc->_width;
+        fpn_proc->raw_hgt         = pFpnProc->_height - first_parth_h;
+        fpn_proc->sensor_gain     = pFpnProc->_last_gain;
+        fpn_proc->max_sensor_gain = pFpnProc->_csi_again_max * pFpnProc->_csi_dgain_max;
+        fpn_proc->fpn_offset      = pSta->sw_fpnSw_offset;
+        fpn_proc->raw_format      = pFpnProc->_is_high_bw_mode ? 1 : 0;
+        fpn_proc->unpacked_shift  = 0;
+        fpn_proc->fpn_raw_ptr     = (((uint8_t*)pFpnProc->_fpn_correct_raw) + (pFpnProc->_width * first_parth_h));
+#if RKAIQ_FPNSW_DEBUG
+        fpn_proc->fpn_offset      = _get_int_default_frome_file("/data/fpn_offset");
+#endif
+        fpn_proc->current_raw_ptr = (uint8_t*)AiqV4l2Buffer_getExpbufUsrptr(tmp_msg.buf_s);
+        fpn_proc->current_raw_ptr += (pFpnProc->_stride * first_parth_h);
+        int dma_fd = AiqV4l2Buffer_getFd(tmp_msg.buf_s);
+
+        struct dma_buf_sync sync = { 0 };
+
+        sync.flags = DMA_BUF_SYNC_WRITE | DMA_BUF_SYNC_READ | DMA_BUF_SYNC_START;
+        ioctl(dma_fd, DMA_BUF_IOCTL_SYNC, &sync);
+
+        rk_fpn_correction_proc(fpn_proc);
+
+        sync.flags = DMA_BUF_SYNC_WRITE | DMA_BUF_SYNC_READ | DMA_BUF_SYNC_END;
+        ioctl(dma_fd, DMA_BUF_IOCTL_SYNC, &sync);
     }
 
-    if (msg.buf_s) AiqVideoBuffer_unref(msg.buf_s);
-    if (msg.buf_m) AiqVideoBuffer_unref(msg.buf_m);
-    if (msg.buf_l) AiqVideoBuffer_unref(msg.buf_l);
+    if (tmp_msg.buf_s) {
+        AiqVideoBuffer_unref(tmp_msg.buf_s);
+        tmp_msg.buf_s = NULL;
+    }
+
+    // gettimeofday(&t_ed, NULL);
+    // double cpu_use_time = (t_ed.tv_sec - t_st.tv_sec) * 1000.0 + (t_ed.tv_usec - t_st.tv_usec) / 1000.0;
+    // LOGK("fpn use time %f", cpu_use_time);
 
     return true;
 }
@@ -465,7 +574,7 @@ static XCamReturn FpnSwStreamProcThread_init(AiqFpnSwStreamProcThread_t* pHdlTh,
 
     AiqListConfig_t msgqCfg;
     msgqCfg._name      = "fpnThMsg";
-    msgqCfg._item_nums = 2;
+    msgqCfg._item_nums = 10;
     msgqCfg._item_size = sizeof(fpn_proc_msg_t);
     pHdlTh->mMsgsQueue = aiqList_init(&msgqCfg);
     if (!pHdlTh->mMsgsQueue) {
@@ -540,21 +649,20 @@ static bool FpnSwStreamProcThread_push_msg(AiqFpnSwStreamProcThread_t* pHdlTh, f
     return true;
 }
 
-XCamReturn AiqFpnSwStreamProcUnit_set_fpnSw_attrib(AiqFpnSwStreamProcUnit_t* pFpnProc, fpnSw_api_attrib_t* attr)
+XCamReturn AiqFpnSwStreamProcUnit_setCalib(AiqFpnSwStreamProcUnit_t* pFpnProc, const CamCalibDbV2Context_t* calibv2)
 {
     if (!pFpnProc)
         return XCAM_RETURN_ERROR_PARAM;
 
-    if (!attr) {
-        LOGE_CAMHW("fpnSw attrib is NULL");
+    if (!calibv2) {
+        LOGE_CAMHW("calibv2 is NULL");
         return XCAM_RETURN_ERROR_PARAM;
     }
 
-    pFpnProc->_fpn_attr = attr;
+    pFpnProc->_fpn_attr =
+            (fpnSw_api_attrib_t*)(CALIBDBV2_GET_MODULE_PTR((void*)(calibv2), fpnSw));
 
-    // LOGK("run here en %d bypass %d opMode %d sta.off %d auto off %d", attr->en, attr->bypass, attr->opMode,
-    //      attr->stMan.sta.sw_fpnSw_off, attr->stAuto.sta.sw_fpnSw_off);
-    // LOGK("run here %s:%d offset %d time %s", __func__, __LINE__, pFpnProc->_fpn_attr->stMan.sta.sw_fpnSw_off, timeString());
+    pFpnProc->_iso_list = calibv2->sensor_info->iso_list;
 
     return XCAM_RETURN_NO_ERROR;
 }
@@ -612,6 +720,65 @@ XCamReturn AiqFpnSwStreamProcUnit_set_fpn_offset(AiqFpnSwStreamProcUnit_t* pFpnP
     return XCAM_RETURN_NO_ERROR;
 }
 
+XCamReturn AiqFpnSwStreamProcUnit_getRawAlignMode(AiqFpnSwStreamProcUnit_t* pFpnProc, bool* need_align, bool* align_mode) {
+    if (!pFpnProc) {
+        *need_align = false;
+        return XCAM_RETURN_ERROR_PARAM;
+    }
+
+    if (pFpnProc->_fpn_attr && pFpnProc->_fpn_attr->en) {
+        pFpnProc->_fpn_en = pFpnProc->_fpn_attr->en;
+        if (pFpnProc->_fpn_attr->opMode == RK_AIQ_OP_MODE_AUTO) {
+            if (pFpnProc->_fpn_attr->stAuto.sta.sw_fpnSw_working_mode == fpnSw_highBW_mode) {
+                pFpnProc->_is_high_bw_mode = true;
+            }
+        } else if (pFpnProc->_fpn_attr->opMode == RK_AIQ_OP_MODE_MANUAL) {
+            if (pFpnProc->_fpn_attr->stMan.sta.sw_fpnSw_working_mode == fpnSw_highBW_mode) {
+                pFpnProc->_is_high_bw_mode = true;
+            }
+        }
+    }
+
+    *need_align = pFpnProc->_fpn_en;
+    *align_mode = pFpnProc->_is_high_bw_mode;
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
+void
+AiqFpnSwStreamProcUnit_setWorkingMode(AiqFpnSwStreamProcUnit_t* pFpnProc, bool is_high_bw_mode)
+{
+    if (!pFpnProc)
+        return;
+
+    pFpnProc->_is_high_bw_mode = is_high_bw_mode;
+}
+
+XCamReturn AiqFpnSwStreamProcUnit_queryStatus(AiqFpnSwStreamProcUnit_t* pFpnProc, void* status)
+{
+    if (!pFpnProc || !status)
+        return XCAM_RETURN_ERROR_PARAM;
+
+    fpnSw_status_t* pStatus = (fpnSw_status_t*)status;
+    memset(pStatus, 0, sizeof(fpnSw_status_t));
+
+    if (pFpnProc->_fpn_attr) {
+        pStatus->en = pFpnProc->_fpn_attr->en;
+        pStatus->bypass = pFpnProc->_fpn_attr->bypass;
+        pStatus->opMode = pFpnProc->_fpn_attr->opMode;
+        if (pFpnProc->_fpn_attr->opMode == RK_AIQ_OP_MODE_AUTO) {
+            pStatus->stMan.sta = pFpnProc->_fpn_attr->stAuto.sta;
+        } else if (pFpnProc->_fpn_attr->opMode == RK_AIQ_OP_MODE_MANUAL) {
+            pStatus->stMan = pFpnProc->_fpn_attr->stMan;
+        }
+    }
+
+    pStatus->en = pFpnProc->_fpn_en;
+    pStatus->stMan.sta.sw_fpnSw_working_mode = pFpnProc->_is_high_bw_mode ? fpnSw_highBW_mode : fpnSw_highCpu_mode;
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
 XCamReturn AiqFpnSwStreamProcUnit_init(AiqFpnSwStreamProcUnit_t* pFpnProc, void *sns_dev)
 {
     if (!pFpnProc)
@@ -619,15 +786,16 @@ XCamReturn AiqFpnSwStreamProcUnit_init(AiqFpnSwStreamProcUnit_t* pFpnProc, void 
 
     memset(&pFpnProc->_fpn_param, 0, sizeof(rk_fpn_correction_param_t));
 
-    pFpnProc->_fpn_en        = false;
-    pFpnProc->_csi_again_max = 1.0;
-    pFpnProc->_csi_dgain_max = 1.0;
-    pFpnProc->mCamPhyId      = 0;
-    pFpnProc->_width         = 0;
-    pFpnProc->_height        = 0;
-    pFpnProc->_proc_stream   = NULL;
-    pFpnProc->_memc_manager  = NULL;
-    pFpnProc->_fpn_offset    = 128;
+    pFpnProc->_fpn_en          = false;
+    pFpnProc->_csi_again_max   = 1.0;
+    pFpnProc->_csi_dgain_max   = 1.0;
+    pFpnProc->mCamPhyId        = 0;
+    pFpnProc->_width           = 0;
+    pFpnProc->_height          = 0;
+    pFpnProc->_proc_stream     = NULL;
+    pFpnProc->_memc_manager    = NULL;
+    pFpnProc->_fpn_offset      = 128;
+    pFpnProc->_is_high_bw_mode = false;
 
     pFpnProc->_procTh = (AiqFpnSwStreamProcThread_t*)aiq_mallocz(sizeof(AiqFpnSwStreamProcThread_t));
     if (!pFpnProc->_procTh) {
@@ -666,16 +834,30 @@ XCamReturn AiqFpnSwStreamProcUnit_deinit(AiqFpnSwStreamProcUnit_t* pFpnProc)
 
     rk_fpn_correction_deinit(&pFpnProc->_fpn_param);
 
+    if (pFpnProc->_fpn_correct_raw) {
+        free(pFpnProc->_fpn_correct_raw);
+        pFpnProc->_fpn_correct_raw = NULL;
+    }
+
     return XCAM_RETURN_NO_ERROR;
 }
 
-XCamReturn AiqFpnSwStreamProcUnit_prepare(AiqFpnSwStreamProcUnit_t* pFpnProc, uint32_t width, uint32_t height)
+XCamReturn AiqFpnSwStreamProcUnit_setFormat(AiqFpnSwStreamProcUnit_t* pFpnProc, uint32_t width, uint32_t height, uint32_t bpp)
 {
     if (!pFpnProc)
         return XCAM_RETURN_ERROR_PARAM;
 
+    if (!pFpnProc->_is_high_bw_mode && bpp != 16) {
+        LOGE_CAMHW("%s compact raw fmt mode must be 10bit raw input!", __func__);
+    }
+
     pFpnProc->_width = width;
     pFpnProc->_height = height;
+    if (!pFpnProc->_is_high_bw_mode) {
+        pFpnProc->_stride = (width * bpp / 8 + 255) / 256 * 256;
+    } else {
+        pFpnProc->_stride = 2 * pFpnProc->_width;
+    }
 
 #if RKAIQ_FPNSW_DEBUG
     if (!g_output_buf) {
@@ -696,14 +878,26 @@ XCamReturn AiqFpnSwStreamProcUnit_start(AiqFpnSwStreamProcUnit_t* pFpnProc)
         return XCAM_RETURN_ERROR_PARAM;
 
     if (strlen(pFpnProc->_fpn_attr->stAuto.sta.sw_fpnSw_raw_path) > 0 && !pFpnProc->_fpn_init) {
-        rk_fpn_correction_param_t fpn_proc;
-        fpn_proc.raw_wid = pFpnProc->_width;
-        fpn_proc.raw_hgt = pFpnProc->_height;
-        fpn_proc.max_sensor_gain = pFpnProc->_csi_again_max * pFpnProc->_csi_dgain_max;
-        fpn_proc.current_raw_ptr = NULL;
-        sprintf(fpn_proc.fpn_path, "%s", pFpnProc->_fpn_attr->stAuto.sta.sw_fpnSw_raw_path);
-        rk_fpn_correction_init(&fpn_proc);
+        rk_fpn_correction_param_t *fpn_proc = &pFpnProc->_fpn_param;
+        fpn_proc->raw_wid = pFpnProc->_width;
+        fpn_proc->raw_hgt = pFpnProc->_height;
+        fpn_proc->max_sensor_gain = pFpnProc->_csi_again_max * pFpnProc->_csi_dgain_max;
+        fpn_proc->current_raw_ptr = NULL;
+        sprintf(fpn_proc->fpn_path, "%s", pFpnProc->_fpn_attr->stAuto.sta.sw_fpnSw_raw_path);
+        rk_fpn_correction_init(fpn_proc);
         pFpnProc->_fpn_init = true;
+
+        if (pFpnProc->_fpn_correct_raw) {
+            free(pFpnProc->_fpn_correct_raw);
+            pFpnProc->_fpn_correct_raw = NULL;
+        }
+        pFpnProc->_fpn_correct_raw = aiq_mallocz(pFpnProc->_width * pFpnProc->_height);
+        FILE *fp = fopen(pFpnProc->_fpn_attr->stAuto.sta.sw_fpnSw_raw_path, "r");
+        if (fp) {
+            fread(pFpnProc->_fpn_correct_raw, 1, pFpnProc->_width * pFpnProc->_height, fp);
+            fclose(fp);
+        }
+
     } else {
         LOGE_CAMHW("fpnSw raw path %s is empty, please set it first!", pFpnProc->_fpn_attr->stAuto.sta.sw_fpnSw_raw_path);
     }
@@ -736,7 +930,7 @@ XCamReturn AiqFpnSwStreamProcUnit_send_sync_buf(void* fpn_ctx, AiqV4l2Buffer_t* 
     pFpnProc->_fpn_en = _get_int_default_frome_file("/data/fpn_en");
 #endif
 
-    if (pFpnProc->_procTh && pFpnProc->_procTh->_base->_started && pFpnProc->_fpn_attr->en) {
+    if (pFpnProc->_procTh && pFpnProc->_procTh->_base->_started && pFpnProc->_fpn_en) {
         fpn_proc_msg_t msg;
         msg.buf_s = buf_s;
         msg.buf_m = buf_m;
@@ -755,9 +949,7 @@ XCamReturn AiqFpnSwStreamProcUnit_send_sync_buf(void* fpn_ctx, AiqV4l2Buffer_t* 
 #endif
 
         if (!FpnSwStreamProcThread_push_msg(pFpnProc->_procTh, &msg)) {
-            if (buf_s) AiqVideoBuffer_unref(buf_s);
-            if (buf_m) AiqVideoBuffer_unref(buf_m);
-            if (buf_l) AiqVideoBuffer_unref(buf_l);
+            clear_fpn_proc_msg(pFpnProc, &msg, false);
             ret = XCAM_RETURN_ERROR_PARAM;
         }
         return ret;

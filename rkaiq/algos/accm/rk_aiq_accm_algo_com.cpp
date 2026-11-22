@@ -464,69 +464,72 @@ void Saturationadjust(float fScale, float flevel1, float *pccMatrixA)
             LOGW_ACCM("fSclae is  %f, so saturation adjust bypass\n", fScale);
         }
      } else {
-        flevel1 = (flevel1 - 50) / 50 + 1;
-        LOGV_ACCM("Satura: %f \n", flevel1);
-        if (pccMatrixA == NULL) {
-            LOGE_ACCM("%s: pointer pccMatrixA is NULL", __FUNCTION__);
-            return;
-        }
-        memcpy(&Matrix_tmp, pccMatrixA, sizeof(Matrix_tmp));
-        float *pccMatrixB;
-        pccMatrixB = Matrix_tmp;
-        /* ************************************
-        *  M_A =  (M0 - E) * fscale + E
-        *  M_B = rgb2ycbcr(M_A)
-        *  M_B' = ycbcr2rgb[ sat_matrix * M_B ]
-        *  M_A' = (M_B' - E) / fscale + E
-        *  return (M_A')
-        * ***********************************/
-        if ( (pccMatrixA != NULL) && (pccMatrixB != NULL) )
-        {
-            for(int i =0; i < 9; i++)
+        if (fabs(flevel1-50)<DIVMIN) {
+            LOGW_ACCM("flevel1(%f) = 50, so saturation adjust bypass\n", flevel1);
+        } else {
+            flevel1 = (flevel1 - 50) / 50 + 1;
+            LOGV_ACCM("Satura: %f \n", flevel1);
+            if (pccMatrixA == NULL) {
+                LOGE_ACCM("%s: pointer pccMatrixA is NULL", __FUNCTION__);
+                return;
+            }
+            memcpy(&Matrix_tmp, pccMatrixA, sizeof(Matrix_tmp));
+            float *pccMatrixB;
+            pccMatrixB = Matrix_tmp;
+            /* ************************************
+            *  M_A =  (M0 - E) * fscale + E
+            *  M_B = rgb2ycbcr(M_A)
+            *  M_B' = ycbcr2rgb[ sat_matrix * M_B ]
+            *  M_A' = (M_B' - E) / fscale + E
+            *  return (M_A')
+            * ***********************************/
+            if ( (pccMatrixA != NULL) && (pccMatrixB != NULL) )
             {
-                if (i == 0 || i == 4 || i == 8){
-                  pccMatrixA[i] = (pccMatrixA[i] - 1)*fScale+1;
+                for(int i =0; i < 9; i++)
+                {
+                    if (i == 0 || i == 4 || i == 8){
+                    pccMatrixA[i] = (pccMatrixA[i] - 1)*fScale+1;
+                    }
+                    else{
+                    pccMatrixA[i] = pccMatrixA[i]*fScale;
+                    }
                 }
-                else{
-                  pccMatrixA[i] = pccMatrixA[i]*fScale;
+                pccMatrixB[0] = 0.299 * pccMatrixA[0] + 0.587 * pccMatrixA[3] + 0.114 * pccMatrixA[6];
+                pccMatrixB[1] = 0.299 * pccMatrixA[1] + 0.587 * pccMatrixA[4] + 0.114 * pccMatrixA[7];
+                pccMatrixB[2] = 0.299 * pccMatrixA[2] + 0.587 * pccMatrixA[5] + 0.114 * pccMatrixA[8];
+                pccMatrixB[3] = -0.1687 * pccMatrixA[0] - 0.3313 * pccMatrixA[3] + 0.5 * pccMatrixA[6];
+                pccMatrixB[4] = -0.1687 * pccMatrixA[1] - 0.3313 * pccMatrixA[4] + 0.5 * pccMatrixA[7];
+                pccMatrixB[5] = -0.1687 * pccMatrixA[2] - 0.3313 * pccMatrixA[5] + 0.5 * pccMatrixA[8];
+                pccMatrixB[6] = 0.5 * pccMatrixA[0]  - 0.4187 * pccMatrixA[3] - 0.0813 * pccMatrixA[6];
+                pccMatrixB[7] = 0.5 * pccMatrixA[1]  - 0.4187 * pccMatrixA[4] - 0.0813 * pccMatrixA[7];
+                pccMatrixB[8] = 0.5 * pccMatrixA[2]  - 0.4187 * pccMatrixA[5] - 0.0813 * pccMatrixA[8];
+
+                for(int i = 3; i < 9; i++)
+                {
+                    pccMatrixB[i] = flevel1 * pccMatrixB[i];
+                }
+                pccMatrixA[0] = 1 * pccMatrixB[0] + 0 * pccMatrixB[3] + 1.402 * pccMatrixB[6];
+                pccMatrixA[1] = 1 * pccMatrixB[1] + 0 * pccMatrixB[4] + 1.402 * pccMatrixB[7];
+                pccMatrixA[2] = 1 * pccMatrixB[2] + 0 * pccMatrixB[5] + 1.402 * pccMatrixB[8];
+                pccMatrixA[3] = 1 * pccMatrixB[0] - 0.34414 * pccMatrixB[3]  - 0.71414 * pccMatrixB[6];
+                pccMatrixA[4] = 1 * pccMatrixB[1] - 0.34414 * pccMatrixB[4]  - 0.71414 * pccMatrixB[7];
+                pccMatrixA[5] = 1 * pccMatrixB[2] - 0.34414 * pccMatrixB[5]  - 0.71414 * pccMatrixB[8];
+                pccMatrixA[6] = 1 * pccMatrixB[0]  + 1.772 * pccMatrixB[3] + 0 * pccMatrixB[6];
+                pccMatrixA[7] = 1 * pccMatrixB[1]  + 1.772 * pccMatrixB[4] + 0 * pccMatrixB[7];
+                pccMatrixA[8] = 1 * pccMatrixB[2]  + 1.772 * pccMatrixB[5] + 0 * pccMatrixB[8];
+
+
+                for(int i =0; i < 9; i++)
+                {
+                    if (i == 0 || i == 4 || i == 8){
+                    pccMatrixA[i] = (pccMatrixA[i] - 1)/fScale+1;
+                    }
+                    else{
+                    pccMatrixA[i] = pccMatrixA[i]/fScale;
+                    }
                 }
             }
-            pccMatrixB[0] = 0.299 * pccMatrixA[0] + 0.587 * pccMatrixA[3] + 0.114 * pccMatrixA[6];
-            pccMatrixB[1] = 0.299 * pccMatrixA[1] + 0.587 * pccMatrixA[4] + 0.114 * pccMatrixA[7];
-            pccMatrixB[2] = 0.299 * pccMatrixA[2] + 0.587 * pccMatrixA[5] + 0.114 * pccMatrixA[8];
-            pccMatrixB[3] = -0.1687 * pccMatrixA[0] - 0.3313 * pccMatrixA[3] + 0.5 * pccMatrixA[6];
-            pccMatrixB[4] = -0.1687 * pccMatrixA[1] - 0.3313 * pccMatrixA[4] + 0.5 * pccMatrixA[7];
-            pccMatrixB[5] = -0.1687 * pccMatrixA[2] - 0.3313 * pccMatrixA[5] + 0.5 * pccMatrixA[8];
-            pccMatrixB[6] = 0.5 * pccMatrixA[0]  - 0.4187 * pccMatrixA[3] - 0.0813 * pccMatrixA[6];
-            pccMatrixB[7] = 0.5 * pccMatrixA[1]  - 0.4187 * pccMatrixA[4] - 0.0813 * pccMatrixA[7];
-            pccMatrixB[8] = 0.5 * pccMatrixA[2]  - 0.4187 * pccMatrixA[5] - 0.0813 * pccMatrixA[8];
-
-            for(int i = 3; i < 9; i++)
-            {
-                 pccMatrixB[i] = flevel1 * pccMatrixB[i];
-             }
-            pccMatrixA[0] = 1 * pccMatrixB[0] + 0 * pccMatrixB[3] + 1.402 * pccMatrixB[6];
-            pccMatrixA[1] = 1 * pccMatrixB[1] + 0 * pccMatrixB[4] + 1.402 * pccMatrixB[7];
-            pccMatrixA[2] = 1 * pccMatrixB[2] + 0 * pccMatrixB[5] + 1.402 * pccMatrixB[8];
-            pccMatrixA[3] = 1 * pccMatrixB[0] - 0.34414 * pccMatrixB[3]  - 0.71414 * pccMatrixB[6];
-            pccMatrixA[4] = 1 * pccMatrixB[1] - 0.34414 * pccMatrixB[4]  - 0.71414 * pccMatrixB[7];
-            pccMatrixA[5] = 1 * pccMatrixB[2] - 0.34414 * pccMatrixB[5]  - 0.71414 * pccMatrixB[8];
-            pccMatrixA[6] = 1 * pccMatrixB[0]  + 1.772 * pccMatrixB[3] + 0 * pccMatrixB[6];
-            pccMatrixA[7] = 1 * pccMatrixB[1]  + 1.772 * pccMatrixB[4] + 0 * pccMatrixB[7];
-            pccMatrixA[8] = 1 * pccMatrixB[2]  + 1.772 * pccMatrixB[5] + 0 * pccMatrixB[8];
-
-
-            for(int i =0; i < 9; i++)
-            {
-                if (i == 0 || i == 4 || i == 8){
-                  pccMatrixA[i] = (pccMatrixA[i] - 1)/fScale+1;
-                }
-                else{
-                  pccMatrixA[i] = pccMatrixA[i]/fScale;
-                }
-            }
         }
-
       }
 
 }
@@ -703,7 +706,7 @@ XCamReturn interpCCMbywbgain(const CalibDbV2_Ccm_illu_est_Para_t* illu_estim,
     const CalibDbV2_Ccm_Matrix_Para_t* pCcmProfile1 = NULL;
     const CalibDbV2_Ccm_Matrix_Para_t* pCcmProfile2 = NULL;
 
-    memset(hAccm->accmRest.undampedCcmMatrix, 0, sizeof(hAccm->accmRest.undampedCcmMatrix));
+    memset(hAccm->accmRest.undampedCcmMatrix0, 0, sizeof(hAccm->accmRest.undampedCcmMatrix0));
     memset(hAccm->accmRest.undampedCcOffset, 0, sizeof(hAccm->accmRest.undampedCcOffset));
     float* prob = (float*)malloc(aCcmCof_len * sizeof(float));
     ret         = illuminant_index_candidate_ccm(aCcmCof_len, aCcmCof,
@@ -767,7 +770,7 @@ XCamReturn interpCCMbywbgain(const CalibDbV2_Ccm_illu_est_Para_t* illu_estim,
         probfSaturation = probfSaturation + fSaturation*prob[i];
 
         for (int j = 0; j < 9; j++)
-            hAccm->accmRest.undampedCcmMatrix[j] += undampedCcmMatrix[j]*prob[i];
+            hAccm->accmRest.undampedCcmMatrix0[j] += undampedCcmMatrix[j]*prob[i];
         for (int j = 0; j < 3; j++)
             hAccm->accmRest.undampedCcOffset[j] += undampedCcOffset[j]*prob[i];
     }
@@ -849,7 +852,7 @@ XCamReturn selectCCM(const CalibDbV2_Ccm_Accm_Cof_Para_t aCcmCof[],
                 LOGD_ACCM("final fSaturation: %f (%f .. %f)\n", hAccm->accmRest.fSaturation,
                         pCcmProfile1->saturation, pCcmProfile2->saturation);
                 ret = SatInterpolateMatrices(hAccm->accmRest.fSaturation, pCcmProfile1, pCcmProfile2,
-                                            hAccm->accmRest.undampedCcmMatrix);
+                                            hAccm->accmRest.undampedCcmMatrix0);
                 RETURN_RESULT_IF_DIFFERENT(ret, XCAM_RETURN_NO_ERROR);
 
                 ret = SatInterpolateOffset(hAccm->accmRest.fSaturation, pCcmProfile1, pCcmProfile2,
@@ -858,7 +861,7 @@ XCamReturn selectCCM(const CalibDbV2_Ccm_Accm_Cof_Para_t aCcmCof[],
             } else if (ret == XCAM_RETURN_ERROR_OUTOFRANGE) {
                 /* we don't need to interpolate */
                 LOGD_ACCM("final fSaturation: %f (%f)\n",   hAccm->accmRest.fSaturation, pCcmProfile1->saturation);
-                memcpy(hAccm->accmRest.undampedCcmMatrix, pCcmProfile1->ccMatrix, sizeof(float)*9);
+                memcpy(hAccm->accmRest.undampedCcmMatrix0, pCcmProfile1->ccMatrix, sizeof(float)*9);
                 memcpy(hAccm->accmRest.undampedCcOffset, pCcmProfile1->ccOffsets, sizeof(float)*3);
                 ret = XCAM_RETURN_NO_ERROR;
             } else {

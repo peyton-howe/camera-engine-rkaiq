@@ -26,8 +26,10 @@
 #include "hwi_c/aiq_camHw.h"
 #include "iq_parser_v2/cis_head.h"
 #include "rk_aiq.h"
+#include "rk_aiq_module_common.h"
 #include "rk_aiq_offline_raw.h"
 #include "rk_aiq_types_priv_c.h"
+
 #if RKAIQ_HAVE_DUMPSYS
 #include "dumpcam_server/info/include/st_string.h"
 #endif
@@ -152,7 +154,9 @@ struct AiqSensorHw_s {
     uint32_t userVts;
 
     calibdb_cis_blc_t cis_blc;
+    int32_t mCisHdrMode;
 
+    int mVicapExpFd;
     // export api
     XCamReturn (*setExposureParams)(AiqSensorHw_t* pBaseSns, AiqAecExpInfoWrapper_t* expPar);
     XCamReturn (*getSensorModeData)(AiqSensorHw_t* pBaseSns, const char* sns_ent_name,
@@ -190,6 +194,8 @@ struct AiqSensorHw_s {
     XCamReturn (*set_hdr)(AiqSensorHw_t* pBaseSns, calibdb_cis_hdr_t* hdr);
     XCamReturn (*set_qbcRmsc)(AiqSensorHw_t* pBaseSns, calibdb_cis_qbc_rmsc_t* qbcRmsc);
     XCamReturn (*set_cmpsOut)(AiqSensorHw_t* pBaseSns, calibdb_cis_cmps_out_t* cmpsOut);
+
+    void (*setVicapExpFd)(AiqSensorHw_t* pSnsHw, int fd);
 };
 
 #define AiqSensorHw_setCamHw(pSnsHw, pCamHw) \
@@ -201,6 +207,11 @@ void AiqSensorHw_deinit(AiqSensorHw_t* pSnsHw);
 XCamReturn _SensorHw_stop(AiqSensorHw_t* pSnsHw);
 void AiqSensorHw_clean(AiqSensorHw_t* pSnsHw);
 XCamReturn AiqSensorHw_getHdrComprCurve(AiqSensorHw_t* pSnsHw, RkAiqHdrCompr_t* compr);
+int AiqSensorHw_getMergeWgtCurve(AiqSensorHw_t* pSnsHw, struct rkmodule_mge_oeWgt* mge_oe_wgt);
+int AiqSensorHwsendMergeWgtCurve2NR(struct rkmodule_mge_oeWgt* mge_oe_wgt,
+                                    mergeLuma2Wgt_t* pMergeLuma2Wgt);
+int AiqSensorHw_getBuiltInHdrSingleBit(
+    AiqSensorHw_t* pSnsHw, struct rkmodule_hdr_compr_single_frame_info* compr_single_info);
 
 #define AiqSensorHw_setUserVts(pSnsHw, vts) \
     (pSnsHw)->userVts = vts

@@ -28,7 +28,17 @@ extern "C" {
 #include <android/log.h>
 #endif
 
+#if defined(__ANDROID__) && !CMAKE_BUILD_ANDROID
+#if defined(ISP_HW_V30)
+#include "android/rkfec_config_v10.h"
+#elif defined(ISP_HW_V35)
+#include "android/rkfec_config_v20.h"
+#else
+#error "Please define supported ISP version!!!, eg: -DISP_HW_V30"
+#endif
+#else
 #include "rkfec_config.h"
+#endif
 
 #define RKFEC_MAX(a, b)  ((a) > (b) ? (a) : (b))
 #define RKFEC_MIN(a, b)  ((a) < (b) ? (a) : (b))
@@ -46,8 +56,10 @@ extern "C" {
 #define rkfec_info(fmt, arg...) \
     __android_log_print(ANDROID_LOG_INFO, LOG_TAG, fmt, ##arg)
 
-#define rkfec_dbg(fmt, arg...) \
-    __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ##arg)
+#define rkfec_dbg(level, debug, fmt, arg...)                                               \
+    do {                                                                                   \
+        if (debug >= (level)) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ##arg); \
+    } while (0)
 
 #define rkfec_verb(fmt, arg...) \
     __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, fmt, ##arg)

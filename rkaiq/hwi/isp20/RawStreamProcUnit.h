@@ -121,6 +121,7 @@ protected:
     int _working_mode{0};
     int _mipi_dev_max{1};
     bool _is_multi_cam_conc;
+    bool _is_split;
     //
     Mutex _buf_mutex;
     std::map<uint32_t, int> _isp_hdr_fid2times_map;

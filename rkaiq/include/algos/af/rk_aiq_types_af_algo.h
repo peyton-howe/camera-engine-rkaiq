@@ -573,6 +573,7 @@ typedef struct {
     float pdConfdThresh;
     float stablePdRatio;
     float stableCntRatio;
+    float badPdRatio;
     unsigned short convergedInfPdThresh;
     unsigned short convergedMacPdThresh;
     unsigned short defocusInfPdThresh;
@@ -581,6 +582,7 @@ typedef struct {
     unsigned short noconfCntThresh;
     unsigned char blkCntW;
     unsigned char blkCntH;
+    float pdFlatRegionRatio;
 
     unsigned int fineSearchConfidence[RKAIQ_PDAF_FINE_SEARCH_RANGE_MAX];
     int fineSearchRange[RKAIQ_PDAF_FINE_SEARCH_RANGE_MAX];
@@ -600,6 +602,16 @@ typedef struct rk_aiq_pdaf_resolution_s {
     unsigned short pdHBinMode;
     unsigned short pdVBinMode;
 } rk_aiq_pdaf_resolution_t;
+
+typedef struct rk_aiq_pdaf_PdafFaceAf_s {
+    bool pdFaceAfEn;
+    float pdFaceAfMaxWidthRatio;
+    float pdFaceAfMaxHeightRatio;
+    float pdFaceAfMinWidthRatio;
+    float pdFaceAfMinHeightRatio;
+    unsigned char pdFaceAfInRoiBlkHorNum;
+    unsigned char pdFaceAfInRoiBlkVerNum;
+} rk_aiq_pdaf_PdafFaceAf_t;
 
 typedef struct {
     unsigned char pdVsImgoutMirror;
@@ -636,12 +648,89 @@ typedef struct {
     short pdTargetOffset;
     unsigned short pdNumJobs;
     bool pdUseFvTrigger;
+    unsigned short pdUnStableCnt_thred;
+    unsigned short pdSearchCnt_thred;
+    unsigned short pdChgDirCnt_thred;
+    bool pdFocusNearObject;
+    float pdNearObjectRatio;
     rk_aiq_pdaf_resolution_t pdResoInf;
+    rk_aiq_pdaf_PdafFaceAf_t pdFaceAf;
+    float pdBlkValidWRatio;
+    float pdBlkValidHRatio;
+    unsigned short pdLumaStableFrames;
+    float pdLumaStableThers;
+    unsigned short pdMonitorFramesInterval;
 } rk_aiq_pdaf_algo_config_t;
 
 int get_lpfv(uint32_t sequence, uint8_t *image_buf, int32_t _img_width, int32_t _img_height,
     int32_t _img_width_align, int32_t _img_height_align, uint8_t *pAfTmp, uint32_t sub_shp4_4[225],
     uint32_t sub_shp8_8[225], uint32_t high_light[225], uint32_t high_light2[225], rk_aiq_af_algo_meas_v20_t *param);
+
+
+#define PDLIB_FIXEDWIN_MAX_WIDTH     64
+#define PDLIB_FIXEDWIN_MAX_HEIGHT    48
+#define PDLIB_FIXEDWIN_MAXROI_NUM    (PDLIB_FIXEDWIN_MAX_WIDTH * PDLIB_FIXEDWIN_MAX_HEIGHT)
+#define PDLIB_FLEXWIN_MAXROI_NUM     8
+
+typedef enum rk_aiq_pdlib_win_e {
+    RK_PDLIB_FIXEDWIN,
+    RK_PDLIB_FLEXWIN
+} rk_aiq_pdlib_win_t;
+
+typedef struct {
+    float start_x;   // 0 - 1
+    float start_y;   // 0 - 1
+    float end_x;     // 0 - 1
+    float end_y;     // 0 - 1
+} rk_aiq_pdlib_roi_in;
+
+typedef struct {
+    float confidence;   // 0 - 1
+    int16_t defocus;    // fixed point 8
+    int16_t phasediff;  // fixed point 8
+} rk_aiq_pdlib_defocus_out;
+
+typedef struct {
+    uint16_t hgrid_count;
+    uint16_t vgrid_count;
+    rk_aiq_pdlib_roi_in roi;
+} rk_aiq_pdlib_fixedwin_in;
+
+typedef struct {
+    uint8_t count;
+    rk_aiq_pdlib_roi_in roi[PDLIB_FLEXWIN_MAXROI_NUM];
+} rk_aiq_pdlib_flexwin_in;
+
+typedef struct {
+    bool thirdalgo_en;
+    rk_aiq_pdlib_win_t win_type;
+    union {
+        rk_aiq_pdlib_fixedwin_in fixedwin;
+        rk_aiq_pdlib_flexwin_in flexwin;
+    };
+} rk_aiq_pdlib_input;
+
+typedef struct {
+    uint16_t hgrid_count;
+    uint16_t vgrid_count;
+    rk_aiq_pdlib_roi_in roi;
+    rk_aiq_pdlib_defocus_out grid[PDLIB_FIXEDWIN_MAXROI_NUM];
+} rk_aiq_pdlib_fixedwin_out;
+
+typedef struct {
+    uint8_t count;
+    rk_aiq_pdlib_roi_in roi[PDLIB_FLEXWIN_MAXROI_NUM];
+    rk_aiq_pdlib_defocus_out win[PDLIB_FLEXWIN_MAXROI_NUM];
+} rk_aiq_pdlib_flexwin_out;
+
+typedef struct {
+    uint32_t frame_id;
+    rk_aiq_pdlib_win_t win_type;
+    union {
+        rk_aiq_pdlib_fixedwin_out fixedwin;
+        rk_aiq_pdlib_flexwin_out flexwin;
+    };
+} rk_aiq_pdlib_output;
 
 RKAIQ_END_DECLARE
 

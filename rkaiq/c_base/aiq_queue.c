@@ -46,6 +46,8 @@ AiqQueue_t* aiqQueue_init(AiqQueueConfig_t* config) {
         goto clean_up_mutex;
     }
 
+    config->_item_size = XCAM_ALIGN_UP(config->_item_size, 4);
+
     array_size = XCAM_ALIGN_UP(config->_item_size * config->_item_nums, 4);
     total_size = array_size + sizeof(AiqQueueItem_t) * config->_item_nums;
 

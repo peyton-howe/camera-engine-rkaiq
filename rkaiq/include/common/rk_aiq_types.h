@@ -472,7 +472,9 @@ typedef struct {
     struct rkmodule_af_inf *otp_af;
     struct rkmodule_pdaf_inf *otp_pdaf;
     u8 compr_bit;
+    u8 compr_single_bit;
     enum rkmodule_bayer_mode bayer_mode;
+    struct rkmodule_mge_oeWgt mge_oe_wgt;
 } rk_aiq_exposure_sensor_descriptor;
 
 // exposure
@@ -735,5 +737,24 @@ typedef struct {
 } rk_aiq_rkrawstream_info_t;
 
 #define RK_AIQ_CAM_GROUP_MAX_CAMS (8)
+
+#define RK_AIQ_FACEINFO_MAX_NUM (8)
+
+typedef struct rk_aiq_face_roi_s {
+    uint32_t id;
+    uint32_t confidence;
+    int left;
+    int top;
+    int width;
+    int height;
+    int rollAngle;
+    int pose;
+    int pitch;
+} rk_aiq_face_roi_t;
+
+typedef struct {
+    uint32_t count;
+    rk_aiq_face_roi_t roi[RK_AIQ_FACEINFO_MAX_NUM];
+} rk_aiq_face_info_t;
 
 #endif

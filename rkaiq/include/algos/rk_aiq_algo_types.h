@@ -268,6 +268,7 @@ typedef struct _RkAiqAlgoProcAsd {
 
 typedef struct _RkAiqAlgoProcResAsd {
     RkAiqAlgoResCom res_com;
+    rk_aiq_face_roi_t selfaceinfo;
 } RkAiqAlgoProcResAsd;
 
 // amerge

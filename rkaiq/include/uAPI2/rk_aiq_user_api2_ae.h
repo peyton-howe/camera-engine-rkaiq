@@ -31,6 +31,8 @@ RKAIQ_BEGIN_DECLARE
 #if USE_NEWSTRUCT
 XCamReturn rk_aiq_user_api2_ae_setExpSwAttr(const rk_aiq_sys_ctx_t* ctx, const ae_api_expSwAttr_t expSwAttr);
 XCamReturn rk_aiq_user_api2_ae_getExpSwAttr(const rk_aiq_sys_ctx_t* ctx, ae_api_expSwAttr_t* pExpSwAttr);
+XCamReturn rk_aiq_user_api2_ae_setFaceExpAttr(const rk_aiq_sys_ctx_t* sys_ctx, ae_api_faceExpAttr_t FaceExpAttr);
+XCamReturn rk_aiq_user_api2_ae_getFaceExpAttr(const rk_aiq_sys_ctx_t* sys_ctx, ae_api_faceExpAttr_t* pFaceExpAttr);
 XCamReturn rk_aiq_user_api2_ae_setLinExpAttr(const rk_aiq_sys_ctx_t* ctx, const ae_api_linExpAttr_t linExpAttr);
 XCamReturn rk_aiq_user_api2_ae_getLinExpAttr(const rk_aiq_sys_ctx_t* ctx, ae_api_linExpAttr_t* pLinExpAttr);
 XCamReturn rk_aiq_user_api2_ae_setHdrExpAttr(const rk_aiq_sys_ctx_t* ctx, const ae_api_hdrExpAttr_t hdrExpAttr);

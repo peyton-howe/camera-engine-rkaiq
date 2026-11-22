@@ -42,73 +42,105 @@ RawStreamCapUnit::RawStreamCapUnit (const rk_sensor_full_info_t *s_info, bool li
             CamHwIsp20::rk1608_share_inf.us_open_cnt = 10;
     }
 
-    //short frame
-    if (strlen(s_info->isp_info->rawrd2_s_path)) {
-        if (linked_to_isp)
-            _dev[0] = new V4l2Device (s_info->isp_info->rawwr2_path);//rkisp_rawwr2
-        else {
-            if (s_info->dvp_itf) {
-                if (strlen(s_info->cif_info->stream_cif_path))
-                    _dev[0] = new V4l2Device (s_info->cif_info->stream_cif_path);
-                else
-                    _dev[0] = new V4l2Device (s_info->cif_info->dvp_id0);
-            } else {
-                if (!s_info->linked_to_1608) {
-                    // normal mode
-                    _dev[0] = new V4l2Device (s_info->cif_info->mipi_id0);
+    _is_split = s_info->split;
+    if (s_info->linked_to_serdes || s_info->split) {
+        int lvds_fd = -1;
+        const char* dev_str = NULL;
+        if (strlen(s_info->isp_info->linked_vicap_sd_path) || strlen(s_info->cif_info->mipi_id0) ||
+            strlen(s_info->cif_info->mipi_id1) || strlen(s_info->cif_info->mipi_id2) ||
+            strlen(s_info->cif_info->mipi_id3)) {
+            switch (s_info->connect_id) {
+                case 0:
+                    dev_str = s_info->cif_info->mipi_id0;
+                    break;
+                case 1:
+                    dev_str = s_info->cif_info->mipi_id1;
+                    break;
+                case 2:
+                    dev_str = s_info->cif_info->mipi_id2;
+                    break;
+                case 3:
+                    dev_str = s_info->cif_info->mipi_id3;
+                    break;
+                default:
+                    LOGE_CAMHW_SUBM(SENSOR_SUBM, "no matched mipi id\n");
+            }
+        }
+        if (dev_str) {
+            _dev[0] = new V4l2Device (dev_str);
+            if (_dev[0].ptr())
+                _dev[0]->open();
+        }
+    } else {
+        //short frame
+        if (strlen(s_info->isp_info->rawrd2_s_path)) {
+            if (linked_to_isp)
+                _dev[0] = new V4l2Device (s_info->isp_info->rawwr2_path);//rkisp_rawwr2
+            else {
+                if (s_info->dvp_itf) {
+                    if (strlen(s_info->cif_info->stream_cif_path))
+                        _dev[0] = new V4l2Device (s_info->cif_info->stream_cif_path);
+                    else
+                        _dev[0] = new V4l2Device (s_info->cif_info->dvp_id0);
                 } else {
-                    if (start_en) {
-                        // 1608 sensor mode.
+                    if (!s_info->linked_to_1608) {
+                        // normal mode
                         _dev[0] = new V4l2Device (s_info->cif_info->mipi_id0);
+                    } else {
+                        if (start_en) {
+                            // 1608 sensor mode.
+                            _dev[0] = new V4l2Device (s_info->cif_info->mipi_id0);
+                        }
                     }
                 }
             }
-        }
-        if (_dev[0].ptr())
-            _dev[0]->open();
+            if (_dev[0].ptr())
+                _dev[0]->open();
 
-    }
-    //mid frame
-    if (strlen(s_info->isp_info->rawrd0_m_path)) {
-        if (linked_to_isp)
-            _dev[1] = new V4l2Device (s_info->isp_info->rawwr0_path);//rkisp_rawwr0
-        else {
-            if (!s_info->dvp_itf) {
-                if (!s_info->linked_to_1608) {
-                    // normal mode.
-                    _dev[1] = new V4l2Device (s_info->cif_info->mipi_id1);
-                } else {
-                    if (start_en) {
-                        // 1608 sensor mode.
+        }
+        //mid frame
+        if (strlen(s_info->isp_info->rawrd0_m_path)) {
+            if (linked_to_isp)
+                _dev[1] = new V4l2Device (s_info->isp_info->rawwr0_path);//rkisp_rawwr0
+            else {
+                if (!s_info->dvp_itf) {
+                    if (!s_info->linked_to_1608) {
+                        // normal mode.
                         _dev[1] = new V4l2Device (s_info->cif_info->mipi_id1);
+                    } else {
+                        if (start_en) {
+                            // 1608 sensor mode.
+                            _dev[1] = new V4l2Device (s_info->cif_info->mipi_id1);
+                        }
                     }
                 }
             }
-        }
 
-        if (_dev[1].ptr())
-            _dev[1]->open();
-    }
-    //long frame
-    if (strlen(s_info->isp_info->rawrd1_l_path)) {
-        if (linked_to_isp)
-            _dev[2] = new V4l2Device (s_info->isp_info->rawwr1_path);//rkisp_rawwr1
-        else {
-            if (!s_info->dvp_itf) {
-                if (!s_info->linked_to_1608) {
-                    // normal mode.
-                    _dev[2] = new V4l2Device (s_info->cif_info->mipi_id2);//rkisp_rawwr1
-                } else {
-                    if (start_en) {
-                        // 1608 sensor mode.
+            if (_dev[1].ptr())
+                _dev[1]->open();
+        }
+        //long frame
+        if (strlen(s_info->isp_info->rawrd1_l_path)) {
+            if (linked_to_isp)
+                _dev[2] = new V4l2Device (s_info->isp_info->rawwr1_path);//rkisp_rawwr1
+            else {
+                if (!s_info->dvp_itf) {
+                    if (!s_info->linked_to_1608) {
+                        // normal mode.
                         _dev[2] = new V4l2Device (s_info->cif_info->mipi_id2);//rkisp_rawwr1
+                    } else {
+                        if (start_en) {
+                            // 1608 sensor mode.
+                            _dev[2] = new V4l2Device (s_info->cif_info->mipi_id2);//rkisp_rawwr1
+                        }
                     }
                 }
             }
+            if (_dev[2].ptr())
+                _dev[2]->open();
         }
-        if (_dev[2].ptr())
-            _dev[2]->open();
     }
+
     int buf_cnt = tx_buf_cnt;
     if (tx_buf_cnt == 0) {
         if (linked_to_isp) {
@@ -123,7 +155,7 @@ RawStreamCapUnit::RawStreamCapUnit (const rk_sensor_full_info_t *s_info, bool li
     for (int i = 0; i < 3; i++) {
         if (_dev[i].ptr()) {
             _dev[i]->set_buffer_count(buf_cnt);
-            _dev[i]->set_buf_sync (true); 
+            _dev[i]->set_buf_sync(true);
             _dev_bakup[i] = _dev[i];
             _dev_index[i] = i;
             _stream[i] =  new RKRawStream(_dev[i], i, ISP_POLL_TX);
@@ -545,7 +577,7 @@ RawStreamCapUnit::set_csi_mem_word_big_align(uint32_t width, uint32_t height,
             break;
         }
 
-        if (((width / 2 - RKMOUDLE_UNITE_EXTEND_PIXEL) *  sns_bpp / 8) & 0xf) {
+        if ( (((width / 2 - RKMOUDLE_UNITE_EXTEND_PIXEL) *  sns_bpp / 8) & 0xf) || _is_split) {
             int mem_mode = CSI_LVDS_MEM_WORD_HIGH_ALIGN;
             int ret1 = _dev[i]->io_control (RKCIF_CMD_SET_CSI_MEMORY_MODE, &mem_mode);
             if (ret1) {

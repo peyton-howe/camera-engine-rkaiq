@@ -328,6 +328,7 @@ void active_isp_params_dump_rawawb_status(void* self, st_string* result) {
     aiq_string_printf(result, buffer);
     aiq_string_printf(result, "\n\n");
 
+    active_isp_params_dump_wbgain_status(self, result);
 
 }
 

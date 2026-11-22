@@ -68,7 +68,7 @@
 							 RKMODULE_CAMERA_BT656_CHANNEL_3)
 
 #define DPHY_MAX_LANE					4
-#define RKMODULE_MULTI_DEV_NUM              4
+#define RKMODULE_MULTI_DEV_NUM				4
 
 #define RKMODULE_GET_MODULE_INFO	\
 	_IOR('V', BASE_VIDIOC_PRIVATE + 0, struct rkmodule_inf)
@@ -188,10 +188,10 @@
 	_IOW('V', BASE_VIDIOC_PRIVATE + 38, __u32)
 
 #define RKMODULE_GET_CAPTURE_MODE  \
-    _IOR('V', BASE_VIDIOC_PRIVATE + 39, struct rkmodule_capture_info)
+	_IOR('V', BASE_VIDIOC_PRIVATE + 39, struct rkmodule_capture_info)
 
 #define RKMODULE_SET_CAPTURE_MODE  \
-    _IOW('V', BASE_VIDIOC_PRIVATE + 40, struct rkmodule_capture_info)
+	_IOW('V', BASE_VIDIOC_PRIVATE + 40, struct rkmodule_capture_info)
 
 #define RKMODULE_GET_SKIP_FRAME  \
 	_IOR('V', BASE_VIDIOC_PRIVATE + 41, __u32)
@@ -227,7 +227,7 @@
 	_IOW('V', BASE_VIDIOC_PRIVATE + 51, __u32)
 
 #define RKMODULE_GET_BAYER_MODE       \
-    _IOR('V', BASE_VIDIOC_PRIVATE + 52, __u32)
+	_IOR('V', BASE_VIDIOC_PRIVATE + 52, __u32)
 
 #define RKMODULE_GET_WB_GAIN_INFO  \
 	_IOR('V', BASE_VIDIOC_PRIVATE + 53, struct rkmodule_wb_gain_info)
@@ -242,22 +242,46 @@
 	_IOR('V', BASE_VIDIOC_PRIVATE + 56, struct rkmodule_error_info)
 
 #define RKMODULE_SET_EXPAND_SINGLE_MODE       \
-	_IOW('V', BASE_VIDIOC_PRIVATE + 56, __u32)
+	_IOW('V', BASE_VIDIOC_PRIVATE + 57, __u32)
 
 #define RKMODULE_SET_LENC  \
-	_IOW('V', BASE_VIDIOC_PRIVATE + 57, struct rkmodule_lenc_gain)
+	_IOW('V', BASE_VIDIOC_PRIVATE + 58, struct rkmodule_lenc_gain)
 
 #define RKMODULE_GET_LENC_INFO  \
-	_IOR('V', BASE_VIDIOC_PRIVATE + 58, struct rkmodule_lenc_info)
+	_IOR('V', BASE_VIDIOC_PRIVATE + 59, struct rkmodule_lenc_info)
 
 #define RKMODULE_SET_REG_SETTING  \
-	_IOW('V', BASE_VIDIOC_PRIVATE + 59, struct rkmodule_reg_setting)
+	_IOW('V', BASE_VIDIOC_PRIVATE + 60, struct rkmodule_reg_setting)
 
 #define RKMODULE_SET_BAYER_MODE       \
-	_IOW('V', BASE_VIDIOC_PRIVATE + 60, struct rkmodule_bayer_param)
+	_IOW('V', BASE_VIDIOC_PRIVATE + 61, struct rkmodule_bayer_param)
 
 #define RKMODULE_GET_HDR_COMPR_SINGLE_FRAME_INFO  \
 	_IOR('V', BASE_VIDIOC_PRIVATE + 62, struct rkmodule_hdr_compr_single_frame_info)
+
+#define RKMODULE_SET_CHANNEL_POWER	\
+	_IOW('V', BASE_VIDIOC_PRIVATE + 63, struct rkmodule_channel_power)
+
+#define RKMODULE_SET_CHANNEL_STREAM	\
+	_IOW('x', 0, struct rkmodule_channel_stream)
+
+#define RKMODULE_SET_DES_LINK	\
+	_IOW('x', 1, __u32)
+
+#define RKMODULE_GET_MATCH_ID	\
+	_IOR('x', 2, __u32)
+
+#define RKMODULE_GET_IRFPA_INFO	\
+	_IOR('x', 3, struct rkmodule_irfpa_info)
+
+#define RKMODULE_GET_HDR_COMPR_PARAM	\
+	_IOR('x', 4, struct rkmodule_hdr_compr)
+
+#define RKMODULE_SET_REGISTER_GROUP       \
+	_IOW('x', 5, struct rkmodule_reg_group)
+
+#define RKMODULE_GET_MERGE_WGT_CURVE       \
+	_IOR('x', 6, struct rkmodule_mge_oeWgt)
 
 #define RKMODULE_REG_LIST_MAX (16)
 struct rkmodule_reg_struct {
@@ -266,13 +290,13 @@ struct rkmodule_reg_struct {
 };
 
 struct rkmodule_i2cdev_info {
-	u8 slave_addr;
+	__u8 slave_addr;
 } __attribute__ ((packed));
 
 struct rkmodule_dev_info {
 	union {
 		struct rkmodule_i2cdev_info i2c_dev;
-		u32 reserved[8];
+		__u32 reserved[8];
 	};
 } __attribute__ ((packed));
 
@@ -302,6 +326,15 @@ struct rkmodule_reg {
 	__u64 preg_value;
 	__u64 preg_addr_bytes;
 	__u64 preg_value_bytes;
+} __attribute__ ((packed));
+
+enum rkmodule_reg_group_type {
+	RKMODULE_REG_GROUP_MERGE,
+};
+
+struct rkmodule_reg_group {
+    __u32 type;
+    struct rkmodule_reg reg_group;
 } __attribute__ ((packed));
 
 /**
@@ -484,13 +517,13 @@ struct rkmodule_lsc_cfg {
  * NO_HDR: linear mode
  * HDR_X2: hdr two frame or line mode
  * HDR_X3: hdr three or line mode
- * HDR_COMPR: linearised and compressed data for hdr
+ * HDR_CIS_MERGE: HDR merge by CIS,both compressed and uncompressed
  */
 enum rkmodule_hdr_mode {
 	NO_HDR = 0,
 	HDR_X2 = 5,
 	HDR_X3 = 6,
-	HDR_COMPR,
+	HDR_CIS_MERGE,
 };
 
 #define HDR_COMPR_POINT_MAX 32
@@ -801,14 +834,14 @@ enum rkmodule_sync_mode {
 	EXTERNAL_MASTER_MODE,
 	INTERNAL_MASTER_MODE,
 	SLAVE_MODE,
-    SOFT_SYNC_MODE,
+	SOFT_SYNC_MODE,
 };
 
 struct rkmodule_mclk_data {
-	u32 enable;
-	u32 mclk_index;
-	u32 mclk_rate;
-	u32 reserved[8];
+	__u32 enable;
+	__u32 mclk_index;
+	__u32 mclk_rate;
+	__u32 reserved[8];
 };
 
 /*
@@ -858,14 +891,14 @@ enum csi2_dphy_vendor {
 };
 
 struct rkmodule_csi_dphy_param {
-	u32 vendor;
-	u32 lp_vol_ref;
-	u32 lp_hys_sw[DPHY_MAX_LANE];
-	u32 lp_escclk_pol_sel[DPHY_MAX_LANE];
-	u32 skew_data_cal_clk[DPHY_MAX_LANE];
-	u32 clk_hs_term_sel;
-	u32 data_hs_term_sel[DPHY_MAX_LANE];
-	u32 reserved[32];
+	__u32 vendor;
+	__u32 lp_vol_ref;
+	__u32 lp_hys_sw[DPHY_MAX_LANE];
+	__u32 lp_escclk_pol_sel[DPHY_MAX_LANE];
+	__u32 skew_data_cal_clk[DPHY_MAX_LANE];
+	__u32 clk_hs_term_sel;
+	__u32 data_hs_term_sel[DPHY_MAX_LANE];
+	__u32 reserved[32];
 };
 
 struct rkmodule_sensor_fmt {
@@ -879,39 +912,46 @@ struct rkmodule_sensor_infos {
 };
 
 enum rkmodule_capture_mode {
-    RKMODULE_CAPTURE_MODE_NONE = 0,
-    RKMODULE_MULTI_DEV_COMBINE_ONE,
-    RKMODULE_ONE_CH_TO_MULTI_ISP,
-    RKMODULE_MULTI_CH_TO_MULTI_ISP,
-    RKMODULE_MULTI_CH_COMBINE_SQUARE,
+	RKMODULE_CAPTURE_MODE_NONE = 0,
+	RKMODULE_MULTI_DEV_COMBINE_ONE,
+	RKMODULE_ONE_CH_TO_MULTI_ISP,
+	RKMODULE_MULTI_CH_TO_MULTI_ISP,
+	RKMODULE_MULTI_CH_COMBINE_SQUARE,
 };
 
 struct rkmodule_multi_dev_info {
-    __u32 dev_idx[RKMODULE_MULTI_DEV_NUM];
-    __u32 combine_idx[RKMODULE_MULTI_DEV_NUM];
-    __u32 pixel_offset;
-    __u32 dev_num;
-    __u32 reserved[8];
+	__u32 dev_idx[RKMODULE_MULTI_DEV_NUM];
+	__u32 combine_idx[RKMODULE_MULTI_DEV_NUM];
+	__u32 pixel_offset;
+	__u32 dev_num;
+	__u32 reserved[8];
+};
+
+enum rkmodule_one_to_multi_exp_mode {
+    RKMODULE_ONE_TO_MULT_EXP_SWITCH,
+    RKMODULE_ONE_TO_MULT_EXP_SINGLE,
 };
 
 struct rkmodule_one_to_multi_info {
     __u32 isp_num;
     __u32 frame_pattern[RKMODULE_MULTI_DEV_NUM];
+    __u32 exp_mode;
+    __u32 exp_main_id;
 };
 
 struct rkmodule_multi_combine_info {
-    __u32 combine_num;
-    __u32 combine_index[RKMODULE_MULTI_DEV_NUM];
+	__u32 combine_num;
+	__u32 combine_index[RKMODULE_MULTI_DEV_NUM];
 };
 
 struct rkmodule_capture_info {
-    __u32 mode;
-    union {
-        struct rkmodule_multi_dev_info multi_dev;
-        struct rkmodule_one_to_multi_info one_to_multi;
-        struct rkmodule_multi_combine_info multi_combine_info;
-    };
- };
+	__u32 mode;
+	union {
+		struct rkmodule_multi_dev_info multi_dev;
+		struct rkmodule_one_to_multi_info one_to_multi;
+		struct rkmodule_multi_combine_info multi_combine_info;
+	};
+};
 
 enum rk_light_type {
 	LIGHT_PWM,
@@ -1011,8 +1051,8 @@ struct rkmodule_blc_group {
 };
 
 enum rkmodule_bayer_mode {
-    RKMODULE_NORMAL_BAYER,
-    RKMODULE_QUARD_BAYER,
+	RKMODULE_NORMAL_BAYER,
+	RKMODULE_QUARD_BAYER,
 };
 
 struct rkmodule_wb_gain_info {
@@ -1093,6 +1133,41 @@ struct rkmodule_bayer_param {
 struct rkmodule_hdr_compr_single_frame_info {
 	__u32 single_bitwidth;
 	__u32 reserved[8];
+};
+
+struct rkmodule_channel_power {
+	__u32 channel;
+	__u32 enable;
+};
+
+struct rkmodule_channel_stream {
+	__u32 channel;
+	__u32 enable;
+};
+
+enum rkmodule_irfpa_raw_mode {
+	IRFPA_RAW_14BITS_IO,
+	IRFPA_RAW_8BITS_IO,
+	IRFPA_RAW_7BITS_IO,
+};
+
+struct rkmodule_irfpa_info {
+	__u32 irfpa_en;
+	__u32 gray_dec_en;
+	__u32 raw14_mode;
+	__u32 reserved[8];
+};
+
+#define RKMODULE_MAX_WGT_CURVE_NUM (2)
+
+struct rkmodule_mge_wgtCurve {
+	__u16 idx[17];
+	__u16 val[17];
+};
+
+struct rkmodule_mge_oeWgt {
+	__u16 wgtCurve_num;
+	struct rkmodule_mge_wgtCurve wgtCurve[RKMODULE_MAX_WGT_CURVE_NUM];
 };
 
 #endif /* _UAPI_RKMODULE_CAMERA_H */

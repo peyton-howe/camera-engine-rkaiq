@@ -30,6 +30,9 @@ typedef struct AiqAlgoHandlerAf_s {
     bool mAeStable;
     uint32_t mAfMeasResSyncFalg;
     uint32_t mAfFocusResSyncFalg;
+
+    AiqMutex_t mPdLibOutputMutex;
+    AiqCond_t mPdLibOutputCond;
 } AiqAlgoHandlerAf_t;
 
 AiqAlgoHandler_t* AiqAlgoHandlerAf_constructor(RkAiqAlgoDesComm* des, AiqCore_t* aiqCore);
@@ -53,6 +56,9 @@ XCamReturn AiqAlgoHandlerAf_GetSearchResult(AiqAlgoHandlerAf_t* pAfHdl, rk_aiq_a
 XCamReturn AiqAlgoHandlerAf_GetFocusRange(AiqAlgoHandlerAf_t* pAfHdl, rk_aiq_af_focusrange* range);
 XCamReturn AiqAlgoHandlerAf_GetZoomRange(AiqAlgoHandlerAf_t* pAfHdl, rk_aiq_af_zoomrange* range);
 XCamReturn AiqAlgoHandlerAf_setAeStable(AiqAlgoHandlerAf_t* pAfHdl, bool ae_stable);
+XCamReturn AiqAlgoHandlerAf_setPdafLibInput(AiqAlgoHandlerAf_t* pAfHdl, rk_aiq_pdlib_input* pdlib_in);
+XCamReturn AiqAlgoHandlerAf_getPdafLibOutput(AiqAlgoHandlerAf_t* pAfHdl, rk_aiq_pdlib_output* pdlib_output, int timeout_ms);
+
 #endif
 RKAIQ_END_DECLARE
 

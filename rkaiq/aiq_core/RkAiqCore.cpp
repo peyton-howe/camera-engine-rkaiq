@@ -484,6 +484,18 @@ RkAiqCore::stop()
 #endif
 #endif
 
+    std::vector<SmartPtr<RkAiqHandle>>& algo_list = mRkAiqCoreGroupManager->getGroupAlgoList(RK_AIQ_CORE_ANALYZE_ALL);
+    for (auto& algoHdl : algo_list) {
+        RkAiqHandle* curHdl = algoHdl.ptr();
+
+        while (curHdl) {
+            if (curHdl->getEnable()) {
+                    curHdl->stop();
+            }
+            curHdl = curHdl->getNextHdl();
+        }
+    }
+
     EXIT_ANALYZER_FUNCTION();
 
     return XCAM_RETURN_NO_ERROR;

@@ -65,6 +65,7 @@ typedef struct accm_rest_s {
     int dominateIlluProfileIdx;
     char CcmProf1Name[25];
     char CcmProf2Name[25];
+    float undampedCcmMatrix0[9];
     float undampedCcmMatrix[9];
     float undampedCcOffset[3];
     float fScale;

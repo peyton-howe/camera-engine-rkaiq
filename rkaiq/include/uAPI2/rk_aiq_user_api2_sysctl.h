@@ -81,6 +81,18 @@ rk_aiq_uapi2_sysctl_init(const char* sns_ent_name,
                         rk_aiq_metas_cb metas_cb);
 
 /*!
+ * \brief Configure hardware mode from single to multi camera
+ * Should be called in init state
+ * \param[in] ctx             the context returned by \ref rk_aiq_uapi_sysctl_init
+ * \param[in] isp_num         the isp num corresponding to the frame pattern nums.
+ * \param[in] frame_pattern   customize different frame pattern.Like A pattern has 1 frame ,\n
+ *                            B has 1 frame, then it's {1,1,0,0}.
+ * \param[in] bSingleExp      salve cams use main cam's exp.
+ */
+XCamReturn rk_aiq_uapi2_sysctl_setOnetoMultiMode(rk_aiq_sys_ctx_t* ctx, int isp_num,
+                                                 __u32 frame_pattern[4], bool bSingleExp);
+
+/*!
  * \brief deinitialze aiq context
  * Should not be called in started state
  *
@@ -631,6 +643,36 @@ void rk_aiq_uapi2_setImuData(const rk_aiq_sys_ctx_t* ctx, AiqImuData_t *data);
  */
 XCamReturn rk_aiq_uapi2_sysctl_getHdrComprCurve(const rk_aiq_sys_ctx_t* ctx,
                                                 RkAiqHdrCompr_t* compr);
+
+
+/*!
+ * \brief get hdr compr curve
+ *
+ * \param[in] ctx             the context returned by \ref rk_aiq_uapi2_sysctl_init
+ * \param[in] async           async mode
+ * \return return 0 if success
+ */
+XCamReturn rk_aiq_uapi2_setSingleRawBufAsyncMode(const rk_aiq_sys_ctx_t* ctx, bool async);
+
+/*!
+ * \brief set aibnr buf cnt
+ *
+ * \param[in] ctx             the context returned by \ref rk_aiq_uapi2_sysctl_init
+ * \param[in] aibnr_buf_cnt   aibnr buffer count
+ * \return return 0 if success
+ * \note This interface should be called after \ref rk_aiq_uapi2_sysctl_init and before \ref
+ * rk_aiq_uapi2_sysctl_prepare
+ */
+XCamReturn rk_aiq_uapi2_setAiBnrBufCnt(const rk_aiq_sys_ctx_t* ctx,
+                                       rk_aiq_aibnr_buffer_count_t aibnr_buf_cnt);
+
+/*!
+ * \brief get aiq read back mode
+ *
+ * \param[in] ctx             the context returned by \ref rk_aiq_uapi2_sysctl_init
+ * \return return mode(true or false), default is false
+ */
+bool rk_aiq_uapi2_judgeNeedRawPipeCtrl(const rk_aiq_sys_ctx_t* ctx);
 
 RKAIQ_END_DECLARE
 

@@ -90,8 +90,8 @@ static XCamReturn _handlerAe_prepare(AiqAlgoHandler_t* pAlgoHandler) {
     ae_config_int->RawWidth  = sharedCom->snsDes.isp_acq_width;
     ae_config_int->RawHeight = sharedCom->snsDes.isp_acq_height;
     ae_config_int->nr_switch = sharedCom->snsDes.nr_switch;
-    ae_config_int->compr_bit = sharedCom->snsDes.compr_bit;
     ae_config_int->dcg_ratio = sharedCom->snsDes.dcg_ratio;
+    ae_config_int->spd_ratio = sharedCom->snsDes.spd_ratio;
 
     aiqMutex_lock(&pAlgoHandler->mCfgMutex);
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)pAlgoHandler->mDes;
@@ -190,6 +190,10 @@ static XCamReturn _handlerAe_preProcess(AiqAlgoHandler_t* pAlgoHandler) {
         }
     }
     ae_pre_int->amtdRes = shared->amtdRes;
+    ae_pre_int->faceRect.h_offs = sharedCom->selfaceinfo.left;
+    ae_pre_int->faceRect.v_offs = sharedCom->selfaceinfo.top;
+    ae_pre_int->faceRect.h_size = sharedCom->selfaceinfo.width;
+    ae_pre_int->faceRect.v_size = sharedCom->selfaceinfo.height;
 
     RkAiqAlgoDescription* des = (RkAiqAlgoDescription*)pAlgoHandler->mDes;
     if (!AiqCore_isGroupAlgo(pAlgoHandler->mAiqCore, pAlgoHandler->mDes->type)) {
@@ -834,6 +838,34 @@ XCamReturn AiqAlgoHandlerAe_getExpSwAttr(AiqAlgoHandlerAe_t* pAeHdl, ae_api_expS
     AiqAlgoHandler_t* pHdl = (AiqAlgoHandler_t*)pAeHdl;
     aiqMutex_lock(&pHdl->mCfgMutex);
     rk_aiq_uapi_ae_getExpSwAttr(pHdl->mAlgoCtx, pExpSwAttrV2, false);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn AiqAlgoHandlerAe_setFaceExpAttr(AiqAlgoHandlerAe_t* pAeHdl, ae_api_faceExpAttr_t FaceExpAttr)
+{
+    ENTER_ANALYZER_FUNCTION();
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    AiqAlgoHandler_t* pHdl = (AiqAlgoHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    rk_aiq_uapi_ae_setFaceExpAttr(pHdl->mAlgoCtx, &FaceExpAttr, false);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn AiqAlgoHandlerAe_getFaceExpAttr(AiqAlgoHandlerAe_t* pAeHdl, ae_api_faceExpAttr_t* pFaceExpAttr)
+{
+    ENTER_ANALYZER_FUNCTION();
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    AiqAlgoHandler_t* pHdl = (AiqAlgoHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    rk_aiq_uapi_ae_getFaceExpAttr(pHdl->mAlgoCtx, pFaceExpAttr, false);
     aiqMutex_unlock(&pHdl->mCfgMutex);
 
     EXIT_ANALYZER_FUNCTION();

@@ -117,10 +117,62 @@ void rk_aiq_merge22_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_
             }
         }
     }
+
+#if MGE_WGT_USE_OLD_STRUCT
     for (int i = 0; i < MGE_OECURVE_LEN; i++) {
         pMergeLuma2Wgt->luma_idx[i] = luma_idx[i];
         pMergeLuma2Wgt->luma_wgt[i] = (float)phwcfg->e_y[i] / 1024.0;
     }
+#else
+    pMergeLuma2Wgt->wgtCurve_num = cvtinfo->frameNum - 1;
+    for (int i = 0; i < pMergeLuma2Wgt->wgtCurve_num; i++) {
+        for (int j = 0; j < 17; j++) {
+            pMergeLuma2Wgt->wgtCurve[i].idx[j] = luma_idx[j];
+            pMergeLuma2Wgt->wgtCurve[i].val[j] = (float)phwcfg->e_y[j] / 1024.0f;
+        }
+    }
+    LOGD_AMERGE("wgtCurve_num %d", pMergeLuma2Wgt->wgtCurve_num);
+    LOGD_AMERGE("%s: MS_wgt_idx: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+                __FUNCTION__, pMergeLuma2Wgt->wgtCurve[0].val[0],
+                pMergeLuma2Wgt->wgtCurve[0].val[1], pMergeLuma2Wgt->wgtCurve[0].val[2],
+                pMergeLuma2Wgt->wgtCurve[0].val[3], pMergeLuma2Wgt->wgtCurve[0].val[4],
+                pMergeLuma2Wgt->wgtCurve[0].val[5], pMergeLuma2Wgt->wgtCurve[0].val[6],
+                pMergeLuma2Wgt->wgtCurve[0].val[7], pMergeLuma2Wgt->wgtCurve[0].val[8],
+                pMergeLuma2Wgt->wgtCurve[0].val[9], pMergeLuma2Wgt->wgtCurve[0].val[10],
+                pMergeLuma2Wgt->wgtCurve[0].val[11], pMergeLuma2Wgt->wgtCurve[0].val[12],
+                pMergeLuma2Wgt->wgtCurve[0].val[13], pMergeLuma2Wgt->wgtCurve[0].val[14],
+                pMergeLuma2Wgt->wgtCurve[0].val[15], pMergeLuma2Wgt->wgtCurve[0].val[16]);
+    LOGD_AMERGE("%s: MS_wgt_val: %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+                __FUNCTION__, pMergeLuma2Wgt->wgtCurve[0].val[0],
+                pMergeLuma2Wgt->wgtCurve[0].val[1], pMergeLuma2Wgt->wgtCurve[0].val[2],
+                pMergeLuma2Wgt->wgtCurve[0].val[3], pMergeLuma2Wgt->wgtCurve[0].val[4],
+                pMergeLuma2Wgt->wgtCurve[0].val[5], pMergeLuma2Wgt->wgtCurve[0].val[6],
+                pMergeLuma2Wgt->wgtCurve[0].val[7], pMergeLuma2Wgt->wgtCurve[0].val[8],
+                pMergeLuma2Wgt->wgtCurve[0].val[9], pMergeLuma2Wgt->wgtCurve[0].val[10],
+                pMergeLuma2Wgt->wgtCurve[0].val[11], pMergeLuma2Wgt->wgtCurve[0].val[12],
+                pMergeLuma2Wgt->wgtCurve[0].val[13], pMergeLuma2Wgt->wgtCurve[0].val[14],
+                pMergeLuma2Wgt->wgtCurve[0].val[15], pMergeLuma2Wgt->wgtCurve[0].val[16]);
+    LOGD_AMERGE("%s: LM_wgt_idx: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+                __FUNCTION__, pMergeLuma2Wgt->wgtCurve[1].val[0],
+                pMergeLuma2Wgt->wgtCurve[1].val[1], pMergeLuma2Wgt->wgtCurve[1].val[2],
+                pMergeLuma2Wgt->wgtCurve[1].val[3], pMergeLuma2Wgt->wgtCurve[1].val[4],
+                pMergeLuma2Wgt->wgtCurve[1].val[5], pMergeLuma2Wgt->wgtCurve[1].val[6],
+                pMergeLuma2Wgt->wgtCurve[1].val[7], pMergeLuma2Wgt->wgtCurve[1].val[8],
+                pMergeLuma2Wgt->wgtCurve[1].val[9], pMergeLuma2Wgt->wgtCurve[1].val[10],
+                pMergeLuma2Wgt->wgtCurve[1].val[11], pMergeLuma2Wgt->wgtCurve[1].val[12],
+                pMergeLuma2Wgt->wgtCurve[1].val[13], pMergeLuma2Wgt->wgtCurve[1].val[14],
+                pMergeLuma2Wgt->wgtCurve[1].val[15], pMergeLuma2Wgt->wgtCurve[1].val[16]);
+    LOGD_AMERGE("%s: LM_wgt_val: %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+                __FUNCTION__, pMergeLuma2Wgt->wgtCurve[1].val[0],
+                pMergeLuma2Wgt->wgtCurve[1].val[1], pMergeLuma2Wgt->wgtCurve[1].val[2],
+                pMergeLuma2Wgt->wgtCurve[1].val[3], pMergeLuma2Wgt->wgtCurve[1].val[4],
+                pMergeLuma2Wgt->wgtCurve[1].val[5], pMergeLuma2Wgt->wgtCurve[1].val[6],
+                pMergeLuma2Wgt->wgtCurve[1].val[7], pMergeLuma2Wgt->wgtCurve[1].val[8],
+                pMergeLuma2Wgt->wgtCurve[1].val[9], pMergeLuma2Wgt->wgtCurve[1].val[10],
+                pMergeLuma2Wgt->wgtCurve[1].val[11], pMergeLuma2Wgt->wgtCurve[1].val[12],
+                pMergeLuma2Wgt->wgtCurve[1].val[13], pMergeLuma2Wgt->wgtCurve[1].val[14],
+                pMergeLuma2Wgt->wgtCurve[1].val[15], pMergeLuma2Wgt->wgtCurve[1].val[16]);
+#endif
 
     if (pdyn->sw_mgeT_baseFrm_mode == mge_baseHdrL_mode) {
         if (pdyn->mdWgt_baseHdrL.sw_mgeT_mdLut_mode == mge_cfgByCurveDirectly_mode) {

@@ -17,13 +17,10 @@
 #include "algo_types_priv.h"
 #include "rk_aiq_isp35_modules.h"
 
-#define MAX_AE_DRC_GAIN     (256.0f)
 #define DRC_GAIN_MAX            (8.0f)
 #define GAINMIN             (1.0f)
 #define PREDGAIN_MAX        (4.0f)
 #define PREDGAIN_DEFAULT    (8.0f)
-#define ISP_HDR_BIT_NUM_MAX (20)
-#define ISP_HDR_BIT_NUM_MIN (12)
 #define ISP_RAW_BIT         (12)
 #define FUNCTION_DISABLE    (0)
 #define FUNCTION_ENABLE     (1)
@@ -160,6 +157,13 @@ void rk_aiq_drc41_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_in
     float L2S_Ratio                = ((rk_aiq_isp_drc_v39_t*)attr)->L2S_Ratio;
     cvtinfo->L2S_Ratio             = L2S_Ratio;
     unsigned char compr_bit        = ((rk_aiq_isp_drc_v39_t*)attr)->compr_bit;
+    unsigned char compr_single_bit   = ((rk_aiq_isp_drc_v39_t*)attr)->compr_single_bit;
+    float isp_raw_bit = 12.0f, real_raw_bit = 12.0f, MAX_AE_DRC_GAIN = 256.0f;
+
+    if (compr_bit) {
+        real_raw_bit    = compr_single_bit;
+        MAX_AE_DRC_GAIN = pow(2.0f, 20.0f - real_raw_bit) - 1.0f;
+    }
 
     bool LongFrmMode = false;
     if (cvtinfo->frameNum > 1) {
@@ -192,9 +196,10 @@ void rk_aiq_drc41_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_in
 	if (cvtinfo->frameNum > 1) {
         if (L2S_Ratio * drc_gain > MAX_AE_DRC_GAIN) {
             LOGE_ATMO(
-                "%s:  AERatio(%f)*sw_drcT_toneGain_maxLimit(%f): %f > 256x!!! Please change AE HDR "
+                "%s:  AERatio(%f)*sw_drcT_toneGain_maxLimit(%f): %f > MAX_AE_DRC_GAIN(%f)!!! "
+                "Please change AE HDR "
                 "parameters and DRC sw_drcT_toneGain_maxLimit vaule.\n",
-                __FUNCTION__, L2S_Ratio, drc_gain, L2S_Ratio * drc_gain);
+                __FUNCTION__, L2S_Ratio, drc_gain, L2S_Ratio * drc_gain, MAX_AE_DRC_GAIN);
             if (L2S_Ratio < GAINMIN) {
                 LOGE_ATMO("%s:  AERatio: %f < 1x!!! Please check AE status.\n", __FUNCTION__,
                           L2S_Ratio);
@@ -286,8 +291,9 @@ void rk_aiq_drc41_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_in
     float toneCurveIdx_scale_toIsp = pdyn->preProc.hw_drcT_toneCurveIdx_scale / preDGain_drc;
     phwcfg->gain_idx_luma_scale = CLIP(toneCurveIdx_scale_toIsp * (1 << 8), 0, (1 << 14) - 1);
     // get sw_drc_compres_scl
-    float log_ratio2     = log(L2S_Ratio * drc_gain * preDGain_drc) / log(2.0f) + 12.0f;
-    float offsetbits_int = CLIP(ptransSta->hw_transCfg_transOfDrc_offset, 0, 15);
+    float log_ratio2 = log(L2S_Ratio * drc_gain * preDGain_drc) / log(2.0f) + real_raw_bit;
+    float offsetbits_int =
+        CLIP(ptransSta->hw_transCfg_transOfDrc_offset - (isp_raw_bit - real_raw_bit), 0, 15);
 
     unsigned char cmps_mode =
         (ptransSta->hw_transCfg_trans_mode == trans_lgi3f9_mode ? FUNCTION_ENABLE

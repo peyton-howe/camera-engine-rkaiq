@@ -121,6 +121,7 @@ typedef struct {
     otplsc_res_cvt_t otplsc_res;
     bool _airms_en;
     bool _aiynr_en;
+    struct rkmodule_mge_oeWgt* mge_oe_wgt;
 } common_cvt_info_t;
 
 typedef struct {

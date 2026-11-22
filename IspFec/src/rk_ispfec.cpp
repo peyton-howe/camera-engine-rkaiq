@@ -655,7 +655,6 @@ int rk_ispfec_api_set_cfg(rk_ispfec_ctx_t* ctx, rk_ispfec_cfg_t* cfg) {
  */
 static int _update_mesh_config(rk_ispfec_ctx_t* ctx, rk_ispfec_mesh_config_t* config) {
     int ret             = 0;
-    char mesh_file[256] = {0};
 
     if (!ctx || !config) return -EINVAL;
 
@@ -701,7 +700,7 @@ static int _update_mesh_config(rk_ispfec_ctx_t* ctx, rk_ispfec_mesh_config_t* co
 
             if ((ret = _load_mesh(config->params.file_cfg.mesh_path, ctx->_cfg.mesh_info.vir_addr,
                                   ctx->_cfg.mesh_info.size))) {
-                rkfec_err("V20 mesh load failed: %s", mesh_file);
+                rkfec_err("V20 mesh load failed: %s", config->params.file_cfg.mesh_path);
                 return ret;
             }
 

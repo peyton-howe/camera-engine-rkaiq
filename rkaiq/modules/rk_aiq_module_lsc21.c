@@ -1,5 +1,8 @@
 #include "rk_aiq_isp39_modules.h"
 #include "xcore/xcam_obj_debug.h"
+#ifdef __ANDROID__
+#include <cutils/properties.h>
+#endif
 
 #define c_lsc_ram_d_bw     26                 // double correction factor, must be even numbers
 

@@ -130,6 +130,7 @@ int rkaiq_get_media_info(struct rkaiq_media_info *media_info)
         media_device_unref (device);
         return -EINVAL;
     }
+    DBG("%s: Get Sensor name: %s...\n", media_info->mdev_path, sensor_name);
 
     strcpy(media_info->sensor_entity_name, sensor_name);
 
@@ -312,7 +313,7 @@ void *engine_thread(void *arg)
 int main(int argc, char **argv)
 {
     int ret, i;
-    int threads = 0;
+    int multi = 0;
 
     /* Line buffered so that printf can flash every line if redirected to
      * no-interactive device.
@@ -328,11 +329,18 @@ int main(int argc, char **argv)
             media_infos[i].available = 0;
             continue;
         }
-        media_infos[i].available = 1;
-        threads++;
+
+        /* Even Camera Bad Connection, setMulCamConc() shall be called if only
+         * kernel dts registers multi rkisp_vir node */
+        multi++;
+        if (!strncmp(media_infos[i].sensor_entity_name, "FakeCamera", strlen("FakeCamera"))) {
+            ERR("Detect Fack Camera, Please Check Camera Connection\n");
+        } else {
+            media_infos[i].available = 1;
+        }
     }
 
-    if (threads > 1)
+    if (multi > 1)
         has_mul_cam = 1;
 
     for (i = 0; i < MAX_MEDIA_NODES; i++) {

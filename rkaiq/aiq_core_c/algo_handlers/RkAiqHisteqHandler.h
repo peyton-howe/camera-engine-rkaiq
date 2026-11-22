@@ -21,6 +21,8 @@
 typedef AiqAlgoHandler_t AiqHisteqHandler_t;
 
 AiqAlgoHandler_t* AiqAlgoHandlerHisteq_constructor(RkAiqAlgoDesComm* des, AiqCore_t* aiqCore);
+XCamReturn AiqHisteqHandler_setUsrCfgStrg(AiqHisteqHandler_t* pHdlHisteq,  bool en, float strength);
+XCamReturn AiqHisteqHandler_getUsrCfgStrg(AiqHisteqHandler_t* pHdlHisteq,  bool *en, float *strength);
 #if 0
 XCamReturn AiqHisteqHandler_setAttrib(AiqHisteqHandler_t* pHdlHisteq, histeq_api_attrib_t* attr);
 XCamReturn AiqHisteqHandler_getAttrib(AiqHisteqHandler_t* pHdlHisteq, histeq_api_attrib_t* attr);

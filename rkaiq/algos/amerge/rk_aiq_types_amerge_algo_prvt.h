@@ -68,8 +68,6 @@
 #define LONG_FRAME_MODE_RATIO (1.0f)
 #define ISP_PREDGAIN_DEFAULT  (1.0f)
 #define INIT_CALC_PARAMS_NUM  (2)
-#define ISP_HDR_BIT_NUM_MAX   (20)
-#define ISP_HDR_BIT_NUM_MIN   (12)
 #define LIMIT_VALUE(value, max_value, min_value) \
     (value > max_value ? max_value : value > min_value ? value : min_value)
 #define LIMIT_VALUE_UNSIGNED(value, max_value) (value > max_value ? max_value : value)
@@ -78,7 +76,6 @@ typedef enum FrameNumber_e {
     LINEAR_NUM = 1,
     HDR_2X_NUM = 2,
     HDR_3X_NUM = 3,
-    SENSOR_MGE = 4,
     HDR_NUM_MAX
 } FrameNumber_t;
 /****************************************************************************/

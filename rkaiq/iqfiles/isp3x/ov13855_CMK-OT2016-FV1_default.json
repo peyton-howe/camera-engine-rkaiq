@@ -5987,6 +5987,11 @@
 									"pdCenterMinFv":	0,
 									"pdCenterMinRatio":	0,
 									"pdHighlightRatio":	0.5,
+									"pdUnStableCnt_thred":	10,
+									"pdSearchCnt_thred":	4,
+									"pdChgDirCnt_thred":	2,
+									"pdFocusNearObject":	0,
+									"pdNearObjectRatio":	0.7,
 									"pdStepRatio":	[1, 1, 1, 0.9, 0.8, 0.7, 0.7],
 									"pdStepDefocus":	[32, 64, 96, 128, 160, 192, 224],
 									"pdIsoPara":	[{
@@ -6006,6 +6011,8 @@
 											"noconfCntThresh":	4,
 											"roiBlkCntW":	3,
 											"roiBlkCntH":	3,
+											"badPdRatio":	0,
+											"pdFlatRegionRatio":	0,
 											"fineSearchTbl":	[{
 													"confidence":	0.5,
 													"range":	0,
@@ -6033,6 +6040,8 @@
 											"noconfCntThresh":	4,
 											"roiBlkCntW":	1,
 											"roiBlkCntH":	1,
+											"badPdRatio":	0,
+											"pdFlatRegionRatio":	0,
 											"fineSearchTbl":	[{
 													"confidence":	0.5,
 													"range":	8,
@@ -6057,7 +6066,21 @@
 											"pdHBinMode":	0,
 											"pdVBinMode":	0
 										}],
-									"pdResoInf_len":	1
+									"pdResoInf_len":	1,
+									"pdFaceAf":	{
+										"pdFaceAfEn":	0,
+										"pdFaceAfMaxWidthRatio":	0.5,
+										"pdFaceAfMaxHeightRatio":	0.5,
+										"pdFaceAfMinWidthRatio":	0.05,
+										"pdFaceAfMinHeightRatio":	0.05,
+										"pdFaceAfInRoiBlkHorNum":	3,
+										"pdFaceAfInRoiBlkVerNum":	3
+									},
+									"pdBlkValidWRatio":	1.0,
+									"pdBlkValidHRatio":	1.0,
+									"pdLumaStableFrames":	0,
+									"pdLumaStableThers":	0,
+									"pdMonitorFramesInterval":	1
 								},
 								"vcmcfg":	{
 									"max_logical_pos":	64,

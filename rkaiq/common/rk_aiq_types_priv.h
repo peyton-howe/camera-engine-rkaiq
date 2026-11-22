@@ -415,6 +415,7 @@ struct rk_aiq_vbuf_info {
     uint32_t timestamp;
     float    exp_time;
     float    exp_gain;
+    float    exp_ispdgain;
     uint32_t exp_time_reg;
     uint32_t exp_gain_reg;
     uint32_t data_fd;
@@ -656,7 +657,10 @@ typedef struct {
     bool linked_to_1608;
     bool linked_to_serdes;
     bool dvp_itf;
+    bool split;
+    std::string sensor_name_before_split;
     struct rkmodule_inf mod_info;
+    int connect_id;
 } rk_sensor_full_info_t;
 
 typedef void (*ref_t)(void* ops_ctx, void* cfg);

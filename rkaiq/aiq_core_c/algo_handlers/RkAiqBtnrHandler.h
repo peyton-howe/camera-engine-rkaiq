@@ -21,7 +21,6 @@
 typedef AiqAlgoHandler_t AiqBtnrHandler_t;
 
 AiqAlgoHandler_t* AiqAlgoHandlerBtnr_constructor(RkAiqAlgoDesComm* des, AiqCore_t* aiqCore);
-AiqAlgoHandler_t* AiqAlgoHandlerBtnr2_constructor(RkAiqAlgoDesComm* des, AiqCore_t* aiqCore);
 #if 0
 XCamReturn AiqBtnrHandler_setAttrib(AiqBtnrHandler_t* pHdlBtnr, btnr_api_attrib_t* attr);
 XCamReturn AiqBtnrHandler_getAttrib(AiqBtnrHandler_t* pHdlBtnr, btnr_api_attrib_t* attr);

@@ -3290,7 +3290,89 @@ typedef struct btnr_swMemc_static_s
     btnr_swMeBaseImu_t swMeBaseImu;
 } btnr_swMemc_static_t;
 
+typedef enum btnr_dloMd_mode_e {
+    // @reg: sw
+    btnr_dLoMdPreOnly_mode = 0,
+    // @reg: sw
+    btnr_dLoMdCurOrPre_mode = 1
+} btnr_dloMd_mode_t;
+
+typedef enum btnr_dloWgtFilt_mode_e {
+    // @reg: sw
+    btnr_dLoWgtFilt3x3_mode = 0,
+    // @reg: sw
+    btnr_dLoWgtFilt3x5_mode = 1,
+    // @reg: sw
+    btnr_dLoWgtFilt5x5_mode = 2,
+    // @reg: sw
+    btnr_dLoWgtFilt7x7_mode = 3
+} btnr_dloWgtFilt_mode_t;
+
+
+typedef struct btnr_subDeepCurMd_dyn_s {
+    /* M4_GENERIC_DESC(
+    M4_ALIAS(subLoMd0),
+    M4_TYPE(struct),
+    M4_UI_MODULE(normal_ui_style),
+    M4_HIDE_EX(0),
+    M4_RO(0),
+    M4_ORDER(0),
+    M4_MARK(midLo),
+    M4_GROUP(md_en_group&&loMd_en_group&&((loMd_mode_group:btnr_allSubLoMdMix_mode)||(loMd_mode_group:btnr_subDeepLoMdOnly_mode&&dLoMd_en_group&&dLoSrc_mode_group:btnr_subLoMd0_mode)||(loMd_mode_group:btnr_subLoMd0Only_mode))),
+    M4_NOTES(TODO))  */
+    btnr_subLoMd0_dyn_t subLoMd0;
+    /* M4_GENERIC_DESC(
+    M4_ALIAS(subLoMd1),
+    M4_TYPE(struct),
+    M4_UI_MODULE(normal_ui_style),
+    M4_HIDE_EX(0),
+    M4_RO(0),
+    M4_ORDER(0),
+    M4_MARK(lo),
+    M4_GROUP(md_en_group&&loMd_en_group&&((loMd_mode_group:btnr_allSubLoMdMix_mode|btnr_subLoMd1Only_mode)||(loMd_mode_group:btnr_subDeepLoMdOnly_mode&&dLoMd_en_group&&dLoSrc_mode_group:btnr_subLoMd1_mode))),
+    M4_NOTES(TODO))  */
+    btnr_subLoMd1_dyn_t subLoMd1;
+    /* M4_GENERIC_DESC(
+    M4_ALIAS(subDeepLoMd),
+    M4_TYPE(struct),
+    M4_UI_MODULE(normal_ui_style),
+    M4_HIDE_EX(0),
+    M4_RO(0),
+    M4_ORDER(0),
+    M4_MARK(deepLo),
+    M4_NOTES(TODO))  */
+    btnr_subDeepLoMd_dyn_t subDeepLoMd;
+
+} btnr_subDeepCurMd_dyn_t;
+
+
 typedef struct btnr_params_static_s {
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(dLoMd_mode),
+        M4_TYPE(enum),
+        M4_ENUM_DEF(btnr_dloMd_mode_t),
+        M4_DEFAULT(btnr_dLoMdPreOnly_mode),
+        M4_HIDE_EX(0),
+        M4_RO(1),
+        M4_ORDER(0),
+        M4_GROUP_CTRL(dloMd_mode_group),
+        M4_NOTES(The mode of low frequency motion detection. Reference enum types.\n
+        Freq of use: high))  */
+    // @reg: hw_btnr_LoMgeWgt_mode
+    btnr_dloMd_mode_t dLoMd_mode;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(dLoMd_mode),
+        M4_TYPE(enum),
+        M4_ENUM_DEF(btnr_dloWgtFilt_mode_t),
+        M4_DEFAULT(btnr_dLoWgtFilt7x7_mode),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(0),
+        M4_GROUP(dloMd_mode_group:btnr_dLoMdCurOrPre_mode)
+        M4_NOTES(The mode of low frequency motion detection. Reference enum types.\n
+        Freq of use: high))  */
+    // @reg: hw_btnr_LoMgeWgt_mode
+    btnr_dloWgtFilt_mode_t dLoWgtFilt_mode;
     /* M4_GENERIC_DESC(
         M4_ALIAS(hw_btnrCfg_pixDomain_mode),
         M4_TYPE(enum),
@@ -3432,15 +3514,27 @@ typedef struct btnr_md_dyn_s {
         M4_NOTES(TODO))  */
     btnr_subLoMd1_dyn_t subLoMd1;
     /* M4_GENERIC_DESC(
-        M4_ALIAS(subDeepLoMd),
+        M4_ALIAS(preDeepLo),
         M4_TYPE(struct),
         M4_UI_MODULE(normal_ui_style),
         M4_HIDE_EX(0),
         M4_RO(0),
         M4_ORDER(0),
-        M4_MARK(deepLo),
+        M4_MARK(dLoPre),
+        M4_GROUP(dloMd_mode_group:btnr_dLoMdPreOnly_mode|btnr_dLoMdCurOrPre_mode),
         M4_NOTES(TODO))  */
     btnr_subDeepLoMd_dyn_t subDeepLoMd;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(curDeepLo),
+        M4_TYPE(struct),
+        M4_UI_MODULE(normal_ui_style),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(0),
+        M4_MARK(dLoCur),
+        M4_GROUP(dloMd_mode_group:btnr_dLoMdCurOrPre_mode),
+        M4_NOTES(TODO))  */
+    btnr_subDeepCurMd_dyn_t subDeepLoCurMd;
     /* M4_GENERIC_DESC(
         M4_ALIAS(loMd),
         M4_TYPE(struct),

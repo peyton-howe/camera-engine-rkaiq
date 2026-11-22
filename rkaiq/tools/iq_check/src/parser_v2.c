@@ -323,7 +323,7 @@ void j2s_dump_obj_to_file(j2s_ctx *ctx, int struct_idx, int *idx_pr)
             printf("#ifdef J2S_ENABLE_DESC\n");
             printf("\tctx->descs[%d] = \"", child_index);
             if (strlen(ctx->descs[child_index]) > 4095) {
-                ERR(".j2s_generated.h descs[%d] strlen %llu more large then 4096, maybe cause some error\n%s\n",
+                ERR(".j2s_generated.h descs[%d] strlen %zu more large then 4096, maybe cause some error\n%s\n",
                     child_index, strlen(ctx->descs[child_index]), ctx->descs[child_index]);
             }
             snprintf(desc_buf, 4096, "%s", ctx->descs[child_index]);

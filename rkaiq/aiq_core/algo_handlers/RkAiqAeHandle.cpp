@@ -1283,8 +1283,8 @@ XCamReturn RkAiqAeHandleInt::prepare() {
     ae_config_int->RawWidth  = sharedCom->snsDes.isp_acq_width;
     ae_config_int->RawHeight = sharedCom->snsDes.isp_acq_height;
     ae_config_int->nr_switch = sharedCom->snsDes.nr_switch;
-    ae_config_int->compr_bit = sharedCom->snsDes.compr_bit;
     ae_config_int->dcg_ratio = sharedCom->snsDes.dcg_ratio;
+    ae_config_int->spd_ratio = sharedCom->snsDes.spd_ratio;
 
 #ifdef DISABLE_HANDLE_ATTRIB
     mCfgMutex.lock();

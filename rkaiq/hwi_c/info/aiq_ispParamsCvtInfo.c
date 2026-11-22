@@ -339,7 +339,7 @@ void cvt_isp_params_dump_rawawb_attr(AiqIspParamsCvt_t* self, st_string* result)
     aiq_string_printf(result, buffer);
     aiq_string_printf(result, "\n\n");
 
-
+    cvt_isp_params_dump_wbgain_attr(self, result);
 }
 
 void cvt_isp_params_dump_dpc_attr(AiqIspParamsCvt_t* self, st_string* result) {

@@ -46,22 +46,47 @@ void sensor_dump_mod_param(AiqSensorHw_t* self, st_string* result) {
     aiq_string_printf(result, "\n\n");
 }
 
+typedef struct {
+    rk_aiq_isp_hdr_mode_t mode;
+    const char* name;
+} hdr_mode_str_map_t;
+
+static const hdr_mode_str_map_t hdr_mode_str_map[] = {
+    {RK_AIQ_ISP_HDR_MODE_2_FRAME_HDR,   "IspMgeHdr2_frame"},
+    {RK_AIQ_ISP_HDR_MODE_2_LINE_HDR,    "IspMgeHdr2_line"},
+    {RK_AIQ_ISP_HDR_MODE_2_BUILTIN,     "CisMgeHdr2"},
+    {RK_AIQ_ISP_HDR_MODE_3_FRAME_HDR,   "IspMgeHdr3_frame"},
+    {RK_AIQ_ISP_HDR_MODE_3_LINE_HDR,    "IspMgeHdr3_line"},
+    {RK_AIQ_ISP_HDR_MODE_3_BUILTIN,     "CisMgeHdr3"},
+};
+
+static const char* rk_aiq_hdr_mode_to_str(rk_aiq_isp_hdr_mode_t mode) {
+    for (size_t i = 0; i < sizeof(hdr_mode_str_map) / sizeof(hdr_mode_str_map[0]); ++i) {
+        if (hdr_mode_str_map[i].mode == mode) return hdr_mode_str_map[i].name;
+    }
+    return "linear";
+}
+
 void sensor_dump_dev_attr1(AiqSensorHw_t* self, st_string* result) {
     char buffer[MAX_LINE_LENGTH] = {0};
 
     aiq_info_dump_title(result, "sensor dev attr 1");
 
-    snprintf(buffer, MAX_LINE_LENGTH, "%-9s%-8s%-14s%-7s%-8s%-8s%-6s%-5s", "phy_chn", "mode",
-             "pixel_format", "width", "height", "mirror", "flip", "dcg");
+    snprintf(buffer, MAX_LINE_LENGTH, "%-9s%-14s%-14s%-14s%-7s%-8s%-8s%-6s%-5s", "phy_chn", "mode",
+             "cis_hdr_mode", "pixel_format", "width", "height", "mirror", "flip", "dcg");
     aiq_string_printf(result, buffer);
     aiq_string_printf(result, "\n");
 
-    const char* mode = "linear";
-    if (RK_AIQ_HDR_GET_WORKING_MODE(self->_working_mode) == RK_AIQ_WORKING_MODE_ISP_HDR2) {
-        mode = "HDR2";
-    } else if (RK_AIQ_HDR_GET_WORKING_MODE(self->_working_mode) == RK_AIQ_WORKING_MODE_ISP_HDR3) {
-        mode = "HDR3";
-    }
+    static const char* const hdr_exp_mode[] = {
+        // clang-format off
+        "none",
+        "hdr2_sta",
+        "hdr2_dcg",
+        "hdr3_dcgVs",
+        "hdr3_dcgSpd",
+        "hdr3_sta",
+        // clang-format on
+    };
 
     char fmt_str[5];
     fmt_str[0] = self->desc.sensor_pixelformat & 0xFF;
@@ -77,8 +102,9 @@ void sensor_dump_dev_attr1(AiqSensorHw_t* self, st_string* result) {
         dcg = "LCG";
 
     memset(buffer, 0, MAX_LINE_LENGTH);
-    snprintf(buffer, MAX_LINE_LENGTH, "%-9d%-8s%-14s%-7d%-8d%-8s%-6s%-5s", self->mCamPhyId, mode,
-             fmt_str, self->desc.sensor_output_width, self->desc.sensor_output_height,
+    snprintf(buffer, MAX_LINE_LENGTH, "%-9d%-14s%-14s%-14s%-7d%-8d%-8s%-6s%-5s", self->mCamPhyId,
+             rk_aiq_hdr_mode_to_str(self->_working_mode), hdr_exp_mode[self->mCisHdrMode], fmt_str,
+             self->desc.sensor_output_width, self->desc.sensor_output_height,
              self->_mirror ? "Y" : "N", self->_flip ? "Y" : "N", dcg);
     aiq_string_printf(result, buffer);
     aiq_string_printf(result, "\n\n");

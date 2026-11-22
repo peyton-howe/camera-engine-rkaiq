@@ -25,6 +25,9 @@
 #include <unistd.h>
 
 #include "rk_smart_ir_api.h"
+#include "uAPI2/rk_aiq_user_api2_ae.h"
+#include "uAPI2/rk_aiq_user_api2_awb.h"
+
 #define RK_SMART_IR_AUTO_IRLED false
 
 typedef struct sample_smartIr_s {
@@ -384,9 +387,9 @@ static void sample_smartIr_calib(const void* arg)
      * 3. Adjust brightness threshold for day-to-night switch
      */
     calib_cfg.calib_mode = RK_SMART_IR_CALIB_MODE_D2N;
-    calib_cfg.calib_params.d2n_envL_th = 0.04f; //need cfg, init calib params
+    calib_cfg.calib_params.d2n_envL_th = 0.04f; //need cfg, init d2n_envL_th param
     rk_smart_ir_calib(g_sample_smartIr_ctx.ir_ctx, &calib_cfg);
-    printf("calib result: d2n_envL_th = %f\n", calib_cfg.calib_params.d2n_envL_th);
+    printf("calib result: d2n_envL_th = %f\n", calib_cfg.calib_result.d2n_envL_th);
 
     /* calib n2d_envL_th
      * 1. Switch to ISP night mode
@@ -394,9 +397,9 @@ static void sample_smartIr_calib(const void* arg)
      * 3. Adjust brightness threshold for night-to-day switch
      */
     calib_cfg.calib_mode = RK_SMART_IR_CALIB_MODE_N2D;
-    calib_cfg.calib_params.n2d_envL_th = 0.2f; //need cfg, init calib params
+    calib_cfg.calib_params.n2d_envL_th = 0.2f; //need cfg, init n2d_envL_th param
     rk_smart_ir_calib(g_sample_smartIr_ctx.ir_ctx, &calib_cfg);
-    printf("calib result: n2d_envL_th = %f\n", calib_cfg.calib_params.n2d_envL_th);
+    printf("calib result: n2d_envL_th = %f\n", calib_cfg.calib_result.n2d_envL_th);
 
     /* calib awbgain base
      * 1. Switch to ISP night mode
@@ -405,8 +408,8 @@ static void sample_smartIr_calib(const void* arg)
      */
     calib_cfg.calib_mode = RK_SMART_IR_CALIB_MODE_BASE;
     rk_smart_ir_calib(g_sample_smartIr_ctx.ir_ctx, &calib_cfg);
-    printf("calib result: awbgain_base = %f, %f\n", calib_cfg.calib_params.rggain_base,
-           calib_cfg.calib_params.bggain_base);
+    printf("calib result: awbgain_base = %f, %f\n", calib_cfg.calib_result.rggain_base,
+           calib_cfg.calib_result.bggain_base);
 
     /* tune awbgain dis
      * 1. Switch to ISP night mode
@@ -414,11 +417,11 @@ static void sample_smartIr_calib(const void* arg)
      * 3. Test various scenarios and get the maximum value
      */
     calib_cfg.calib_mode = RK_SMART_IR_CALIB_MODE_DIS;
-    calib_cfg.calib_params.rggain_base = 1.00f; //need cfg
-    calib_cfg.calib_params.bggain_base = 1.00f; //need cfg
-    calib_cfg.calib_params.awbgain_rad = 0.10f; //need cfg
+    calib_cfg.calib_params.rggain_base = 1.00f; //need cfg, init rggain_base param
+    calib_cfg.calib_params.bggain_base = 1.00f; //need cfg, init bggain_base param
+    calib_cfg.calib_params.awbgain_rad = 0.10f; //need cfg, init awbgain_rad param
     rk_smart_ir_calib(g_sample_smartIr_ctx.ir_ctx, &calib_cfg);
-    printf("calib result: awbgain_rad = %f\n", calib_cfg.calib_params.awbgain_rad);
+    printf("calib result: awbgain_dis = %f\n", calib_cfg.calib_result.awbgain_dis);
 
     if (g_sample_smartIr_ctx.ir_ctx) {
         rk_smart_ir_deInit(g_sample_smartIr_ctx.ir_ctx);
@@ -426,7 +429,7 @@ static void sample_smartIr_calib(const void* arg)
     }
 }
 
-void smartIr_cb(rk_smart_ir_result_t result)
+void sample_smartIr_cb(rk_smart_ir_result_t result)
 {
     if (result.status == RK_SMART_IR_STATUS_NIGHT) {
         if (result.is_status_change) {
@@ -481,7 +484,7 @@ static void sample_smartIr_start(const void* arg)
     attr.params.switch_cnts_th = 50;
     rk_smart_ir_setAttr(g_sample_smartIr_ctx.ir_ctx, &attr);
 
-    rk_smart_ir_runCb(g_sample_smartIr_ctx.ir_ctx, g_sample_smartIr_ctx.camGroup, smartIr_cb);
+    rk_smart_ir_runCb(g_sample_smartIr_ctx.ir_ctx, g_sample_smartIr_ctx.camGroup, sample_smartIr_cb);
 }
 
 static void* smartIr_dualCam_thread(void* args)
@@ -600,6 +603,185 @@ static void smartIr_dualCam_stop(const void* arg)
     printf("stop smartIr\n");
 }
 
+static void smartIr_test_switch(const void* arg)
+{
+    sample_smartIr_start(arg);
+
+    rk_smart_ir_attr_t attr;
+    //memset(&attr, 0, sizeof(attr));
+    rk_smart_ir_getAttr(g_sample_smartIr_ctx.ir_ctx, &attr);
+    attr.switch_test.switch_en = true;
+    attr.switch_test.switch_interval = 100;
+    rk_smart_ir_setAttr(g_sample_smartIr_ctx.ir_ctx, &attr);
+}
+
+static XCamReturn sample_getIspStats(const rk_aiq_sys_ctx_t* ctx)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    uint32_t R_blk[225] = { 0 }, G_blk[225] = { 0 }, B_blk[225] = { 0 };
+    uint32_t WpNo_blk[225] = { 0 };
+    float rgain = 0.0f, bgain = 0.0f;
+    int cnt = 0;
+    uint16_t Y_blk[225] = { 0 };
+
+#ifdef USE_NEWSTRUCT
+    // 1) get isp stats
+    rk_aiq_isp_statistics_t isp_stats;
+    isp_stats.bValid_aec_stats = false;
+    isp_stats.bValid_awb_stats = false;
+    ret = rk_aiq_uapi2_stats_getIspStats(ctx, &isp_stats, 1000);
+    if (ret == XCAM_RETURN_NO_ERROR && isp_stats.bValid_aec_stats && isp_stats.bValid_awb_stats) {
+        // do nothing
+    } else {
+        printf("ret=%d, stats_id=%d, valid=%d,%d, getIspStats fail!\n", ret, isp_stats.frame_id,
+               isp_stats.bValid_aec_stats, isp_stats.bValid_awb_stats);
+        return ret;
+    }
+
+    // 2) calc awb gain
+    for (int i = 0; i < RAWAEBIG_WIN_NUM; i++) {
+        R_blk[i] = isp_stats.awb_stats.com.pixEngine.zonePix[i].hw_awbCfg_rSum_val;
+        G_blk[i] = isp_stats.awb_stats.com.pixEngine.zonePix[i].hw_awbCfg_gSum_val;
+        B_blk[i] = isp_stats.awb_stats.com.pixEngine.zonePix[i].hw_awbCfg_bSum_val;
+        WpNo_blk[i] = isp_stats.awb_stats.com.pixEngine.zonePix[i].hw_awbCfg_statsPix_count;
+        if (G_blk[i] > 0) {
+            rgain = rgain + (float)R_blk[i] / (float)G_blk[i];
+            bgain = bgain + (float)B_blk[i] / (float)G_blk[i];
+            cnt++;
+        }
+    }
+    if (cnt > 0) {
+        rgain = rgain / cnt;
+        bgain = bgain / cnt;
+    }
+
+    // 3) get ae stats
+    Uapi_RkAeStats_t AeHwStats;
+    rk_aiq_user_api2_ae_getRKAeStats(ctx, &AeHwStats);
+    memcpy(Y_blk, AeHwStats.chn[0].rawae_big.channely_xy, sizeof(Y_blk));
+
+    // 4) querry ae/awb info
+    rk_aiq_wb_querry_info_t wbInfo;
+    ae_api_queryInfo_t expInfo;
+    rk_aiq_user_api2_awb_QueryWBInfo(ctx, &wbInfo);
+    rk_aiq_user_api2_ae_queryExpResInfo(ctx, &expInfo);
+
+    printf("frame_id=%d,cnt=%d,rgain=%f,bgain=%f,wbrgain=%f,wbbgain=%f\nae_converged=%d,meanluma=%f,exp=[%f,%f,%f]\n",
+           isp_stats.frame_id, cnt, rgain, bgain, wbInfo.stat_gain_blk.rgain, wbInfo.stat_gain_blk.bgain,
+           expInfo.isConverged, expInfo.linExpInfo.meanLuma, expInfo.linExpInfo.expParam.integration_time,
+           expInfo.linExpInfo.expParam.analog_gain, expInfo.linExpInfo.expParam.isp_dgain);
+
+#else
+    // 1) get isp stats
+    rk_aiq_isp_stats_t *stats_ref = NULL;
+    ret = rk_aiq_uapi2_sysctl_get3AStatsBlk(ctx, &stats_ref, 1000);
+    if (ret != XCAM_RETURN_NO_ERROR || stats_ref == NULL) {
+        printf("ret=%d, get3AStatsBlk fail!\n", ret);
+        rk_aiq_uapi2_sysctl_release3AStatsRef(ctx, stats_ref);
+        return ret;
+    }
+
+    // 2) calc awb gain
+#if defined(ISP_HW_V39) || defined(ISP_HW_V33) || defined(ISP_HW_V35)
+    for (int i = 0; i < RAWAEBIG_WIN_NUM; i++) {
+        R_blk[i] = (float)stats_ref->awb_stats_v39.com.pixEngine.zonePix[i].hw_awbCfg_rSum_val;
+        G_blk[i] = (float)stats_ref->awb_stats_v39.com.pixEngine.zonePix[i].hw_awbCfg_gSum_val;
+        B_blk[i] = (float)stats_ref->awb_stats_v39.com.pixEngine.zonePix[i].hw_awbCfg_bSum_val;
+        WpNo_blk[i] = (float)stats_ref->awb_stats_v39.com.pixEngine.zonePix[i].hw_awbCfg_statsPix_count;
+    }
+#endif
+#if defined(ISP_HW_V32) || defined(ISP_HW_V32_LITE)
+    for (int i = 0; i < RAWAEBIG_WIN_NUM; i++) {
+        R_blk[i] = (float)stats_ref->awb_stats_v32.blockResult[i].Rvalue;
+        G_blk[i] = (float)stats_ref->awb_stats_v32.blockResult[i].Gvalue;
+        B_blk[i] = (float)stats_ref->awb_stats_v32.blockResult[i].Bvalue;
+        WpNo_blk[i] = (float)stats_ref->awb_stats_v32.blockResult[i].WpNo;
+    }
+#endif
+#if defined(ISP_HW_V30)
+    for (int i = 0; i < RAWAEBIG_WIN_NUM; i++) {
+        R_blk[i] = (float)stats_ref->awb_stats_v3x.blockResult[i].Rvalue;
+        G_blk[i] = (float)stats_ref->awb_stats_v3x.blockResult[i].Gvalue;
+        B_blk[i] = (float)stats_ref->awb_stats_v3x.blockResult[i].Bvalue;
+        WpNo_blk[i] = (float)stats_ref->awb_stats_v3x.blockResult[i].WpNo;
+    }
+#endif
+#if defined(ISP_HW_V21)
+    for (int i = 0; i < RAWAEBIG_WIN_NUM; i++) {
+        R_blk[i] = (float)stats_ref->awb_stats_v21.blockResult[i].Rvalue;
+        G_blk[i] = (float)stats_ref->awb_stats_v21.blockResult[i].Gvalue;
+        B_blk[i] = (float)stats_ref->awb_stats_v21.blockResult[i].Bvalue;
+        WpNo_blk[i] = (float)stats_ref->awb_stats_v21.blockResult[i].WpNo;
+    }
+#endif
+    for (int i = 0; i < RAWAEBIG_WIN_NUM; i++) {
+        if (G_blk[i] > 0) {
+            rgain = rgain + (float)R_blk[i] / (float)G_blk[i];
+            bgain = bgain + (float)B_blk[i] / (float)G_blk[i];
+            cnt++;
+        }
+    }
+    if (cnt > 0) {
+        rgain = rgain / cnt;
+        bgain = bgain / cnt;
+    }
+
+    // 3) get ae stats
+    memcpy(Y_blk, stats_ref->aec_stats.ae_data.chn[0].rawae_big.channely_xy, sizeof(Y_blk));
+    rk_aiq_uapi2_sysctl_release3AStatsRef(ctx, stats_ref);
+
+    // 4) querry ae/awb info
+    rk_aiq_wb_querry_info_t wb_info;
+    Uapi_ExpQueryInfo_t exp_info;
+    rk_aiq_user_api2_awb_QueryWBInfo(ctx, &wb_info);
+    rk_aiq_user_api2_ae_queryExpResInfo(ctx, &exp_info);
+
+    printf("frame_id=%d,cnt=%d,rgain=%f,bgain=%f,wbrgain=%f,wbbgain=%f\nae_converged=%d,meanluma=%f,exp=[%f,%f,%f]\n",
+           stats_ref->frame_id, cnt, rgain, bgain, wb_info.stat_gain_blk.rgain, wb_info.stat_gain_blk.bgain,
+           exp_info.IsConverged, exp_info.LinAeInfo.MeanLuma, exp_info.LinAeInfo.LinearExp.integration_time,
+           exp_info.LinAeInfo.LinearExp.analog_gain, exp_info.LinAeInfo.LinearExp.isp_dgain);
+#endif
+
+    printf("================================= Source statistics log =================================\n");
+    printf("block luma:\n");
+    for (int i = 0; i < 15; i++) {
+        printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               Y_blk[15 * i + 0], Y_blk[15 * i + 1], Y_blk[15 * i + 2], Y_blk[15 * i + 3], Y_blk[15 * i + 4],
+               Y_blk[15 * i + 5], Y_blk[15 * i + 6], Y_blk[15 * i + 7], Y_blk[15 * i + 8], Y_blk[15 * i + 9],
+               Y_blk[15 * i + 10], Y_blk[15 * i + 11], Y_blk[15 * i + 12], Y_blk[15 * i + 13], Y_blk[15 * i + 14]);
+    }
+
+    printf("block wbR:\n");
+    for (int i = 0; i < 15; i++) {
+        printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               R_blk[15 * i + 0], R_blk[15 * i + 1], R_blk[15 * i + 2], R_blk[15 * i + 3], R_blk[15 * i + 4],
+               R_blk[15 * i + 5], R_blk[15 * i + 6], R_blk[15 * i + 7], R_blk[15 * i + 8], R_blk[15 * i + 9],
+               R_blk[15 * i + 10], R_blk[15 * i + 11], R_blk[15 * i + 12], R_blk[15 * i + 13], R_blk[15 * i + 14]);
+    }
+
+    printf("block wbG:\n");
+    for (int i = 0; i < 15; i++) {
+        printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               G_blk[15 * i + 0], G_blk[15 * i + 1], G_blk[15 * i + 2], G_blk[15 * i + 3], G_blk[15 * i + 4],
+               G_blk[15 * i + 5], G_blk[15 * i + 6], G_blk[15 * i + 7], G_blk[15 * i + 8], G_blk[15 * i + 9],
+               G_blk[15 * i + 10], G_blk[15 * i + 11], G_blk[15 * i + 12], G_blk[15 * i + 13], G_blk[15 * i + 14]);
+    }
+
+    printf("block wbB:\n");
+    for (int i = 0; i < 15; i++) {
+        printf("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               B_blk[15 * i + 0], B_blk[15 * i + 1], B_blk[15 * i + 2], B_blk[15 * i + 3], B_blk[15 * i + 4],
+               B_blk[15 * i + 5], B_blk[15 * i + 6], B_blk[15 * i + 7], B_blk[15 * i + 8], B_blk[15 * i + 9],
+               B_blk[15 * i + 10], B_blk[15 * i + 11], B_blk[15 * i + 12], B_blk[15 * i + 13], B_blk[15 * i + 14]);
+    }
+
+    printf("block wpNo: %d,%d\n", WpNo_blk[0], WpNo_blk[224]);
+    printf("========================================== end ==========================================\n\n");
+
+    return ret;
+}
+
 static void sample_smartIr_usage()
 {
     printf("Usage : \n");
@@ -607,11 +789,12 @@ static void sample_smartIr_usage()
     printf("\t i) SmartIr:         Start smartIr irled test.\n");
     printf("\t v) SmartIr:         Start smartIr visled test.\n");
     printf("\t s) SmartIr:         Start smartIr (callback).\n");
-    printf("\t e) SmartIr:         Exit smartIr test.\n");
-    printf("\t c) SmartIr:         Ir wb calibration.\n");
-
+    printf("\t e) SmartIr:         Stop smartIr test.\n");
     printf("\t a) SmartIr:         Start duamcam smartIr.\n");
     printf("\t b) SmartIr:         Stop duamcam smartIr.\n");
+    printf("\t c) SmartIr:         Calib params.\n");
+    printf("\t t) SmartIr:         Test switch smartIr.\n");
+    printf("\t g) SmartIr:         Get isp stats.\n");
 
     printf("\n");
     printf("\t h) SmartIr:         help.\n");
@@ -676,14 +859,20 @@ XCamReturn sample_smartIr_module(const void* arg)
         case 'e':
             sample_smartIr_stop(ctx);
             break;
-        case 'c':
-            sample_smartIr_calib(ctx);
-            break;
         case 'a':
             smartIr_dualCam_start(ctx);
             break;
         case 'b':
             smartIr_dualCam_stop(ctx);
+            break;
+        case 'c':
+            sample_smartIr_calib(ctx);
+            break;
+        case 't':
+            smartIr_test_switch(ctx);
+            break;
+        case 'g':
+            sample_getIspStats(ctx);
             break;
         default:
             break;

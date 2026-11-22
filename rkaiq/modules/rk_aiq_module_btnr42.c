@@ -1,5 +1,7 @@
 #include "rk_aiq_isp33_modules.h"
 #include "interpolation.h"
+#include "iq_parser_v2/moduleinfo_head.h"
+
 
 // fix define
 #define FIXTNRSQRT      40
@@ -334,6 +336,30 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
     btnr_api_attrib_t *btnr_attrib = pBtnrInfo->btnr_attrib;
     btnr_param_auto_t *paut = &btnr_attrib->stAuto;
     rk_aiq_op_mode_t opMode = btnr_attrib->opMode;
+	#if 0
+    int lcgSpd_mergeX[] = {0, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024};
+    //int lcgSpd_mergeY[] = {0, 0, 0, 0, 0, 128, 256, 384, 512, 576, 640, 704, 768, 832, 896, 960, 1024};
+    int lcgSpd_mergeY[] = {0, 0, 0, 0, 0, 80, 192, 336, 512, 697, 845, 945, 1017, 1024, 1024, 1024, 1024};
+    int hcglcg_mergeX[] = {0, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960, 1024};
+    //int hcglcg_mergeY[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 124, 248, 372, 496, 627, 759, 891, 1024};
+    int hcglcg_mergeY[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 39, 308, 605, 730, 828, 926, 1024};
+	#if MGE_WGT_USE_OLD_STRUCT
+    pMergeLumaWgt = (mergeLuma2Wgt_t *)malloc(sizeof(mergeLuma2Wgt_t) * cvtinfo->frameNum);
+	for(int i = 0; i < 17; i++) {
+        pMergeLumaWgt[0].luma_idx[i] = lcgSpd_mergeX[i];
+        pMergeLumaWgt[0].luma_wgt[i] = (float)lcgSpd_mergeY[i] / 1024.0;
+        pMergeLumaWgt[1].luma_idx[i] = hcglcg_mergeX[i];
+        pMergeLumaWgt[1].luma_wgt[i] = (float)hcglcg_mergeY[i] / 1024.0;
+    }
+	#else
+    for(int i = 0; i < 17; i++) {
+        pMergeLumaWgt->wgtCurve[0].idx[i] = lcgSpd_mergeX[i];
+        pMergeLumaWgt->wgtCurve[0].val[i] = (float)lcgSpd_mergeY[i] / 1024.0;
+        pMergeLumaWgt->wgtCurve[1].idx[i] = hcglcg_mergeX[i];
+        pMergeLumaWgt->wgtCurve[1].val[i] = (float)hcglcg_mergeY[i] / 1024.0;
+    }
+	#endif
+	#endif
 #if 0
     printf("hw_btnrT_sigma_scale %f %f\n",
            paut->mdMeDyn[0].mdSigma.hw_btnrT_sigma_scale, paut->mdMeDyn[1].mdSigma.hw_btnrT_sigma_scale);
@@ -371,13 +397,16 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
     btnr_params_static_t* psta = &btnr_param->sta;
     btnr_other_dyn_t* pdyn = &btnr_param->spNrDyn;
     btnr_mdMe_dyn_t* pmdDyn = &btnr_param->mdMeDyn;
+    btnr_subDeepLoMd_dyn_t *pSubDeepLoMd = &pmdDyn->subDeepLoMd;
+    btnr_subLoMd0_dyn_t *pSubLoMd0 = &pmdDyn->subLoMd0;
+    btnr_subLoMd1_dyn_t *pSubLoMd1 = &pmdDyn->subLoMd1;
 
     bool bayertnr_default_noise_curve_use = false;
     int bayertnr_iso_cur = cvtinfo->frameIso[cvtinfo->frameNum - 1];
     bayertnr_default_noise_curve_use = bayertnr_find_top_one_pos(bayertnr_iso_cur) != bayertnr_find_top_one_pos(pTransParams->bayertnr_iso_pre);
     pTransParams->bayertnr_iso_pre = bayertnr_iso_cur;
     pTransParams->isFirstFrame = cvtinfo->isFirstFrame;
-    pTransParams->isHdrMode = cvtinfo->frameNum == 2;
+    pTransParams->isHdrMode = (cvtinfo->frameNum > 1);
 
     if(psta->hw_btnrCfg_pixDomain_mode != pdyn->sigmaEnv.hw_btnrC_sigmaAttrib.hw_btnrCfg_pixDomain_mode
             || psta->transCfg.hw_btnrCfg_trans_mode != pdyn->sigmaEnv.hw_btnrC_sigmaAttrib.hw_btnrCfg_trans_mode
@@ -457,6 +486,10 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
     pCfg->iir_rw_fmt = 2;
 
     if (psta->hw_btnrCfg_pixDomain_mode == btnr_pixLog2Domain_mode &&
+            cvtinfo->frameNum > 1)
+        pCfg->iir_rw_fmt = 2;
+
+    if (psta->hw_btnrCfg_pixDomain_mode == btnr_pixLog2Domain_mode &&
             !cvtinfo->use_aiisp)
         pCfg->iir_rw_fmt = 0; // could be 0~3, preferred to be 0 to save bandwidth
 
@@ -471,6 +504,10 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
     if (pCfg->btnr_ldc_en && cvtinfo->use_aiisp && (cvtinfo->frameNum > 1))
         LOGE("btnr_ldc_en and aiisp_hdr_en can't be enabled simultaneously");
 #endif
+
+    if(cvtinfo->frameNum > 2) {
+        pCfg->iir_rw_fmt = 2;
+    }
 
     // REG: BAY3D_CTRL1
     switch (psta->hw_btnrCfg_pixDomain_mode) {
@@ -521,22 +558,22 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
         pCfg->cur_spnr_out_en = 0;
     }
 
-    if (pmdDyn->subDeepLoMd.sw_btnrT_dLoSrc_mode == btnr_subLoMd1_mode)
+    if (pSubDeepLoMd->sw_btnrT_dLoSrc_mode == btnr_subLoMd1_mode)
         pCfg->md_large_lo_use_mode = 0;
     else
         pCfg->md_large_lo_use_mode = 1;
 
     pCfg->tnrsigma_curve_double_en =  (cvtinfo->frameNum > 1) ? 1 : 0;
-    pCfg->md_large_lo_min_filter_bypass_en = !pmdDyn->subDeepLoMd.hw_btnrT_minFilt_en;
-    pCfg->md_large_lo_gauss_filter_bypass_en = !pmdDyn->subDeepLoMd.hw_btnrT_lpf_en;
-    pCfg->md_large_lo_md_wgt_bypass_en = !pmdDyn->subDeepLoMd.hw_btnrT_dLoMd_en;
+    pCfg->md_large_lo_min_filter_bypass_en = !pSubDeepLoMd->hw_btnrT_minFilt_en;
+    pCfg->md_large_lo_gauss_filter_bypass_en = !pSubDeepLoMd->hw_btnrT_lpf_en;
+    pCfg->md_large_lo_md_wgt_bypass_en = !pSubDeepLoMd->hw_btnrT_dLoMd_en;
     pCfg->pre_pix_out_mode = pmdDyn->frmFusion.hw_btnrT_frmFusion_mode;
     pCfg->lpf_hi_bypass_en = !pmdDyn->hiMd.hw_btnrT_hfLpf_en;
-    pCfg->lo_diff_vfilt_bypass_en = !pmdDyn->subLoMd0.diffCh.hw_btnrT_vFilt_en;
-    pCfg->lpf_lo_bypass_en = !pmdDyn->subLoMd1.hw_btnrT_lpf_en;
-    pCfg->lo_wgt_hfilt_en = pmdDyn->subLoMd1.hw_btnrT_hFilt_en;
-    pCfg->lo_diff_hfilt_en = pmdDyn->subLoMd0.diffCh.hw_btnrT_hFilt_en;
-    pCfg->sig_hfilt_en = pmdDyn->subLoMd0.sgmCh.hw_btnrT_hFilt_en;
+    pCfg->lo_diff_vfilt_bypass_en = !pSubLoMd0->diffCh.hw_btnrT_vFilt_en;
+    pCfg->lpf_lo_bypass_en = !pSubLoMd1->hw_btnrT_lpf_en;
+    pCfg->lo_wgt_hfilt_en = pSubLoMd1->hw_btnrT_hFilt_en;
+    pCfg->lo_diff_hfilt_en = pSubLoMd0->diffCh.hw_btnrT_hFilt_en;
+    pCfg->sig_hfilt_en = pSubLoMd0->sgmCh.hw_btnrT_hFilt_en;
     pCfg->motion_detect_bypass_en = !pmdDyn->hw_btnrT_md_en;
     pCfg->md_only_lo_en = !pmdDyn->loAsBias_hiMd1.hw_btnrT_hiMd_en;
     pCfg->lo_detection_bypass_en = !pmdDyn->loMd.hw_btnrT_loMd_en;
@@ -673,8 +710,8 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
     }
 
     // REG: BAY3D_TRANS1
-    // mode scale只有0�?两种选择，对应log域的小数精度�?    // 0对应8bit小数�?bit整数�?4bit整数导致最大线性输入数据位宽为20bit->transData_maxlimit�?�?0次方-1
-    // 1对应9bit小数�?bit整数�?3bit整数限制最大线性输入数据位宽为15bit->transData_maxlimit�?�?5次方-1
+    // mode scale只有0�?两种选择，对应log域的小数精度�?    // 0对应8bit小数�?bit整数�?4bit整数导致最大线性输入数据位宽为20bit->transData_maxlimit�?�?0次方-1
+    // 1对应9bit小数�?bit整数�?3bit整数限制最大线性输入数据位宽为15bit->transData_maxlimit�?�?5次方-1
     if(pCfg->transf_bypass_en == 1) {
         pCfg->transf_data_max_limit = ((1 << 12) - 1);
     } else {
@@ -794,11 +831,11 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
 
     {
         int coeff[9];
-        if (pmdDyn->subLoMd1.sw_btnrT_lpfCfg_mode == btnr_cfgByFiltStrg_mode) {
-            bay_gauss7x5_filter_coeff(pmdDyn->subLoMd1.sw_btnrT_lpf_strg, 5, 7, 7, coeff);
+        if (pSubLoMd1->sw_btnrT_lpfCfg_mode == btnr_cfgByFiltStrg_mode) {
+            bay_gauss7x5_filter_coeff(pSubLoMd1->sw_btnrT_lpf_strg, 5, 7, 7, coeff);
         } else {
             for (i = 0; i < 9; i++)
-                coeff[i] = pmdDyn->subLoMd1.hw_btnrT_lpfSpatial_wgt[i];
+                coeff[i] = pSubLoMd1->hw_btnrT_lpfSpatial_wgt[i];
         }
         // REG: BAY3D_HIWD0
         pCfg->lpf_lo_coeff[0] = CLIP(coeff[0], 0, 0x3ff);
@@ -831,34 +868,34 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
         pCfg->sigma_idx_filt_coeff[4] = CLIP(coeff[4], 0, 0xff);
         pCfg->sigma_idx_filt_coeff[5] = CLIP(coeff[5], 0, 0xff);
     }
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_mdWgtFstLn_negOff) * (1 << 8);
+    tmp = (pSubLoMd1->hw_btnrT_mdWgtFstLn_negOff) * (1 << 8);
     pCfg->lo_wgt_cal_first_line_sigma_scale = CLIP(tmp, 0, 0xfff);
 
     // REG: BAY3D_VIIR
-    float loWgtVfilt_wgt = 1.0 - (1.0 / pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRFilt_strg);
+    float loWgtVfilt_wgt = 1.0 - (1.0 / pSubLoMd0->diffCh.hw_btnrT_vIIRFilt_strg);
     tmp = (loWgtVfilt_wgt) * (1 << 4);
     pCfg->lo_diff_vfilt_wgt = CLIP(tmp, 0, 0x1f);
-    loWgtVfilt_wgt = 1.0 - (1.0 / pmdDyn->subLoMd1.hw_btnrT_vIIRFilt_strg);
+    loWgtVfilt_wgt = 1.0 - (1.0 / pSubLoMd1->hw_btnrT_vIIRFilt_strg);
     tmp = (loWgtVfilt_wgt) * (1 << 4);
     pCfg->lo_wgt_vfilt_wgt = CLIP(tmp, 0, 0x1f);
-    tmp = (pmdDyn->subLoMd0.sgmCh.hw_btnrT_vIIRFstLn_scale) * (1 << 4);
+    tmp = (pSubLoMd0->sgmCh.hw_btnrT_vIIRFstLn_scale) * (1 << 4);
     pCfg->sig_first_line_scale = CLIP(tmp, 0, 0x3f);
-    tmp = (pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRFstLn_scale) * (1 << 4);
+    tmp = (pSubLoMd0->diffCh.hw_btnrT_vIIRFstLn_scale) * (1 << 4);
     pCfg->lo_diff_first_line_scale = CLIP(tmp, 0, 0x3f);
     // REG: BAY3D_LFSCL
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_mdWgt_negOff) * (1 << 10);
+    tmp = (pSubLoMd1->hw_btnrT_mdWgt_negOff) * (1 << 10);
     pCfg->lo_wgt_cal_offset = CLIP(tmp, 0, 0x3fff);
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_mdWgt_scale) * (1 << 10);
+    tmp = (pSubLoMd1->hw_btnrT_mdWgt_scale) * (1 << 10);
     pCfg->lo_wgt_cal_scale = CLIP(tmp, 0, 0x3fff);
     // REG: BAY3D_LFSCLTH
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_mdWgt_maxLimit) * (1 << 10);
+    tmp = (pSubLoMd1->hw_btnrT_mdWgt_maxLimit) * (1 << 10);
     pCfg->lo_wgt_cal_max_limit = CLIP(tmp, 0, 0x3fff);
     tmp = (pmdDyn->loAsRatio_hiMd0.hw_btnrT_hiNsBase_ratio) * (1 << 10);
     pCfg->mode0_base_ratio = CLIP(tmp, 0, 0x3fff);
     // REG: BAY3D_DSWGTSCL
-    tmp = (pmdDyn->subLoMd0.wgtOpt.hw_btnrT_mdWgt_negOff) * (1 << 10);
+    tmp = (pSubLoMd0->wgtOpt.hw_btnrT_mdWgt_negOff) * (1 << 10);
     pCfg->lo_diff_wgt_cal_offset = CLIP(tmp, 0, 0x3fff);
-    tmp = (pmdDyn->subLoMd0.wgtOpt.hw_btnrT_mdWgt_scale) * (1 << 10);
+    tmp = (pSubLoMd0->wgtOpt.hw_btnrT_mdWgt_scale) * (1 << 10);
     pCfg->lo_diff_wgt_cal_scale = CLIP(tmp, 0, 0x3fff);
     // REG: BAY3D_WGTlastSCL
     tmp = (pmdDyn->loMd.hw_btnrT_preWgtMge_offset) * (1 << 10);
@@ -976,29 +1013,29 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
     tmp = (pmdDyn->mdSigma.hw_btnrT_sigmaHdrS_scale) * (1 << 10);
     pCfg->sigma_hdr_sht_scale = CLIP(tmp, 0, 0x3fff);
     // REG: BAY3D_DSOFF
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_vIIRWgt_offset) * (1 << 10);
+    tmp = (pSubLoMd1->hw_btnrT_vIIRWgt_offset) * (1 << 10);
     pCfg->lo_wgt_vfilt_offset = CLIP(tmp, 0, 0x3ff);
-    tmp = (pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRWgt_offset);
+    tmp = (pSubLoMd0->diffCh.hw_btnrT_vIIRWgt_offset);
     pCfg->lo_diff_vfilt_offset = CLIP(tmp, 0, 0xfff);
     tmp = (0) * (1 << 4);
     pCfg->lo_wgt_cal_first_line_vfilt_wgt = CLIP(tmp, 0, 0x3f);
     // REG: BAY3D_DSSCL
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_vIIRWgt_scale) * (1 << 4);
+    tmp = (pSubLoMd1->hw_btnrT_vIIRWgt_scale) * (1 << 4);
     pCfg->lo_wgt_vfilt_scale = CLIP(tmp, 0, 0x3f);
     {
         // calc vfilt scale
         int bayertnr_lodiff_vfilt_scale_bit;
         int bayertnr_lodiff_vfilt_scale;
         for (i = 8; i >= 2; i--) {
-            if (pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRWgt_scale < (float)1.0 / (1 << i)) {
+            if (pSubLoMd0->diffCh.hw_btnrT_vIIRWgt_scale < (float)1.0 / (1 << i)) {
                 bayertnr_lodiff_vfilt_scale_bit = (i + 1) - 2;
-                bayertnr_lodiff_vfilt_scale = MIN((int)(pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRWgt_scale * (1 << (i + 1)) + 0.5), 63); //U2.4
+                bayertnr_lodiff_vfilt_scale = MIN((int)(pSubLoMd0->diffCh.hw_btnrT_vIIRWgt_scale * (1 << (i + 1)) + 0.5), 63); //U2.4
                 break;
             }
         }
         if(i == 1) {
             bayertnr_lodiff_vfilt_scale_bit = 2 - 2;
-            bayertnr_lodiff_vfilt_scale = MIN((int)(pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRWgt_scale * (1 << 2) + 0.5), 63);  //U2.4
+            bayertnr_lodiff_vfilt_scale = MIN((int)(pSubLoMd0->diffCh.hw_btnrT_vIIRWgt_scale * (1 << 2) + 0.5), 63);  //U2.4
         }
         pCfg->lo_diff_vfilt_scale_bit = CLIP(bayertnr_lodiff_vfilt_scale_bit, 0, 0x7);
         pCfg->lo_diff_vfilt_scale = CLIP(bayertnr_lodiff_vfilt_scale, 0, 0x7f);
@@ -1044,11 +1081,11 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
     /* BAY3D_LOCOEF0 */
     {
         int coeff[5];
-        if (pmdDyn->subLoMd1.sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
-            bay_hozi_filter_coeff(pmdDyn->subLoMd1.hw_btnrT_hFilt_strg, coeff);
+        if (pSubLoMd1->sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
+            bay_hozi_filter_coeff(pSubLoMd1->hw_btnrT_hFilt_strg, coeff);
         } else {
             for (i = 0; i < 5; i++)
-                coeff[i] = pmdDyn->subLoMd1.hw_btnrT_hFilt_coeff[i];
+                coeff[i] = pSubLoMd1->hw_btnrT_hFilt_coeff[i];
         }
         pCfg->lo_wgt_hflt_coeff0 = CLIP(coeff[2], 0, 0x1f);
         pCfg->lo_wgt_hflt_coeff1 = CLIP(coeff[1], 0, 0x1f);
@@ -1057,11 +1094,11 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
 
     {
         int coeff[5];
-        if (pmdDyn->subLoMd0.sgmCh.sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
-            bay_hozi_filter_coeff(pmdDyn->subLoMd0.sgmCh.hw_btnrT_hFilt_strg, coeff);
+        if (pSubLoMd0->sgmCh.sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
+            bay_hozi_filter_coeff(pSubLoMd0->sgmCh.hw_btnrT_hFilt_strg, coeff);
         } else {
             for (i = 0; i < 5; i++)
-                coeff[i] = pmdDyn->subLoMd0.sgmCh.hw_btnrT_hFilt_coeff[i];
+                coeff[i] = pSubLoMd0->sgmCh.hw_btnrT_hFilt_coeff[i];
         }
         pCfg->sig_hflt_coeff0 = CLIP(coeff[2], 0, 0x1f);
         pCfg->sig_hflt_coeff1 = CLIP(coeff[1], 0, 0x1f);
@@ -1071,11 +1108,11 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
     /* BAY3D_LOCOEF1 */
     {
         int coeff[5];
-        if (pmdDyn->subLoMd0.diffCh.sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
-            bay_hozi_filter_coeff(pmdDyn->subLoMd0.diffCh.hw_btnrT_hFilt_strg, coeff);
+        if (pSubLoMd0->diffCh.sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
+            bay_hozi_filter_coeff(pSubLoMd0->diffCh.hw_btnrT_hFilt_strg, coeff);
         } else {
             for (i = 0; i < 5; i++)
-                coeff[i] = pmdDyn->subLoMd0.diffCh.hw_btnrT_hFilt_coeff[i];
+                coeff[i] = pSubLoMd0->diffCh.hw_btnrT_hFilt_coeff[i];
         }
         pCfg->lo_dif_hflt_coeff0 = CLIP(coeff[2], 0, 0x1f);
         pCfg->lo_dif_hflt_coeff1 = CLIP(coeff[1], 0, 0x1f);
@@ -1104,17 +1141,17 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
     tmp = (pdyn->preSpNr.loNr.hw_btnrT_filtWgt_minLimit) * (1 << 8);
     pCfg->pre_spnr_lo_filter_wgt_min = CLIP(tmp, 1, 0xff);
     // REG: BAY3D_MIDBIG0
-    tmp = (pmdDyn->subDeepLoMd.hw_btnrT_wgt_offset) * (1 << 8);
+    tmp = (pSubDeepLoMd->hw_btnrT_wgt_offset) * (1 << 8);
     pCfg->md_large_lo_md_wgt_offset = CLIP(tmp, 0, 0xff);
-    tmp = (pmdDyn->subDeepLoMd.hw_btnrT_wgt_scale) * (1 << 8);
+    tmp = (pSubDeepLoMd->hw_btnrT_wgt_scale) * (1 << 8);
     pCfg->md_large_lo_md_wgt_scale = CLIP(tmp, 0, 0xfff);
     // REG: BAY3D_MIDBIG1
-    tmp = (pmdDyn->subDeepLoMd.sw_btnrT_wgt2FusionLmt_negOff) * (1 << 8);
+    tmp = (pSubDeepLoMd->sw_btnrT_wgt2FusionLmt_negOff) * (1 << 8);
     pCfg->md_large_lo_wgt_cut_offset = CLIP(tmp, 0, 0xfff);
-    tmp = (pmdDyn->subDeepLoMd.hw_btnrT_wgt2FussionLmt_offset) * (1 << 12);
+    tmp = (pSubDeepLoMd->hw_btnrT_wgt2FussionLmt_offset) * (1 << 12);
     pCfg->md_large_lo_wgt_add_offset = CLIP(tmp, 0, 0xfff);
     // REG: BAY3D_MIDBIG2
-    tmp = (pmdDyn->subDeepLoMd.sw_btnrT_wgt2FusionLmt_scale) * (1 << 8);
+    tmp = (pSubDeepLoMd->sw_btnrT_wgt2FusionLmt_scale) * (1 << 8);
     pCfg->md_large_lo_wgt_scale = CLIP(tmp, 0, 0xfff);
 
     // tnr sigma curve must calculate before spnr sigma
@@ -1184,7 +1221,7 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
     }
     pCfg->tnr_luma2sigma_x[sigbins - 1] =  pCfg->pix_max_limit;
 
-
+    //printf("frame_num:%d buildin_hdr:%d\n", framenum, RK_AIQ_HDR_IS_SENSOR_BUILTIN(pBtnrInfo->_working_mode));
 
     if(psta->sigmaEnv.sw_btnrCfg_sigma_mode == btnr_manualSigma_mode || cvtinfo->isFirstFrame || bayertnr_default_noise_curve_use) {
         pTransParams->bayertnr_auto_sig_count_en = 0;
@@ -1193,7 +1230,14 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
             for(i = 0; i < sigbins; i++) {
                 pTransParams->tnr_luma_sigma_y[i] = pdyn->sigmaEnv.hw_btnrC_mdSigma_curve.val[i];
             }
+        } else if(RK_AIQ_HDR_IS_SENSOR_BUILTIN(pBtnrInfo->_working_mode)) {
+            uint16_t* pSigmaX = pCfg->tnr_luma2sigma_x;
+            uint16_t* pSigmaY = pTransParams->tnr_luma_sigma_y;
+
+            btnr_sensor_hdr_sigma_calc(pSigmaX, pSigmaY, cvtinfo, pBtnrInfo, pMergeLumaWgt, sigbins, pTransParams);
+
         } else if(pTransParams->isHdrMode) {
+
             uint16_t shortY[sigbins];
             int short_iso = cvtinfo->frameIso[1];
             int short_ilow = 0, short_ihigh = 0;
@@ -1293,7 +1337,7 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
 
     int pix_max = pCfg->transf_bypass_en ? ((1 << 12) - 1) : bayertnr_logtrans((1 << 12) - 1, pTransParams);
     pix_max = cvtinfo->frameNum == 2 ? bayertnr_logtrans((1 << 20) - 1, pTransParams) : pix_max;
-    if(cvtinfo->frameNum == 2) {
+    if(cvtinfo->frameNum >= 2) {
         // hdr long bins
         int lgbins = 8;
         for(i = 0; i < lgbins; i++) {
@@ -1377,6 +1421,11 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
                 pCfg->pre_spnr_luma2sigma_y[i] = CLIP((int)(pdyn->sigmaEnv.hw_btnrC_preSpNrSgm_curve.val[i]), 0, max_sig);
                 pCfg->pre_spnr_luma2sigma_x[i] = pdyn->sigmaEnv.hw_btnrC_preSpNrSgm_curve.idx[i];
             }
+        } else if(RK_AIQ_HDR_IS_SENSOR_BUILTIN(pBtnrInfo->_working_mode)) {
+            uint16_t* pSigmaX = pCfg->pre_spnr_luma2sigma_x;
+            uint16_t* pSigmaY = pCfg->pre_spnr_luma2sigma_y;
+            btnr_sensor_hdr_sigma_calc(pSigmaX, pSigmaY, cvtinfo, pBtnrInfo, pMergeLumaWgt, spnrsigbins, pTransParams);
+
         } else if(pTransParams->isHdrMode ) {
             uint16_t shortY[spnrsigbins];
             int short_iso = cvtinfo->frameIso[1];
@@ -1454,15 +1503,15 @@ void rk_aiq_btnr42_params_cvt(void* attr, isp_params_t* isp_params, common_cvt_i
         pCfg->btnr_ldc_en = 1;
 
         pCfg->iir_rw_fmt = 3;
-        pCfg->b3dldcv_map13p3_en=0;
-        pCfg->b3dldcv_force_map_en=0;
+        pCfg->b3dldcv_map13p3_en = 0;
+        pCfg->b3dldcv_force_map_en = 0;
         /* B3DLDC_ADR_STS */
-        pCfg->b3dldch_en=1;
-        pCfg->b3dldch_map13p3_en=0;
-        pCfg->b3dldch_force_map_en=0;
+        pCfg->b3dldch_en = 1;
+        pCfg->b3dldch_map13p3_en = 0;
+        pCfg->b3dldch_force_map_en = 0;
         /* B3DLDC_EXTBOUND1 */
-        pCfg->btnr_ldcltp_mode=1;
-        pCfg->btnr_ldc_wrap_ext_bound_offset=0x0;
+        pCfg->btnr_ldcltp_mode = 1;
+        pCfg->btnr_ldc_wrap_ext_bound_offset = 0x0;
     } else {
         pCfg->btnr_ldc_en = 0;
         pCfg->b3dldch_en = 0;
@@ -1479,6 +1528,7 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
     btnr_api_attrib_t *btnr_attrib = pBtnrInfo->btnr_attrib;
     btnr_param_auto_t *paut = &btnr_attrib->stAuto;
     rk_aiq_op_mode_t opMode = btnr_attrib->opMode;
+
 #if 0
     printf("hw_btnrT_sigma_scale %f %f\n",
            paut->mdMeDyn[0].mdSigma.hw_btnrT_sigma_scale, paut->mdMeDyn[1].mdSigma.hw_btnrT_sigma_scale);
@@ -1493,7 +1543,7 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
         pBtnrInfo->stats_buffer_cnt = bufCnt;
         pBtnrInfo->stats_delay_cnt  = dlyCnt;
     } else {
-        btnr_stats = bayertnr_get_stats(pBtnrInfo, cvtinfo->frameId);
+        btnr_stats = bayertnr2_get_stats(pBtnrInfo, cvtinfo->frameId);
         if (cvtinfo->frameId - pBtnrInfo->stats_delay_cnt != btnr_stats->id) {
             pBtnrInfo->btnr_stats_miss_cnt ++;
             if ((pBtnrInfo->btnr_stats_miss_cnt > 10) && (pBtnrInfo->btnr_stats_miss_cnt % 30 == 0)) {
@@ -1516,6 +1566,9 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
     btnr_params_static_t* psta = &btnr_param->sta;
     btnr_other_dyn_t* pdyn = &btnr_param->spNrDyn;
     btnr_mdMe_dyn_t* pmdDyn = &btnr_param->mdMeDyn;
+    btnr_subDeepLoMd_dyn_t *pSubDeepLoMd = &pmdDyn->subDeepLoCurMd.subDeepLoMd;
+    btnr_subLoMd0_dyn_t *pSubLoMd0 = &pmdDyn->subDeepLoCurMd.subLoMd0;
+    btnr_subLoMd1_dyn_t *pSubLoMd1 = &pmdDyn->subDeepLoCurMd.subLoMd1;
 
     bool bayertnr_default_noise_curve_use = false;
     int bayertnr_iso_cur = cvtinfo->frameIso[cvtinfo->frameNum - 1];
@@ -1601,6 +1654,10 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
     pCfg->iir_rw_fmt = 2;
 
     if (psta->hw_btnrCfg_pixDomain_mode == btnr_pixLog2Domain_mode &&
+            cvtinfo->frameNum > 1)
+        pCfg->iir_rw_fmt = 2;
+
+    if (psta->hw_btnrCfg_pixDomain_mode == btnr_pixLog2Domain_mode &&
             !cvtinfo->use_aiisp)
         pCfg->iir_rw_fmt = 0; // could be 0~3, preferred to be 0 to save bandwidth
 
@@ -1665,22 +1722,22 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
         pCfg->cur_spnr_out_en = 0;
     }
 
-    if (pmdDyn->subDeepLoMd.sw_btnrT_dLoSrc_mode == btnr_subLoMd1_mode)
+    if (pSubDeepLoMd->sw_btnrT_dLoSrc_mode == btnr_subLoMd1_mode)
         pCfg->md_large_lo_use_mode = 0;
     else
         pCfg->md_large_lo_use_mode = 1;
 
     pCfg->tnrsigma_curve_double_en =  (cvtinfo->frameNum > 1) ? 1 : 0;
-    pCfg->md_large_lo_min_filter_bypass_en = !pmdDyn->subDeepLoMd.hw_btnrT_minFilt_en;
-    pCfg->md_large_lo_gauss_filter_bypass_en = !pmdDyn->subDeepLoMd.hw_btnrT_lpf_en;
-    pCfg->md_large_lo_md_wgt_bypass_en = !pmdDyn->subDeepLoMd.hw_btnrT_dLoMd_en;
+    pCfg->md_large_lo_min_filter_bypass_en = !pSubDeepLoMd->hw_btnrT_minFilt_en;
+    pCfg->md_large_lo_gauss_filter_bypass_en = !pSubDeepLoMd->hw_btnrT_lpf_en;
+    pCfg->md_large_lo_md_wgt_bypass_en = !pSubDeepLoMd->hw_btnrT_dLoMd_en;
     pCfg->pre_pix_out_mode = pmdDyn->frmFusion.hw_btnrT_frmFusion_mode;
     pCfg->lpf_hi_bypass_en = !pmdDyn->hiMd.hw_btnrT_hfLpf_en;
-    pCfg->lo_diff_vfilt_bypass_en = !pmdDyn->subLoMd0.diffCh.hw_btnrT_vFilt_en;
-    pCfg->lpf_lo_bypass_en = !pmdDyn->subLoMd1.hw_btnrT_lpf_en;
-    pCfg->lo_wgt_hfilt_en = pmdDyn->subLoMd1.hw_btnrT_hFilt_en;
-    pCfg->lo_diff_hfilt_en = pmdDyn->subLoMd0.diffCh.hw_btnrT_hFilt_en;
-    pCfg->sig_hfilt_en = pmdDyn->subLoMd0.sgmCh.hw_btnrT_hFilt_en;
+    pCfg->lo_diff_vfilt_bypass_en = !pSubLoMd0->diffCh.hw_btnrT_vFilt_en;
+    pCfg->lpf_lo_bypass_en = !pSubLoMd1->hw_btnrT_lpf_en;
+    pCfg->lo_wgt_hfilt_en = pSubLoMd1->hw_btnrT_hFilt_en;
+    pCfg->lo_diff_hfilt_en = pSubLoMd0->diffCh.hw_btnrT_hFilt_en;
+    pCfg->sig_hfilt_en = pSubLoMd0->sgmCh.hw_btnrT_hFilt_en;
     pCfg->motion_detect_bypass_en = !pmdDyn->hw_btnrT_md_en;
     pCfg->md_only_lo_en = !pmdDyn->loAsBias_hiMd1.hw_btnrT_hiMd_en;
     pCfg->lo_detection_bypass_en = !pmdDyn->loMd.hw_btnrT_loMd_en;
@@ -1817,8 +1874,8 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
     }
 
     // REG: BAY3D_TRANS1
-    // mode scale只有0�?两种选择，对应log域的小数精度�?    // 0对应8bit小数�?bit整数�?4bit整数导致最大线性输入数据位宽为20bit->transData_maxlimit�?�?0次方-1
-    // 1对应9bit小数�?bit整数�?3bit整数限制最大线性输入数据位宽为15bit->transData_maxlimit�?�?5次方-1
+    // mode scale只有0�?两种选择，对应log域的小数精度�?    // 0对应8bit小数�?bit整数�?4bit整数导致最大线性输入数据位宽为20bit->transData_maxlimit�?�?0次方-1
+    // 1对应9bit小数�?bit整数�?3bit整数限制最大线性输入数据位宽为15bit->transData_maxlimit�?�?5次方-1
     if(pCfg->transf_bypass_en == 1) {
         pCfg->transf_data_max_limit = ((1 << 12) - 1);
     } else {
@@ -1938,11 +1995,11 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
 
     {
         int coeff[9];
-        if (pmdDyn->subLoMd1.sw_btnrT_lpfCfg_mode == btnr_cfgByFiltStrg_mode) {
-            bay_gauss7x5_filter_coeff(pmdDyn->subLoMd1.sw_btnrT_lpf_strg, 5, 7, 7, coeff);
+        if (pSubLoMd1->sw_btnrT_lpfCfg_mode == btnr_cfgByFiltStrg_mode) {
+            bay_gauss7x5_filter_coeff(pSubLoMd1->sw_btnrT_lpf_strg, 5, 7, 7, coeff);
         } else {
             for (i = 0; i < 9; i++)
-                coeff[i] = pmdDyn->subLoMd1.hw_btnrT_lpfSpatial_wgt[i];
+                coeff[i] = pSubLoMd1->hw_btnrT_lpfSpatial_wgt[i];
         }
         // REG: BAY3D_HIWD0
         pCfg->lpf_lo_coeff[0] = CLIP(coeff[0], 0, 0x3ff);
@@ -1975,34 +2032,34 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
         pCfg->sigma_idx_filt_coeff[4] = CLIP(coeff[4], 0, 0xff);
         pCfg->sigma_idx_filt_coeff[5] = CLIP(coeff[5], 0, 0xff);
     }
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_mdWgtFstLn_negOff) * (1 << 8);
+    tmp = (pSubLoMd1->hw_btnrT_mdWgtFstLn_negOff) * (1 << 8);
     pCfg->lo_wgt_cal_first_line_sigma_scale = CLIP(tmp, 0, 0xfff);
 
     // REG: BAY3D_VIIR
-    float loWgtVfilt_wgt = 1.0 - (1.0 / pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRFilt_strg);
+    float loWgtVfilt_wgt = 1.0 - (1.0 / pSubLoMd0->diffCh.hw_btnrT_vIIRFilt_strg);
     tmp = (loWgtVfilt_wgt) * (1 << 4);
     pCfg->lo_diff_vfilt_wgt = CLIP(tmp, 0, 0x1f);
-    loWgtVfilt_wgt = 1.0 - (1.0 / pmdDyn->subLoMd1.hw_btnrT_vIIRFilt_strg);
+    loWgtVfilt_wgt = 1.0 - (1.0 / pSubLoMd1->hw_btnrT_vIIRFilt_strg);
     tmp = (loWgtVfilt_wgt) * (1 << 4);
     pCfg->lo_wgt_vfilt_wgt = CLIP(tmp, 0, 0x1f);
-    tmp = (pmdDyn->subLoMd0.sgmCh.hw_btnrT_vIIRFstLn_scale) * (1 << 4);
+    tmp = (pSubLoMd0->sgmCh.hw_btnrT_vIIRFstLn_scale) * (1 << 4);
     pCfg->sig_first_line_scale = CLIP(tmp, 0, 0x3f);
-    tmp = (pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRFstLn_scale) * (1 << 4);
+    tmp = (pSubLoMd0->diffCh.hw_btnrT_vIIRFstLn_scale) * (1 << 4);
     pCfg->lo_diff_first_line_scale = CLIP(tmp, 0, 0x3f);
     // REG: BAY3D_LFSCL
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_mdWgt_negOff) * (1 << 10);
+    tmp = (pSubLoMd1->hw_btnrT_mdWgt_negOff) * (1 << 10);
     pCfg->lo_wgt_cal_offset = CLIP(tmp, 0, 0x3fff);
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_mdWgt_scale) * (1 << 10);
+    tmp = (pSubLoMd1->hw_btnrT_mdWgt_scale) * (1 << 10);
     pCfg->lo_wgt_cal_scale = CLIP(tmp, 0, 0x3fff);
     // REG: BAY3D_LFSCLTH
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_mdWgt_maxLimit) * (1 << 10);
+    tmp = (pSubLoMd1->hw_btnrT_mdWgt_maxLimit) * (1 << 10);
     pCfg->lo_wgt_cal_max_limit = CLIP(tmp, 0, 0x3fff);
     tmp = (pmdDyn->loAsRatio_hiMd0.hw_btnrT_hiNsBase_ratio) * (1 << 10);
     pCfg->mode0_base_ratio = CLIP(tmp, 0, 0x3fff);
     // REG: BAY3D_DSWGTSCL
-    tmp = (pmdDyn->subLoMd0.wgtOpt.hw_btnrT_mdWgt_negOff) * (1 << 10);
+    tmp = (pSubLoMd0->wgtOpt.hw_btnrT_mdWgt_negOff) * (1 << 10);
     pCfg->lo_diff_wgt_cal_offset = CLIP(tmp, 0, 0x3fff);
-    tmp = (pmdDyn->subLoMd0.wgtOpt.hw_btnrT_mdWgt_scale) * (1 << 10);
+    tmp = (pSubLoMd0->wgtOpt.hw_btnrT_mdWgt_scale) * (1 << 10);
     pCfg->lo_diff_wgt_cal_scale = CLIP(tmp, 0, 0x3fff);
     // REG: BAY3D_WGTlastSCL
     tmp = (pmdDyn->loMd.hw_btnrT_preWgtMge_offset) * (1 << 10);
@@ -2120,29 +2177,29 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
     tmp = (pmdDyn->mdSigma.hw_btnrT_sigmaHdrS_scale) * (1 << 10);
     pCfg->sigma_hdr_sht_scale = CLIP(tmp, 0, 0x3fff);
     // REG: BAY3D_DSOFF
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_vIIRWgt_offset) * (1 << 10);
+    tmp = (pSubLoMd1->hw_btnrT_vIIRWgt_offset) * (1 << 10);
     pCfg->lo_wgt_vfilt_offset = CLIP(tmp, 0, 0x3ff);
-    tmp = (pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRWgt_offset);
+    tmp = (pSubLoMd0->diffCh.hw_btnrT_vIIRWgt_offset);
     pCfg->lo_diff_vfilt_offset = CLIP(tmp, 0, 0xfff);
     tmp = (0) * (1 << 4);
     pCfg->lo_wgt_cal_first_line_vfilt_wgt = CLIP(tmp, 0, 0x3f);
     // REG: BAY3D_DSSCL
-    tmp = (pmdDyn->subLoMd1.hw_btnrT_vIIRWgt_scale) * (1 << 4);
+    tmp = (pSubLoMd1->hw_btnrT_vIIRWgt_scale) * (1 << 4);
     pCfg->lo_wgt_vfilt_scale = CLIP(tmp, 0, 0x3f);
     {
         // calc vfilt scale
         int bayertnr_lodiff_vfilt_scale_bit;
         int bayertnr_lodiff_vfilt_scale;
         for (i = 8; i >= 2; i--) {
-            if (pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRWgt_scale < (float)1.0 / (1 << i)) {
+            if (pSubLoMd0->diffCh.hw_btnrT_vIIRWgt_scale < (float)1.0 / (1 << i)) {
                 bayertnr_lodiff_vfilt_scale_bit = (i + 1) - 2;
-                bayertnr_lodiff_vfilt_scale = MIN((int)(pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRWgt_scale * (1 << (i + 1)) + 0.5), 63); //U2.4
+                bayertnr_lodiff_vfilt_scale = MIN((int)(pSubLoMd0->diffCh.hw_btnrT_vIIRWgt_scale * (1 << (i + 1)) + 0.5), 63); //U2.4
                 break;
             }
         }
         if(i == 1) {
             bayertnr_lodiff_vfilt_scale_bit = 2 - 2;
-            bayertnr_lodiff_vfilt_scale = MIN((int)(pmdDyn->subLoMd0.diffCh.hw_btnrT_vIIRWgt_scale * (1 << 2) + 0.5), 63);  //U2.4
+            bayertnr_lodiff_vfilt_scale = MIN((int)(pSubLoMd0->diffCh.hw_btnrT_vIIRWgt_scale * (1 << 2) + 0.5), 63);  //U2.4
         }
         pCfg->lo_diff_vfilt_scale_bit = CLIP(bayertnr_lodiff_vfilt_scale_bit, 0, 0x7);
         pCfg->lo_diff_vfilt_scale = CLIP(bayertnr_lodiff_vfilt_scale, 0, 0x7f);
@@ -2188,11 +2245,11 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
     /* BAY3D_LOCOEF0 */
     {
         int coeff[5];
-        if (pmdDyn->subLoMd1.sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
-            bay_hozi_filter_coeff(pmdDyn->subLoMd1.hw_btnrT_hFilt_strg, coeff);
+        if (pSubLoMd1->sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
+            bay_hozi_filter_coeff(pSubLoMd1->hw_btnrT_hFilt_strg, coeff);
         } else {
             for (i = 0; i < 5; i++)
-                coeff[i] = pmdDyn->subLoMd1.hw_btnrT_hFilt_coeff[i];
+                coeff[i] = pSubLoMd1->hw_btnrT_hFilt_coeff[i];
         }
         pCfg->lo_wgt_hflt_coeff0 = CLIP(coeff[2], 0, 0x1f);
         pCfg->lo_wgt_hflt_coeff1 = CLIP(coeff[1], 0, 0x1f);
@@ -2201,11 +2258,11 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
 
     {
         int coeff[5];
-        if (pmdDyn->subLoMd0.sgmCh.sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
-            bay_hozi_filter_coeff(pmdDyn->subLoMd0.sgmCh.hw_btnrT_hFilt_strg, coeff);
+        if (pSubLoMd0->sgmCh.sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
+            bay_hozi_filter_coeff(pSubLoMd0->sgmCh.hw_btnrT_hFilt_strg, coeff);
         } else {
             for (i = 0; i < 5; i++)
-                coeff[i] = pmdDyn->subLoMd0.sgmCh.hw_btnrT_hFilt_coeff[i];
+                coeff[i] = pSubLoMd0->sgmCh.hw_btnrT_hFilt_coeff[i];
         }
         pCfg->sig_hflt_coeff0 = CLIP(coeff[2], 0, 0x1f);
         pCfg->sig_hflt_coeff1 = CLIP(coeff[1], 0, 0x1f);
@@ -2215,11 +2272,11 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
     /* BAY3D_LOCOEF1 */
     {
         int coeff[5];
-        if (pmdDyn->subLoMd0.diffCh.sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
-            bay_hozi_filter_coeff(pmdDyn->subLoMd0.diffCh.hw_btnrT_hFilt_strg, coeff);
+        if (pSubLoMd0->diffCh.sw_btnrT_hFiltCfg_mode == btnr_cfgByFiltStrg_mode) {
+            bay_hozi_filter_coeff(pSubLoMd0->diffCh.hw_btnrT_hFilt_strg, coeff);
         } else {
             for (i = 0; i < 5; i++)
-                coeff[i] = pmdDyn->subLoMd0.diffCh.hw_btnrT_hFilt_coeff[i];
+                coeff[i] = pSubLoMd0->diffCh.hw_btnrT_hFilt_coeff[i];
         }
         pCfg->lo_dif_hflt_coeff0 = CLIP(coeff[2], 0, 0x1f);
         pCfg->lo_dif_hflt_coeff1 = CLIP(coeff[1], 0, 0x1f);
@@ -2248,17 +2305,17 @@ void rk_aiq_btnr42_l2_params_cvt(void* attr, isp_params_t* isp_params, common_cv
     tmp = (pdyn->preSpNr.loNr.hw_btnrT_filtWgt_minLimit) * (1 << 8);
     pCfg->pre_spnr_lo_filter_wgt_min = CLIP(tmp, 1, 0xff);
     // REG: BAY3D_MIDBIG0
-    tmp = (pmdDyn->subDeepLoMd.hw_btnrT_wgt_offset) * (1 << 8);
+    tmp = (pSubDeepLoMd->hw_btnrT_wgt_offset) * (1 << 8);
     pCfg->md_large_lo_md_wgt_offset = CLIP(tmp, 0, 0xff);
-    tmp = (pmdDyn->subDeepLoMd.hw_btnrT_wgt_scale) * (1 << 8);
+    tmp = (pSubDeepLoMd->hw_btnrT_wgt_scale) * (1 << 8);
     pCfg->md_large_lo_md_wgt_scale = CLIP(tmp, 0, 0xfff);
     // REG: BAY3D_MIDBIG1
-    tmp = (pmdDyn->subDeepLoMd.sw_btnrT_wgt2FusionLmt_negOff) * (1 << 8);
+    tmp = (pSubDeepLoMd->sw_btnrT_wgt2FusionLmt_negOff) * (1 << 8);
     pCfg->md_large_lo_wgt_cut_offset = CLIP(tmp, 0, 0xfff);
-    tmp = (pmdDyn->subDeepLoMd.hw_btnrT_wgt2FussionLmt_offset) * (1 << 12);
+    tmp = (pSubDeepLoMd->hw_btnrT_wgt2FussionLmt_offset) * (1 << 12);
     pCfg->md_large_lo_wgt_add_offset = CLIP(tmp, 0, 0xfff);
     // REG: BAY3D_MIDBIG2
-    tmp = (pmdDyn->subDeepLoMd.sw_btnrT_wgt2FusionLmt_scale) * (1 << 8);
+    tmp = (pSubDeepLoMd->sw_btnrT_wgt2FusionLmt_scale) * (1 << 8);
     pCfg->md_large_lo_wgt_scale = CLIP(tmp, 0, 0xfff);
 
     // tnr sigma curve must calculate before spnr sigma

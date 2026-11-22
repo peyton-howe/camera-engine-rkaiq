@@ -18,14 +18,24 @@
 #ifndef _RK_ISPFEC_API_H_
 #define _RK_ISPFEC_API_H_
 
+#if defined(__ANDROID__) && !CMAKE_BUILD_ANDROID
+#if defined(ISP_HW_V30)
+#include "android/rkfec_config_v10.h"
+#elif defined(ISP_HW_V35)
+#include "android/rkfec_config_v20.h"
+#else
+#error "Please define supported ISP version!!!, eg: -DISP_HW_V30"
+#endif
+#else
 #include "rkfec_config.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define FEC_VERSION_ENCODE(a, b, c) (((a) << 16) + ((b) << 8) + ((c) > 255 ? 255 : (c)))
-#define RK_ISP_FEC_API_VERSION      FEC_VERSION_ENCODE(4, 0, 4)
+#define RK_ISP_FEC_API_VERSION      FEC_VERSION_ENCODE(4, 0, 5)
 
 #define RK_ISP_FEC_API_VERSION_MAJOR(v) (((v) >> 16) & 0xff)
 #define RK_ISP_FEC_API_VERSION_MINOR(v) (((v) >> 8) & 0xff)

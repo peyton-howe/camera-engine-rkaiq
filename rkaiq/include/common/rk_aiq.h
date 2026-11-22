@@ -120,6 +120,17 @@ typedef struct rk_aiq_tb_info_s {
 } rk_aiq_tb_info_t;
 #endif
 
+/**
+ * @brief Number of buffers for Aibnr
+ * @isp_fe:     Number of front-end buffers
+ * @isp_be:     Number of back-end  buffers
+ *
+ */
+typedef struct rk_aiq_aibnr_buf_count_s {
+    uint16_t isp_fe;
+    uint16_t isp_be;
+} rk_aiq_aibnr_buffer_count_t;
+
 XCAM_END_DECLARE
 
 #endif

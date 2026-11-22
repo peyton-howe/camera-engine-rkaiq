@@ -29,6 +29,8 @@ typedef CalibDb_AntiFlickerAttrV2_t Uapi_AntiFlickerV2_t;
 
 typedef CalibDb_DelayTypeV2_t Uapi_DelayTypeV2_t;
 
+typedef CalibDb_FaceAeCtrl_t Uapi_FaceCtrl_t;
+
 typedef struct Uapi_AeAttrV2_s {
 
     Uapi_AeSpeedV2_t           stAeSpeed;

@@ -72,6 +72,15 @@ typedef struct {
         M4_ORDER(1),
         M4_NOTES(The params of auto mode, be only valid for auto mode))  */
     fpnSw_param_auto_t stAuto;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(stMan),
+        M4_TYPE(struct),
+        M4_UI_MODULE(normal_ui_style),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(2),
+        M4_NOTES(The current params of module))  */
+    fpnSw_param_t stMan;
 } fpnSw_api_attrib_t;
 
 typedef struct fpnSw_status_s {
