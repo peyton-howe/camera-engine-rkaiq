@@ -40,6 +40,16 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
 #set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
 
 set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -fPIC")
+include_directories(
+${PROJECT_SOURCE_DIR}/../rkaiq/include
+${PROJECT_SOURCE_DIR}/../rkaiq/include/uAPI2
+${PROJECT_SOURCE_DIR}/../rkaiq/include/common
+${PROJECT_SOURCE_DIR}/../rkaiq/include/xcore
+${PROJECT_SOURCE_DIR}/../rkaiq/include/algos
+${PROJECT_SOURCE_DIR}/../rkaiq/include/isp
+${PROJECT_SOURCE_DIR}/../rkaiq/include/iq_parser_v2
+${PROJECT_SOURCE_DIR}/../rkaiq/include/iq_parser
+)
 
 #set ADD_RK_AIQ
 set(ADD_RK_AIQ true)
@@ -100,6 +110,8 @@ ${RK_AIQ_HEADER_DIR}
 include/common/mediactl
 ./
 ./common/
+${PROJECT_SOURCE_DIR}/rkaiq/include
+${PROJECT_SOURCE_DIR}/rkaiq/include/uAPI2
 )
 
 if(GENMESH_ONLINE)
@@ -121,24 +133,27 @@ ADD_EXECUTABLE(rkaiq_3A_server rkaiq_3A_server.cpp common/mediactl/mediactl.c)
 
 target_link_libraries(rkaiq_3A_server ${RK_AIQ_LIB} pthread dl)
 
+set(SERVICE_NAME rkaiq_3A.service)
+install(FILES rkaiq_3A.service DESTINATION ../lib/systemd/system/)
+
 #FIXME: buildroot and ipc sdk shall use the same setting
 if(BUILDROOT_BUILD_PROJECT)
 	install(TARGETS rkaiq_3A_server
-		RUNTIME DESTINATION /usr/bin
+		RUNTIME DESTINATION /bin
 		LIBRARY DESTINATION /usr/lib
 		)
 
-	install(FILES S40rkaiq_3A DESTINATION /etc/init.d/
+	install(FILES S40rkaiq_3A DESTINATION ../etc/init.d/
 		PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
 		GROUP_EXECUTE GROUP_READ
 		WORLD_EXECUTE WORLD_READ)
 else()
 	install(TARGETS rkaiq_3A_server
-		RUNTIME DESTINATION "usr/bin"
+		RUNTIME DESTINATION "bin"
 		LIBRARY DESTINATION "usr/lib"
 		)
 
-	install(FILES S40rkaiq_3A DESTINATION "etc/init.d"
+	install(FILES S40rkaiq_3A DESTINATION "../etc/init.d"
 		PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
 		GROUP_EXECUTE GROUP_READ
 		WORLD_EXECUTE WORLD_READ)

@@ -60,6 +60,7 @@ class RkAiqHandle {
     virtual XCamReturn processing();
     virtual XCamReturn postProcess();
     virtual XCamReturn genIspResult(RkAiqFullParams* params, RkAiqFullParams* cur_params) { return XCAM_RETURN_NO_ERROR; };
+    virtual XCamReturn stop() { return XCAM_RETURN_NO_ERROR; };
     RkAiqAlgoContext* getAlgoCtx() { return mAlgoCtx; }
     int getAlgoId() const { return mDes->id; }
     int getAlgoType() const { return mDes->type; }

@@ -24573,7 +24573,7 @@
 						},
 						"colorAsGrey":	{
 							"param":	{
-								"enable":	0,
+								"enable":	1,
 								"skip_frame":	10
 							}
 						},

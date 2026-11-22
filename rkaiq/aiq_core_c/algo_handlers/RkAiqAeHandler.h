@@ -72,6 +72,8 @@ XCamReturn AiqAlgoHandlerAe_queryExpInfo(AiqAlgoHandlerAe_t* pAeHdl, Uapi_ExpQue
 #else
 XCamReturn AiqAlgoHandlerAe_setExpSwAttr(AiqAlgoHandlerAe_t* pAeHdl, ae_api_expSwAttr_t ExpSwAttr);
 XCamReturn AiqAlgoHandlerAe_getExpSwAttr(AiqAlgoHandlerAe_t* pAeHdl, ae_api_expSwAttr_t* pExpSwAttr);
+XCamReturn AiqAlgoHandlerAe_setFaceExpAttr(AiqAlgoHandlerAe_t* pAeHdl, ae_api_faceExpAttr_t FaceExpAttr);
+XCamReturn AiqAlgoHandlerAe_getFaceExpAttr(AiqAlgoHandlerAe_t* pAeHdl, ae_api_faceExpAttr_t* pFaceExpAttr);
 XCamReturn AiqAlgoHandlerAe_setLinExpAttr(AiqAlgoHandlerAe_t* pAeHdl, ae_api_linExpAttr_t LinExpAttr);
 XCamReturn AiqAlgoHandlerAe_getLinExpAttr(AiqAlgoHandlerAe_t* pAeHdl, ae_api_linExpAttr_t* pLinExpAttr);
 XCamReturn AiqAlgoHandlerAe_setHdrExpAttr(AiqAlgoHandlerAe_t* pAeHdl, ae_api_hdrExpAttr_t HdrExpAttr);

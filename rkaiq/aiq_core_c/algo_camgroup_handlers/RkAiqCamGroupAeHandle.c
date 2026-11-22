@@ -23,10 +23,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_setExpSwAttr(AiqAlgoCamGroupAeHandler_t* pAe
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_setExpSwAttr(pHdl->mAlgoCtx, &ExpSwAttr, true, false);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_setExpSwAttr(pHdl->mAlgoCtx, &ExpSwAttr, true, false);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -36,10 +36,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_getExpSwAttr(AiqAlgoCamGroupAeHandler_t* pAe
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_getExpSwAttr(pHdl->mAlgoCtx, pExpSwAttr, true);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_getExpSwAttr(pHdl->mAlgoCtx, pExpSwAttr, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -49,10 +49,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_setLinExpAttr(AiqAlgoCamGroupAeHandler_t* pA
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_setLinExpAttr(pHdl->mAlgoCtx, &LinExpAttr, true, false);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_setLinExpAttr(pHdl->mAlgoCtx, &LinExpAttr, true, false);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -62,10 +62,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_getLinExpAttr(AiqAlgoCamGroupAeHandler_t* pA
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_getLinExpAttr(pHdl->mAlgoCtx, pLinExpAttr, true);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_getLinExpAttr(pHdl->mAlgoCtx, pLinExpAttr, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -75,10 +75,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_setHdrExpAttr(AiqAlgoCamGroupAeHandler_t* pA
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_setHdrExpAttr(pHdl->mAlgoCtx, &HdrExpAttr, true, false);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_setHdrExpAttr(pHdl->mAlgoCtx, &HdrExpAttr, true, false);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -88,10 +88,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_getHdrExpAttr (AiqAlgoCamGroupAeHandler_t* p
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_getHdrExpAttr(pHdl->mAlgoCtx, pHdrExpAttr, true);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_getHdrExpAttr(pHdl->mAlgoCtx, pHdrExpAttr, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -101,10 +101,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_setLinAeRouteAttr(AiqAlgoCamGroupAeHandler_t
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_setLinAeRouteAttr(pHdl->mAlgoCtx, &LinAeRouteAttr, true, false);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_setLinAeRouteAttr(pHdl->mAlgoCtx, &LinAeRouteAttr, true, false);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -114,10 +114,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_getLinAeRouteAttr(AiqAlgoCamGroupAeHandler_t
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_getLinAeRouteAttr(pHdl->mAlgoCtx, pLinAeRouteAttr, true);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_getLinAeRouteAttr(pHdl->mAlgoCtx, pLinAeRouteAttr, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -127,10 +127,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_setHdrAeRouteAttr(AiqAlgoCamGroupAeHandler_t
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_setHdrAeRouteAttr(pHdl->mAlgoCtx, &HdrAeRouteAttr, true, false);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_setHdrAeRouteAttr(pHdl->mAlgoCtx, &HdrAeRouteAttr, true, false);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -140,10 +140,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_getHdrAeRouteAttr(AiqAlgoCamGroupAeHandler_t
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_getHdrAeRouteAttr(pHdl->mAlgoCtx, pHdrAeRouteAttr, true);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_getHdrAeRouteAttr(pHdl->mAlgoCtx, pHdrAeRouteAttr, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -153,10 +153,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_setSyncTestAttr(AiqAlgoCamGroupAeHandler_t* 
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_setSyncTest(pHdl->mAlgoCtx, &SyncTestAttr, true, false);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_setSyncTest(pHdl->mAlgoCtx, &SyncTestAttr, true, false);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -166,10 +166,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_getSyncTestAttr(AiqAlgoCamGroupAeHandler_t* 
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_getSyncTest(pHdl->mAlgoCtx, pSyncTestAttr, true);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_getSyncTest(pHdl->mAlgoCtx, pSyncTestAttr, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -179,10 +179,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_queryExpInfo(AiqAlgoCamGroupAeHandler_t* pAe
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_queryExpInfo(pHdl->mAlgoCtx, pExpQueryInfo, true);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_queryExpInfo(pHdl->mAlgoCtx, pExpQueryInfo, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }
@@ -193,12 +193,12 @@ XCamReturn AiqAlgoCamGroupAeHandler_setExpSwAttr(AiqAlgoCamGroupAeHandler_t* pAe
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-        ret = rk_aiq_uapi_ae_setExpSwAttr(pHdl->mAlgoCtx, &ExpSwAttr, true);
-        aiqMutex_unlock(&pHdl->mCfgMutex);
-        EXIT_ANALYZER_FUNCTION();
-        return ret;
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_setExpSwAttr(pHdl->mAlgoCtx, &ExpSwAttr, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
 }
 
 XCamReturn AiqAlgoCamGroupAeHandler_getExpSwAttr(AiqAlgoCamGroupAeHandler_t* pAeHdl, ae_api_expSwAttr_t* pExpSwAttr)
@@ -206,12 +206,37 @@ XCamReturn AiqAlgoCamGroupAeHandler_getExpSwAttr(AiqAlgoCamGroupAeHandler_t* pAe
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-        ret = rk_aiq_uapi_ae_getExpSwAttr(pHdl->mAlgoCtx, pExpSwAttr, true);
-        aiqMutex_unlock(&pHdl->mCfgMutex);
-        EXIT_ANALYZER_FUNCTION();
-        return ret;
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_getExpSwAttr(pHdl->mAlgoCtx, pExpSwAttr, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+XCamReturn AiqAlgoCamGroupAeHandler_setFaceExpAttr(AiqAlgoCamGroupAeHandler_t* pAeHdl, ae_api_faceExpAttr_t FaceExpAttr)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_setFaceExpAttr(pHdl->mAlgoCtx, &FaceExpAttr, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
+XCamReturn AiqAlgoCamGroupAeHandler_getFaceExpAttr(AiqAlgoCamGroupAeHandler_t* pAeHdl, ae_api_faceExpAttr_t* pFaceExpAttr)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_getFaceExpAttr(pHdl->mAlgoCtx, pFaceExpAttr, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
 }
 
 XCamReturn AiqAlgoCamGroupAeHandler_setLinExpAttr(AiqAlgoCamGroupAeHandler_t* pAeHdl, ae_api_linExpAttr_t LinExpAttr)
@@ -310,10 +335,10 @@ XCamReturn AiqAlgoCamGroupAeHandler_getRkAeStats(AiqAlgoCamGroupAeHandler_t* pAe
     ENTER_ANALYZER_FUNCTION();
 
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-	AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
-	aiqMutex_lock(&pHdl->mCfgMutex);
-	ret = rk_aiq_uapi_ae_getRKAeStats(pHdl->mAlgoCtx, pRkAeStats, true);
-	aiqMutex_unlock(&pHdl->mCfgMutex);
+    AiqAlgoCamGroupHandler_t* pHdl = (AiqAlgoCamGroupHandler_t*)pAeHdl;
+    aiqMutex_lock(&pHdl->mCfgMutex);
+    ret = rk_aiq_uapi_ae_getRKAeStats(pHdl->mAlgoCtx, pRkAeStats, true);
+    aiqMutex_unlock(&pHdl->mCfgMutex);
     EXIT_ANALYZER_FUNCTION();
     return ret;
 }

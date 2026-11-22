@@ -26,6 +26,12 @@ extern "C" {
         float max_sensor_gain;
         uint8_t* current_raw_ptr;
         char fpn_path[256];
+        uint8_t* fpn_raw_ptr;
+
+        int raw_format;     // 0 = packed10, 1 = unpacked16
+        int unpacked_shift;
+
+        int log_en;
     } rk_fpn_correction_param_t;
 
     extern int rk_fpn_correction_init(rk_fpn_correction_param_t* param);

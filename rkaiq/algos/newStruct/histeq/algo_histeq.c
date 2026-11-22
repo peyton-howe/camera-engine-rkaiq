@@ -24,6 +24,18 @@
 #include "interpolation.h"
 #include "xcam_log.h"
 
+#if RKAIQ_HAVE_HISTEQ_V10
+static void _histeq_applyUserCfg(HisteqContext_t* pHisteqCtx, histeq_param_t* out)
+{
+    if (!pHisteqCtx->user_cfg_en) {
+        return;
+    }
+
+    out->dyn.mapHist.sw_histT_mapUsrCfgStrg_alpha += 1.0;
+    out->dyn.mapHist.sw_histT_mapUsrCfg_strg += (1.0 - out->dyn.mapHist.sw_histT_mapUsrCfg_strg) * pHisteqCtx->user_cfg_strg;
+}
+#endif
+
 XCamReturn HisteqSelectParam(HisteqContext_t* pHisteqCtx, histeq_param_t* out, int iso) {
     LOGI_AHISTEQ("%s(%d): enter!\n", __FUNCTION__, __LINE__);
 
@@ -135,6 +147,8 @@ static XCamReturn create_context(RkAiqAlgoContext** context, const AlgoCtxInstan
 
     ctx->isReCal_      = true;
     ctx->histeq_attrib = (histeq_api_attrib_t*)(CALIBDBV2_GET_MODULE_PTR(pCalibDbV2, histEQ));
+    ctx->user_cfg_en   = false;
+    ctx->user_cfg_strg = 0.0f;
 
     *context = (RkAiqAlgoContext*)ctx;
     LOGV_AHISTEQ("%s: (exit)\n", __FUNCTION__);
@@ -204,6 +218,10 @@ XCamReturn Ahisteq_processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* out
         histeqRes->sta = pHisteqCtx->histeq_attrib->stAuto.sta;
         HisteqSelectParam(pHisteqCtx, histeqRes, iso);
 
+#if RKAIQ_HAVE_HISTEQ_V10
+        _histeq_applyUserCfg(pHisteqCtx, histeqRes);
+#endif
+
         outparams->cfg_update = true;
         outparams->en         = histeq_attrib->en;
         outparams->bypass     = histeq_attrib->bypass;
@@ -220,6 +238,36 @@ XCamReturn Ahisteq_processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* out
 static XCamReturn processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams) {
     int iso = inparams->u.proc.iso;
     Ahisteq_processing(inparams, outparams, iso);
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
+algo_histeq_SetUsrCfgStrg(RkAiqAlgoContext* ctx, bool en, float strength)
+{
+    if(ctx == NULL) {
+        LOGE_AHISTEQ("%s(%d): null pointer\n", __FUNCTION__, __LINE__);
+        return XCAM_RETURN_ERROR_PARAM;
+    }
+
+    HisteqContext_t* pHisteqCtx = (HisteqContext_t*)ctx;
+    pHisteqCtx->user_cfg_en     = en;
+    pHisteqCtx->user_cfg_strg   = strength;
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn
+algo_histeq_GetUsrCfgStrg(RkAiqAlgoContext* ctx, bool *en, float* strength)
+{
+    if(ctx == NULL) {
+        LOGE_AHISTEQ("%s(%d): null pointer\n", __FUNCTION__, __LINE__);
+        return XCAM_RETURN_ERROR_PARAM;
+    }
+
+    HisteqContext_t* pHisteqCtx = (HisteqContext_t*)ctx;
+    *strength = pHisteqCtx->user_cfg_strg;
+    *en       = pHisteqCtx->user_cfg_en;
 
     return XCAM_RETURN_NO_ERROR;
 }

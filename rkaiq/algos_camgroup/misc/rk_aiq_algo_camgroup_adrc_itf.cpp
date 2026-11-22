@@ -94,20 +94,6 @@ prepare(RkAiqAlgoCom* params)
         pAdrcGrpCtx->FrameNumber = HDR_2X_NUM;
     else
         pAdrcGrpCtx->FrameNumber = HDR_3X_NUM;
-#if RKAIQ_HAVE_DRC_V12 || RKAIQ_HAVE_DRC_V12_LITE || RKAIQ_HAVE_DRC_V20
-    if (AdrcCfgParam->gcom.com.u.prepare.compr_bit) {
-        pAdrcGrpCtx->FrameNumber = SENSOR_MGE;
-        pAdrcGrpCtx->compr_bit   = AdrcCfgParam->gcom.com.u.prepare.compr_bit;
-        if (pAdrcGrpCtx->compr_bit > ISP_HDR_BIT_NUM_MAX)
-            LOGE_ATMO("%s:  SensorMgeBitNum(%d) > %d!!!\n", __FUNCTION__, pAdrcGrpCtx->compr_bit,
-                      ISP_HDR_BIT_NUM_MAX);
-        if (pAdrcGrpCtx->compr_bit < ISP_HDR_BIT_NUM_MIN)
-            LOGE_ATMO("%s:  SensorMgeBitNum(%d) < %d!!!\n", __FUNCTION__, pAdrcGrpCtx->compr_bit,
-                      ISP_HDR_BIT_NUM_MIN);
-        pAdrcGrpCtx->compr_bit =
-            LIMIT_VALUE(pAdrcGrpCtx->compr_bit, ISP_HDR_BIT_NUM_MAX, ISP_HDR_BIT_NUM_MIN);
-    }
-#endif
 
     if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )) {
         LOGI_ATMO("%s: Adrc Reload Para!\n", __FUNCTION__);
@@ -312,30 +298,6 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
                                                    ->aec._effAecExpInfo.HdrExp[1]
                                                    .exp_real_params.isp_dgain *
                                                ISOMIN;
-        } else if (pAdrcGrpCtx->FrameNumber == SENSOR_MGE) {
-#if RKAIQ_HAVE_DRC_V12 || RKAIQ_HAVE_DRC_V12_LITE || RKAIQ_HAVE_DRC_V20
-            pAdrcGrpCtx->NextData.AEData.MExpo =
-                pAdrcGrpParams->camgroupParmasArray[0]
-                    ->aec._effAecExpInfo.LinearExp.exp_real_params.analog_gain *
-                pAdrcGrpParams->camgroupParmasArray[0]
-                    ->aec._effAecExpInfo.LinearExp.exp_real_params.digital_gain *
-                pAdrcGrpParams->camgroupParmasArray[0]
-                    ->aec._effAecExpInfo.LinearExp.exp_real_params.isp_dgain *
-                pAdrcGrpParams->camgroupParmasArray[0]
-                    ->aec._effAecExpInfo.LinearExp.exp_real_params.integration_time;
-            pAdrcGrpCtx->NextData.AEData.LExpo = pAdrcGrpCtx->NextData.AEData.MExpo;
-            pAdrcGrpCtx->NextData.AEData.SExpo =
-                pAdrcGrpCtx->NextData.AEData.MExpo /
-                pow(2.0f, float(pAdrcGrpCtx->compr_bit - ISP_HDR_BIT_NUM_MIN));
-            pAdrcGrpCtx->NextData.AEData.ISO =
-                pAdrcGrpParams->camgroupParmasArray[0]
-                    ->aec._effAecExpInfo.LinearExp.exp_real_params.analog_gain *
-                pAdrcGrpParams->camgroupParmasArray[0]
-                    ->aec._effAecExpInfo.LinearExp.exp_real_params.digital_gain *
-                pAdrcGrpParams->camgroupParmasArray[0]
-                    ->aec._effAecExpInfo.LinearExp.exp_real_params.isp_dgain *
-                ISOMIN;
-#endif
         }
         pAdrcGrpCtx->NextData.AEData.ISO =
             LIMIT_VALUE(pAdrcGrpCtx->NextData.AEData.ISO, ISOMAX, ISOMIN);
@@ -377,8 +339,7 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
                       pAdrcGrpParams->camgroupParmasArray[0]
                           ->aec._effAecExpInfo.HdrExp[2]
                           .exp_real_params.integration_time);
-        } else if (pAdrcGrpCtx->FrameNumber == LINEAR_NUM ||
-                   pAdrcGrpCtx->FrameNumber == SENSOR_MGE) {
+        } else if (pAdrcGrpCtx->FrameNumber == LINEAR_NUM) {
             LOGV_ATMO("%s: nextFrame: exp: %f-%f\n", __FUNCTION__,
                       pAdrcGrpParams->camgroupParmasArray[0]
                               ->aec._effAecExpInfo.LinearExp.exp_real_params.analog_gain *

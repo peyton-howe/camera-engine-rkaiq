@@ -996,21 +996,27 @@ _setIspParamToDrv(AiqMemcManager_t* pMemcMan, AiqV4l2Buffer_t* pV4l2Buf, const r
 #if defined(ISP_HW_V32) || defined(ISP_HW_V32_LITE)
     struct isp32_isp_params_cfg* isp_params =
         (struct isp32_isp_params_cfg*)(AiqV4l2Buffer_getBuf(pV4l2Buf)->m.userptr);
+    struct isp32_isp_params_cfg ori_params;
 #elif defined(ISP_HW_V30)
     struct isp3x_isp_params_cfg* isp_params =
         (struct isp3x_isp_params_cfg*)(AiqV4l2Buffer_getBuf(pV4l2Buf)->m.userptr);
+    struct isp3x_isp_params_cfg ori_params;
 #elif defined(ISP_HW_V21)
     struct isp21_isp_params_cfg* isp_params =
         (struct isp21_isp_params_cfg*)(AiqV4l2Buffer_getBuf(pV4l2Buf)->m.userptr);
+    struct isp21_isp_params_cfg ori_params;
 #elif defined(ISP_HW_V39)
     struct isp39_isp_params_cfg* isp_params =
         (struct isp39_isp_params_cfg*)(AiqV4l2Buffer_getBuf(pV4l2Buf)->m.userptr);
+    struct isp39_isp_params_cfg ori_params;
 #elif defined(ISP_HW_V33)
     struct isp33_isp_params_cfg* isp_params =
         (struct isp33_isp_params_cfg*)(AiqV4l2Buffer_getBuf(pV4l2Buf)->m.userptr);
+    struct isp33_isp_params_cfg ori_params;
 #elif defined(ISP_HW_V35)
     struct isp35_isp_params_cfg* isp_params =
         (struct isp35_isp_params_cfg*)(AiqV4l2Buffer_getBuf(pV4l2Buf)->m.userptr);
+    struct isp35_isp_params_cfg ori_params;
 #else
     struct isp2x_isp_params_cfg* isp_params =
         (struct isp2x_isp_params_cfg*)(AiqV4l2Buffer_getBuf(pV4l2Buf)->m.userptr);
@@ -1019,12 +1025,41 @@ _setIspParamToDrv(AiqMemcManager_t* pMemcMan, AiqV4l2Buffer_t* pV4l2Buf, const r
     int buf_index      = AiqV4l2Buffer_getBuf(pV4l2Buf)->index;
     frameId            = isp_params->frame_id;
 
+     uint64_t oldEns = pCamHw->_isp_module_ens;
+    // assume the max valid bit is 60
+    for (int i = 0; i < 60; i++) {
+        if (isp_params->module_en_update & (1ULL << i)) {
+            if (isp_params->module_ens & (1ULL << i))
+                pCamHw->_isp_module_ens |= (1ULL << i);
+            else
+                pCamHw->_isp_module_ens &= ~(1ULL << i);
+        }
+    }
+
+    if (oldEns == pCamHw->_isp_module_ens && pCamHw->_state == CAM_HW_STATE_STARTED)
+        isp_params->module_en_update = 0;
+
+    if (pCamHw->updateEffParams) {
+#if defined(RKAIQ_HAVE_MULTIISP) && (defined(ISP_HW_V30) || defined(ISP_HW_V32) || \
+            defined(ISP_HW_V32_LITE) || defined(ISP_HW_V39) || defined(ISP_HW_V33) || defined(ISP_HW_V35))
+        if (g_mIsMultiIspMode) {
+            ori_params = *isp_params;
+            pCamHw->updateEffParams(pCamHw, isp_params, &ori_params);
+        } else
+            pCamHw->updateEffParams(pCamHw, isp_params, NULL);
+#else
+        pCamHw->updateEffParams(pCamHw, isp_params, NULL);
+#endif
+    }
+
     struct isp35_bay3d_cfg *b3d_cfg = &(isp_params->others.bay3d_cfg);
     if (pMemcMan->mMemcEn && mesh_info &&
         (isp_params->module_cfg_update & ISP35_MODULE_BAY3D)) {
         b3d_cfg->lut_buf_fd = mesh_info->fd;
         b3d_cfg->b3dldc_last_ffff_off = pMemcMan->_param.b3dldc_offset;
-
+        if (pMemcMan->_last_btnr_cfg_params) {
+            memcpy(pMemcMan->_last_btnr_cfg_params, b3d_cfg, sizeof(struct isp35_bay3d_cfg));
+        }
         // LOGK("run here %s:%d id %d fd %d off %d %p", __func__, __LINE__, frameId, b3d_cfg->lut_buf_fd, b3d_cfg->b3dldc_last_ffff_off, b3d_cfg);
     } else if (mesh_info) {
         *mesh_info->state = MESH_BUF_INIT;
@@ -1128,24 +1163,66 @@ XCamReturn AiqMemcManager_result_callback(AiqMemcManager_t* pMemcMan,
             }
             aiqMutex_unlock(&pMemcMan->_mFullParam_mutex);
 
-            if (pV4l2Buf && res->mesh_info) {
-                aiqMutex_lock(&pCamHw->_stop_cond_mutex);
-                if (pCamHw->_isp_stream_status != ISP_STREAM_STATUS_STREAM_OFF && res->frame_id > 1) {
-                    _setIspParamToDrv(pMemcMan, pV4l2Buf, res->mesh_info);
-                } else {
-                    *(res->mesh_info->state) = MESH_BUF_INIT;
+            aiqMutex_lock(&pCamHw->_stop_cond_mutex);
+            if (pCamHw->_isp_stream_status != ISP_STREAM_STATUS_STREAM_OFF) {
+                if (pV4l2Buf && res->mesh_info) {
+                    if (res->frame_id > 1) {
+                        _setIspParamToDrv(pMemcMan, pV4l2Buf, res->mesh_info);
+                    } else {
+                        *(res->mesh_info->state) = MESH_BUF_INIT;
+                        AiqV4l2Device_returnBufToPool(pCamHw->mIspParamsDev, pV4l2Buf);
+                    }
+                } else if (res->mesh_info) {
+                    LOGE_ANR("frame id %d param buf is no ready, no set to drv line %d", res->frame_id, __LINE__);
+                    pV4l2Buf = AiqV4l2Device_getBuf(pCamHw->mIspParamsDev, -1);
+                    if (pV4l2Buf && pMemcMan->_last_btnr_cfg_params) {
+#if defined(ISP_HW_V35)
+                        struct isp35_isp_params_cfg* isp_params =
+                            (struct isp35_isp_params_cfg*)(AiqV4l2Buffer_getBuf(pV4l2Buf)->m.userptr);
+
+                        isp_params->module_en_update  = 0;
+                        isp_params->module_cfg_update = ISP35_MODULE_BAY3D;
+                        isp_params->module_ens = 0;
+                        isp_params->frame_id = res->frame_id;
+
+                        // if (res->mesh_info && pMemcMan->_algo_ctx) {
+                        //     rk_gyro_memc_param_t in_param;
+                        //     memset(&in_param, 0, sizeof(rk_gyro_memc_param_t));
+                        //     in_param.enable_default_map = true;
+                        //     in_param.map_fix_bit_y = 4;
+                        //     in_param.map_fix_bit_x = 4;
+                        //     in_param.raw_wid = pMemcMan->Width;
+                        //     in_param.raw_hgt = pMemcMan->Height;
+                        //     if (in_param.raw_wid > 4080)
+                        //         in_param.map_fix_bit_x = 3;
+                        //     if (in_param.raw_hgt > 4080)
+                        //         in_param.map_fix_bit_y = 3;
+                        //     in_param.map_mesh_fix_ptr = res->mesh_info->addr;
+                        //     in_param.mapX_start_fix_ptr = res->mesh_info->addr1;
+                        //     rk_gyro_memc_default_map(pMemcMan->_algo_ctx, &in_param);
+                        // }
+
+                        isp_params->others.bay3d_cfg = *((struct isp35_bay3d_cfg*)pMemcMan->_last_btnr_cfg_params);
+                        if (res->frame_id > 1) {
+                            _setIspParamToDrv(pMemcMan, pV4l2Buf, res->mesh_info);
+                        } else {
+                            *(res->mesh_info->state) = MESH_BUF_INIT;
+                            AiqV4l2Device_returnBufToPool(pCamHw->mIspParamsDev, pV4l2Buf);
+                        }
+#endif
+                    } else {
+                        *(res->mesh_info->state) = MESH_BUF_INIT;
+                    }
+                    ret = XCAM_RETURN_ERROR_FAILED;
+                } else if (pV4l2Buf) {
                     AiqV4l2Device_returnBufToPool(pCamHw->mIspParamsDev, pV4l2Buf);
+                    LOGE_ANR("frame id %d b3dldc mesh no ready, no set to drv line %d", res->frame_id, __LINE__);
+                    ret = XCAM_RETURN_ERROR_FAILED;
                 }
-                aiqMutex_unlock(&pCamHw->_stop_cond_mutex);
             } else if (res->mesh_info) {
                 *(res->mesh_info->state) = MESH_BUF_INIT;
-                LOGE_ANR("frame id %d param buf is no ready, no set to drv line %d", res->frame_id, __LINE__);
-                ret = XCAM_RETURN_ERROR_FAILED;
-            } else if (pV4l2Buf) {
-                AiqV4l2Device_returnBufToPool(pCamHw->mIspParamsDev, pV4l2Buf);
-                LOGE_ANR("frame id %d b3dldc mesh no ready, no set to drv line %d", res->frame_id, __LINE__);
-                ret = XCAM_RETURN_ERROR_FAILED;
             }
+            aiqMutex_unlock(&pCamHw->_stop_cond_mutex);
         }
     }
     return ret;
@@ -1364,6 +1441,8 @@ XCamReturn AiqMemcManager_init(AiqMemcManager_t* pMemcMan,
     pMemcMan->_import_buffer = false;
 
     pMemcMan->mIirPkWarp = true;
+    pMemcMan->_last_btnr_cfg_params = NULL;
+    pMemcMan->_last_btnr_cfg_params = aiq_mallocz(sizeof(struct isp35_bay3d_cfg));
     // pMemcMan->mIirPkWarp = !!_get_int_default_frome_file("/data/memc_pk_warp_en");
 
     AiqMemcProcThread_init(&pMemcMan->mProcTh, "AlgoMemcProcTh", pMemcMan);
@@ -1389,6 +1468,11 @@ void AiqMemcManager_deinit(AiqMemcManager_t* pMemcMan)
     aiqList_deinit(pMemcMan->mImuDataList);
     aiqMutex_deInit(&pMemcMan->_mFullParam_mutex);
     aiqPool_deinit(pMemcMan->mMemcResPool);
+
+    if (pMemcMan->_last_btnr_cfg_params) {
+        aiq_free(pMemcMan->_last_btnr_cfg_params);
+        pMemcMan->_last_btnr_cfg_params = NULL;
+    }
 
 }
 

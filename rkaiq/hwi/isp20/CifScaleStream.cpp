@@ -140,6 +140,16 @@ XCamReturn CifSclStream::start()
     return XCAM_RETURN_NO_ERROR;
 }
 
+XCamReturn CifSclStream::stopTreadOnly()
+{
+    for (int i = 0; i < index; i++) {
+        if (_stream[i].ptr())
+            _stream[i]->stopThreadOnly();
+    }
+    return XCAM_RETURN_NO_ERROR;
+}
+
+
 XCamReturn CifSclStream::stop()
 {
     for (int i = 0; i < index; i++) {

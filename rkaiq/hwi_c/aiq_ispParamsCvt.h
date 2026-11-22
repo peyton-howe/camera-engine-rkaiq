@@ -179,7 +179,7 @@ struct AiqIspParamsCvt_s {
 #if (defined(ISP_HW_V39) || defined(ISP_HW_V33) || defined(ISP_HW_V35)) && (USE_NEWSTRUCT)
     btnr_cvt_info_t mBtnrInfo;
     void *btnr_attrib;
-    void *btnr2_attrib;
+    void *btnr_cis_info;
 #endif
     float mLatestIspDgain;
 #if defined(ISP_HW_V39) && (USE_NEWSTRUCT)

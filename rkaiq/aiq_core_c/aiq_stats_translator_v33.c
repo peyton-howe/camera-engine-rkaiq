@@ -21,9 +21,9 @@
 
 // #define AE_STATS_DEBUG
 #define MAX_8BITS  ((1 << 8) - 1)
-#define MAX_10BITS (1 << 10) - 1
-#define MAX_12BITS (1 << 12) - 1
-#define MAX_29BITS (1 << 29) - 1
+#define MAX_10BITS ((1 << 10) - 1)
+#define MAX_12BITS ((1 << 12) - 1)
+#define MAX_29BITS ((1 << 29) - 1)
 #define MAX_32BITS 0xffffffff
 
 #if defined(ISP_HW_V33) & defined(USE_NEWSTRUCT)

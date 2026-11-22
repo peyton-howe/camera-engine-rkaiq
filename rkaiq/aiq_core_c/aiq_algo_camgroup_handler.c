@@ -162,6 +162,7 @@ XCamReturn AiqAlgoCamGroupHandler_prepare(AiqAlgoCamGroupHandler_t* pAlgoCamGrou
     com->u.prepare.sns_op_width  = sharedCom->snsDes.isp_acq_width;
     com->u.prepare.sns_op_height = sharedCom->snsDes.isp_acq_height;
     com->u.prepare.compr_bit     = sharedCom->snsDes.compr_bit;
+    com->u.prepare.compr_single_bit = sharedCom->snsDes.compr_single_bit;
     com->u.prepare.conf_type     = sharedCom->conf_type;
     com->u.prepare.calibv2 =
         (CamCalibDbV2Context_t*)(prepareCfg->s_calibv2);

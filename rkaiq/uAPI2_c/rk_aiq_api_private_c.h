@@ -41,6 +41,7 @@ typedef enum {
 typedef struct rk_aiq_sys_ctx_s {
     rk_aiq_cam_type_t cam_type;
     RkAiqAlgoDescription* ae_desc;
+    bool _isCustomAe;
     RkAiqAlgoDescription* awb_desc;
     const char* _sensor_entity_name;
     AiqManager_t* _rkAiqManager;
@@ -82,6 +83,7 @@ typedef struct rk_aiq_camgroup_ctx_s {
 #ifdef RKAIQ_ENABLE_CAMGROUP
     rk_aiq_cam_type_t cam_type;
     RkAiqAlgoDescription* ae_desc;
+    bool _isCustomAe;
     RkAiqAlgoDescription* awb_desc;
     rk_aiq_sys_ctx_t* cam_ctxs_array[RK_AIQ_CAM_GROUP_MAX_CAMS];
     int sns_ids_array[RK_AIQ_CAM_GROUP_MAX_CAMS];

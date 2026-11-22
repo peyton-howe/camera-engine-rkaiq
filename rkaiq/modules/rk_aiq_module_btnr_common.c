@@ -1,4 +1,5 @@
 #include "rk_aiq_isp39_modules.h"
+#include "interpolation.h"
 
 #define FIXTNRWGT       10
 #define FIXTNRKAL       8
@@ -364,6 +365,43 @@ void bayertnr_save_stats(void *stats_buffer, btnr_cvt_info_t *pBtnrInfo)
                    btnr_stats->sigma_y[19]);
 #endif
         }
+
+        if (stats->meas_type & ISP35_STAT_BAY3D_L2) {
+            uint8_t min_idx = 0;
+            for (uint8_t i = 0; i < pBtnrInfo->stats_buffer_cnt; i++) {
+                if (pBtnrInfo->mBtnr2Stats[min_idx].id > pBtnrInfo->mBtnr2Stats[i].id)
+                    min_idx = i;
+            }
+            btnr_stats_t *btnr2_stats = &pBtnrInfo->mBtnr2Stats[min_idx];
+            btnr2_stats->id = stats->frame_id;
+            btnr2_stats->sigma_num = stats->stat.bay3d.sigma_num;
+            for (uint8_t i = 0; i < 20; i++) {
+                btnr2_stats->sigma_y[i] = stats->stat.bay3d.sigma_y[i];
+            }
+#if 0
+            printf("btnr sigma stats [%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d]\n",
+                   btnr2_stats->sigma_y[0],
+                   btnr2_stats->sigma_y[1],
+                   btnr2_stats->sigma_y[2],
+                   btnr2_stats->sigma_y[3],
+                   btnr2_stats->sigma_y[4],
+                   btnr2_stats->sigma_y[5],
+                   btnr2_stats->sigma_y[6],
+                   btnr2_stats->sigma_y[7],
+                   btnr2_stats->sigma_y[8],
+                   btnr2_stats->sigma_y[9],
+                   btnr2_stats->sigma_y[10],
+                   btnr2_stats->sigma_y[11],
+                   btnr2_stats->sigma_y[12],
+                   btnr2_stats->sigma_y[13],
+                   btnr2_stats->sigma_y[14],
+                   btnr2_stats->sigma_y[15],
+                   btnr2_stats->sigma_y[16],
+                   btnr2_stats->sigma_y[17],
+                   btnr2_stats->sigma_y[18],
+                   btnr2_stats->sigma_y[19]);
+#endif
+        }
     }
 #endif
 
@@ -414,6 +452,18 @@ btnr_stats_t *bayertnr_get_stats(btnr_cvt_info_t *pBtnrInfo, uint32_t frameId)
     }
     return &pBtnrInfo->mBtnrStats[idx];
 }
+
+btnr_stats_t *bayertnr2_get_stats(btnr_cvt_info_t *pBtnrInfo, uint32_t frameId)
+{
+    uint8_t idx = 0;
+
+    for (uint8_t i = 0; i < pBtnrInfo->stats_buffer_cnt; i++) {
+        if (pBtnrInfo->mBtnr2Stats[i].id == frameId - pBtnrInfo->stats_delay_cnt)
+            idx = i;
+    }
+    return &pBtnrInfo->mBtnr2Stats[idx];
+}
+
 #if defined(RKAIQ_HAVE_SHARP_V40) || defined(RKAIQ_HAVE_SHARP_V41)
 sharp_stats_t *sharp_get_stats(btnr_cvt_info_t *pBtnrInfo, uint32_t frameId)
 {
@@ -851,9 +901,19 @@ float btnr_hdr_mergeWgt_interpolate(int xData, int* luma_idx, float*luma2wgt_val
 void btnr_hdr_sigma_calc(uint16_t* pSigmaX, uint16_t* pSigmaY, uint16_t* pCalibX, uint16_t*pShortY, uint16_t* pLongY, mergeLuma2Wgt_t* pMerge_luma2wgt, btnr_trans_params_t *pTransParams, int sigbins, float hdr_ratio)
 {
     float short_iso_ratio = 0.0f, merge_luma2Wgt = 0.0f;
-    int i, tmp0, tmp1, short_edge_idx = 0;
+    int i, tmp0, tmp1, tmp2, tmp3, short_edge_idx = 0;
     int long_pixLuma, short_pixLuma;
     int pixmax_long =  bayertnr_logtrans(((1 << 12) - 1), pTransParams);
+	int* pMerge_luma_idx = NULL;
+	float* pMerge_luma_wgt = NULL;
+
+	#if MGE_WGT_USE_OLD_STRUCT
+		pMerge_luma_idx = pMerge_luma2wgt->luma_idx;
+		pMerge_luma_wgt = pMerge_luma2wgt->luma_wgt;
+	#else
+		pMerge_luma_idx = pMerge_luma2wgt->wgtCurve[0].idx;
+		pMerge_luma_wgt = pMerge_luma2wgt->wgtCurve[0].val;
+	#endif
 
     for(i = 0; i < sigbins; i++) {
         if(pSigmaX[i] <= pixmax_long) {
@@ -863,17 +923,21 @@ void btnr_hdr_sigma_calc(uint16_t* pSigmaX, uint16_t* pSigmaY, uint16_t* pCalibX
 
     for(i = 0; i < short_edge_idx; i++) {
         tmp1 = 0;
+		tmp2 = 0;
+		tmp3 = 0;
         merge_luma2Wgt = 0.0f;
         tmp0 = btnr_hdr_sigmaY_interpolate(pSigmaX[i], pCalibX, pLongY, sigbins);
         long_pixLuma = bayertnr_logiitrans(pSigmaX[i], pTransParams);
-        if(long_pixLuma >= pMerge_luma2wgt->luma_idx[0] * 4) {
+        if(long_pixLuma >= pMerge_luma_idx[0] * 4) {
             short_pixLuma = (float)long_pixLuma / hdr_ratio;
             short_pixLuma = bayertnr_logtrans(short_pixLuma, pTransParams);
             tmp1 = btnr_hdr_sigmaY_interpolate(MAX(short_pixLuma, 0), pCalibX, pShortY, sigbins);
-            tmp1 += bayertnr_logtrans(hdr_ratio, pTransParams);
-            merge_luma2Wgt = btnr_hdr_mergeWgt_interpolate(long_pixLuma / 4, pMerge_luma2wgt->luma_idx, pMerge_luma2wgt->luma_wgt);
+            tmp2 = tmp1 + bayertnr_logtrans(hdr_ratio, pTransParams);
+            tmp3 = tmp1 * sqrt(hdr_ratio);
+			tmp1 = 0.7*tmp2 + 0.3*tmp3;
+            merge_luma2Wgt = btnr_hdr_mergeWgt_interpolate(long_pixLuma / 4, pMerge_luma_idx, pMerge_luma_wgt);
             long_pixLuma = bayertnr_logiitrans(pSigmaX[i + 1], pTransParams);
-            merge_luma2Wgt = (merge_luma2Wgt + btnr_hdr_mergeWgt_interpolate(long_pixLuma / 4, pMerge_luma2wgt->luma_idx, pMerge_luma2wgt->luma_wgt)) / 2;
+            merge_luma2Wgt = (merge_luma2Wgt + btnr_hdr_mergeWgt_interpolate(long_pixLuma / 4, pMerge_luma_idx, pMerge_luma_wgt)) / 2;
         }
 
         pSigmaY[i] = tmp0 * (1.0f - merge_luma2Wgt) + merge_luma2Wgt * tmp1;
@@ -882,21 +946,251 @@ void btnr_hdr_sigma_calc(uint16_t* pSigmaX, uint16_t* pSigmaY, uint16_t* pCalibX
 
     for(i = short_edge_idx; i < sigbins; i++) {
         tmp1 = 0;
+		tmp2 = 0;
+		tmp3 = 0;
         merge_luma2Wgt = 1.0;
         long_pixLuma = bayertnr_logiitrans(pSigmaX[i], pTransParams);
         short_pixLuma = (float)long_pixLuma / hdr_ratio;
         short_pixLuma = bayertnr_logtrans(short_pixLuma, pTransParams);
         tmp0 = btnr_hdr_sigmaY_interpolate(MAX(short_pixLuma, 0), pCalibX, pShortY, sigbins);
-        tmp0 += bayertnr_logtrans(hdr_ratio, pTransParams);
-        if( long_pixLuma <= pMerge_luma2wgt->luma_idx[16] * 4) {
+        tmp2 = tmp1 + bayertnr_logtrans(hdr_ratio, pTransParams);
+        tmp3 = tmp1 * sqrt(hdr_ratio);
+		tmp1 = 0.7*tmp2 + 0.3*tmp3;
+        if( long_pixLuma <= pMerge_luma_idx[16] * 4) {
             tmp1 = btnr_hdr_sigmaY_interpolate(pSigmaX[i], pCalibX, pLongY, sigbins);
-            merge_luma2Wgt = btnr_hdr_mergeWgt_interpolate(long_pixLuma / 4, pMerge_luma2wgt->luma_idx, pMerge_luma2wgt->luma_wgt);
+            merge_luma2Wgt = btnr_hdr_mergeWgt_interpolate(long_pixLuma / 4, pMerge_luma_idx, pMerge_luma_wgt);
             long_pixLuma = bayertnr_logiitrans(pSigmaX[i + 1], pTransParams);
-            merge_luma2Wgt = (merge_luma2Wgt + btnr_hdr_mergeWgt_interpolate(long_pixLuma / 4, pMerge_luma2wgt->luma_idx, pMerge_luma2wgt->luma_wgt)) / 2;
+            merge_luma2Wgt = (merge_luma2Wgt + btnr_hdr_mergeWgt_interpolate(long_pixLuma / 4, pMerge_luma_idx, pMerge_luma_wgt)) / 2;
         }
         pSigmaY[i] = tmp0 * merge_luma2Wgt + (1.0 - merge_luma2Wgt) * tmp1;
         //printf("iitrans pSigmaX:%d short luma:%d %f tmp0:%d, merge_luma2Wgt:%f tmp1:%d finnal:%hu \n", pSigmaX[i], long_pixLuma, long_pixLuma/fdGain[0], tmp0, merge_luma2Wgt, tmp1, pSigmaY[i]);
     }
 
+}
+
+
+void btnr_sensor_hdr_sigma_calc(uint16_t* pSigmaX, uint16_t* pSigmaY, common_cvt_info_t* cvtinfo, btnr_cvt_info_t* pBtnrInfo, mergeLuma2Wgt_t* pMergeLumaWgt, int sigbins, btnr_trans_params_t *pTransParams)
+{
+    int frame_num = cvtinfo->frameNum;
+    int i = 0, j = 0;
+    int isSensorHdr = RK_AIQ_HDR_IS_SENSOR_BUILTIN(pBtnrInfo->_working_mode);
+    int iso[frame_num];
+    float exp_ratio[frame_num];
+    uint16_t **PPIsoCalibSigmaY;
+    uint16_t **PPIsoCalibSigmaX;
+    float iso_ratio;
+    int iso_ilow = 0, iso_ihigh = 0;
+    CalibDb_Cis_Tnr_t *btnr_cis_info = (CalibDb_Cis_Tnr_t *)pBtnrInfo->btnr_cis_info;
+    int sigma_x_linear[frame_num];
+    int sigma_x_log[frame_num];
+    int sigma_y[frame_num];
+    int sigma_y_tmp[frame_num];
+    float weight[frame_num - 1];
+    static int hdr_cnt = 0;
+    int blc = 0;
+	
+    if(cvtinfo->blc_res.en) {
+        blc = (cvtinfo->blc_res.obcPreTnr.hw_blcC_obGr_val + cvtinfo->blc_res.obcPreTnr.hw_blcC_obGb_val) / 2;
+        if((hdr_cnt % 300) == 0) {
+            printf("blc:%d\n", blc);
+        }
+    }
+
+	if((hdr_cnt % 300) == 0) {
+		for(i=0; i<frame_num -1; i++){
+			printf("frame idx %d : mergeLumaIdx: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+				i,
+				pMergeLumaWgt->wgtCurve[i].idx[0],
+				pMergeLumaWgt->wgtCurve[i].idx[1],
+				pMergeLumaWgt->wgtCurve[i].idx[2],
+				pMergeLumaWgt->wgtCurve[i].idx[3],
+				pMergeLumaWgt->wgtCurve[i].idx[4],
+				pMergeLumaWgt->wgtCurve[i].idx[5],
+				pMergeLumaWgt->wgtCurve[i].idx[6],
+				pMergeLumaWgt->wgtCurve[i].idx[7],
+				pMergeLumaWgt->wgtCurve[i].idx[8],
+				pMergeLumaWgt->wgtCurve[i].idx[9],
+				pMergeLumaWgt->wgtCurve[i].idx[10],
+				pMergeLumaWgt->wgtCurve[i].idx[11],
+				pMergeLumaWgt->wgtCurve[i].idx[12],
+				pMergeLumaWgt->wgtCurve[i].idx[13],
+				pMergeLumaWgt->wgtCurve[i].idx[14],
+				pMergeLumaWgt->wgtCurve[i].idx[15],
+				pMergeLumaWgt->wgtCurve[i].idx[16]);
+			
+        	printf("frame idx %d : mergeWgt: %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+				i,
+				pMergeLumaWgt->wgtCurve[i].val[0],
+				pMergeLumaWgt->wgtCurve[i].val[1],
+				pMergeLumaWgt->wgtCurve[i].val[2],
+				pMergeLumaWgt->wgtCurve[i].val[3],
+				pMergeLumaWgt->wgtCurve[i].val[4],
+				pMergeLumaWgt->wgtCurve[i].val[5],
+				pMergeLumaWgt->wgtCurve[i].val[6],
+				pMergeLumaWgt->wgtCurve[i].val[7],
+				pMergeLumaWgt->wgtCurve[i].val[8],
+				pMergeLumaWgt->wgtCurve[i].val[9],
+				pMergeLumaWgt->wgtCurve[i].val[10],
+				pMergeLumaWgt->wgtCurve[i].val[11],
+				pMergeLumaWgt->wgtCurve[i].val[12],
+				pMergeLumaWgt->wgtCurve[i].val[13],
+				pMergeLumaWgt->wgtCurve[i].val[14],
+				pMergeLumaWgt->wgtCurve[i].val[15],
+				pMergeLumaWgt->wgtCurve[i].val[16]);
+		}
+    }
+
+    PPIsoCalibSigmaX = (uint16_t **)malloc(frame_num * sizeof(uint16_t *));
+    PPIsoCalibSigmaY = (uint16_t **)malloc(frame_num * sizeof(uint16_t *));
+    for(i = 0; i < frame_num; i++) {
+        PPIsoCalibSigmaX[i] = (uint16_t *)malloc(sigbins * sizeof(uint16_t));
+        memset(PPIsoCalibSigmaX[i], 0x00, sigbins * sizeof(uint16_t));
+        PPIsoCalibSigmaY[i] = (uint16_t *)malloc(sigbins * sizeof(uint16_t));
+        memset(PPIsoCalibSigmaY[i], 0x00, sigbins * sizeof(uint16_t));
+    }
+
+    for(i = 0; i < frame_num; i++) {
+        if(isSensorHdr) {
+            if(i == frame_num - 1) {
+                exp_ratio[i] = 1;
+            } else {
+                exp_ratio[i] = cvtinfo->ae_exp->HdrExp[frame_num - 1].exp_real_params.cis_total_gain * cvtinfo->ae_exp->HdrExp[frame_num - 1].exp_real_params.integration_time
+                               / (cvtinfo->ae_exp->HdrExp[i].exp_real_params.cis_total_gain * cvtinfo->ae_exp->HdrExp[i].exp_real_params.integration_time);
+            }
+            iso[i] = cvtinfo->frameIso[i];
+        }
+
+        if((hdr_cnt % 300) == 0) {
+            printf("frame_idx:%d iso:%d time:%f again:%f cis_gain:%f, conversionGain:%f exp_ratio:%f\n",
+                   i, iso[i],
+                   cvtinfo->ae_exp->HdrExp[i].exp_real_params.integration_time,
+                   cvtinfo->ae_exp->HdrExp[i].exp_real_params.analog_gain,
+                   cvtinfo->ae_exp->HdrExp[i].exp_real_params.cis_total_gain,
+                   cvtinfo->ae_exp->HdrExp[i].exp_real_params.cis_total_gain / cvtinfo->ae_exp->HdrExp[i].exp_real_params.analog_gain,
+                   exp_ratio[i]);
+        }
+
+        iso_ilow = 0;
+        iso_ihigh = 0;
+        iso_ratio = 0.0;
+        pre_interp(iso[i], NULL, 0, &iso_ilow, &iso_ihigh, &iso_ratio);
+
+        //printf("iso:%d iso_low:%d iso_high:%d iso_ratio:%f\n", iso[i], iso_ilow, iso_ihigh, iso_ratio);
+        for(j = 0; j < sigbins; j++) {
+            uint16_t sigmaLowY =  btnr_cis_info->sigmaCurve_dyn[iso_ilow].sigmaCurve[i].val[j];
+            uint16_t sigmaHighY =  btnr_cis_info->sigmaCurve_dyn[iso_ihigh].sigmaCurve[i].val[j];
+            PPIsoCalibSigmaX[i][j] =  btnr_cis_info->sigmaCurve_dyn[iso_ilow].sigmaCurve[i].idx[j];
+            PPIsoCalibSigmaY[i][j] = ( sigmaLowY + iso_ratio * (sigmaHighY - sigmaLowY));
+            //printf("frame_idx:%d sigmaY[%d]=%d \n", i, j, PPIsoCalibSigmaY[i][j]);
+        }
+
+        if((hdr_cnt % 300) == 0) {
+            printf("frame_idx:%d bins:%d sigmaY=%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+                   i, sigbins,
+                   PPIsoCalibSigmaY[i][0],
+                   PPIsoCalibSigmaY[i][1],
+                   PPIsoCalibSigmaY[i][2],
+                   PPIsoCalibSigmaY[i][3],
+                   PPIsoCalibSigmaY[i][4],
+                   PPIsoCalibSigmaY[i][5],
+                   PPIsoCalibSigmaY[i][6],
+                   PPIsoCalibSigmaY[i][7],
+                   PPIsoCalibSigmaY[i][8],
+                   PPIsoCalibSigmaY[i][9],
+                   PPIsoCalibSigmaY[i][10],
+                   PPIsoCalibSigmaY[i][11],
+                   PPIsoCalibSigmaY[i][12],
+                   PPIsoCalibSigmaY[i][13],
+                   PPIsoCalibSigmaY[i][14],
+                   PPIsoCalibSigmaY[i][15],
+                   PPIsoCalibSigmaY[i][16],
+                   PPIsoCalibSigmaY[i][17]);
+        }
+
+    }
+
+
+    for(j = 0; j < sigbins; j++) {
+        sigma_x_log[frame_num - 1] = pSigmaX[j];
+        sigma_x_linear[frame_num - 1] = bayertnr_logiitrans(sigma_x_log[frame_num - 1], pTransParams);
+        sigma_y[frame_num - 1] = btnr_hdr_sigmaY_interpolate(sigma_x_log[frame_num - 1], PPIsoCalibSigmaX[frame_num - 1], PPIsoCalibSigmaY[frame_num - 1], sigbins);
+        sigma_y_tmp[frame_num - 1] = sigma_y[frame_num - 1];
+        for(i = 0; i < frame_num - 1; i++) {
+            sigma_x_linear[i] =  sigma_x_linear[frame_num - 1] / exp_ratio[i];
+            sigma_x_log[i] = bayertnr_logtrans(sigma_x_linear[i], pTransParams);
+            sigma_y[i] = btnr_hdr_sigmaY_interpolate(MAX(sigma_x_log[i], 0), PPIsoCalibSigmaX[i], PPIsoCalibSigmaY[i], sigbins);
+
+        }
+
+        for(i = 0; i < frame_num - 1; i++) {
+			#if MGE_WGT_USE_OLD_STRUCT
+			weight[i] = btnr_hdr_mergeWgt_interpolate(MAX((sigma_x_linear[i + 1]  -  blc / 2), 0), pMergeLumaWgt[i].luma_idx, pMergeLumaWgt[i].luma_wgt);
+            if( 0 ) {
+                int pre_x = bayertnr_logiitrans(pSigmaX[j - 1], pTransParams) / exp_ratio[i];
+                weight[i] = (weight[i] + btnr_hdr_mergeWgt_interpolate(MAX((pre_x), 0), pMergeLumaWgt[i].luma_idx, pMergeLumaWgt[i].luma_wgt)) / 2;
+            }
+			#else
+            weight[i] = btnr_hdr_mergeWgt_interpolate(MAX((sigma_x_linear[i + 1]  -  blc / 2), 0), pMergeLumaWgt->wgtCurve[i].idx, pMergeLumaWgt->wgtCurve[i].val);
+            if( 0 ) {
+                int pre_x = bayertnr_logiitrans(pSigmaX[j - 1], pTransParams) / exp_ratio[i];
+                weight[i] = (weight[i] + btnr_hdr_mergeWgt_interpolate(MAX((pre_x), 0), pMergeLumaWgt->wgtCurve[i].idx, pMergeLumaWgt->wgtCurve[i].val)) / 2;
+            }
+			#endif
+            if(sigma_x_linear[i] >= blc / 2 || weight[i] >= 0.3) {
+                int tmp_y1 = sigma_y[i] * sqrt(exp_ratio[i]);
+                int tmp_y2 = sigma_y[i] + bayertnr_logtrans(exp_ratio[i], pTransParams);
+                sigma_y[i] = (0.3 * tmp_y1 + 0.7 * tmp_y2);
+            }
+            sigma_y_tmp[i] = sigma_y[i];
+            sigma_y[i + 1] = (sigma_y[i]) * weight[i] + (1.0 - weight[i]) * (sigma_y[i + 1]);
+        }
+
+        pSigmaY[j] = sigma_y[frame_num - 1];
+
+
+        if((hdr_cnt % 300) == 0) {
+            printf("linear x:%d %d %d Log x:%d %d %d  log Y:%d %d %d weight:%f %f finnal:%d\n",
+                   sigma_x_linear[2], sigma_x_linear[1], sigma_x_linear[0],
+                   sigma_x_log[2], sigma_x_log[1], sigma_x_log[0],
+                   sigma_y_tmp[2], sigma_y_tmp[1], sigma_y_tmp[0],
+                   weight[1], weight[0], pSigmaY[j]);
+        }
+    }
+
+
+
+    for(j = 1; j < sigbins - 1; j++) {
+        pSigmaY[j] = ( 0.2 * pSigmaY[j - 1] + 0.6 * pSigmaY[j] + 0.2 * pSigmaY[j + 1]);
+    }
+
+    if((hdr_cnt % 300) == 0) {
+        printf("finnal sigmaY=%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+               pSigmaY[0],
+               pSigmaY[1],
+               pSigmaY[2],
+               pSigmaY[3],
+               pSigmaY[4],
+               pSigmaY[5],
+               pSigmaY[6],
+               pSigmaY[7],
+               pSigmaY[8],
+               pSigmaY[9],
+               pSigmaY[10],
+               pSigmaY[11],
+               pSigmaY[12],
+               pSigmaY[13],
+               pSigmaY[14],
+               pSigmaY[15],
+               pSigmaY[16],
+               pSigmaY[17]);
+    }
+
+    for(i = 0; i < frame_num; i++) {
+        free(PPIsoCalibSigmaX[i]);
+        free(PPIsoCalibSigmaY[i]);
+    }
+    free(PPIsoCalibSigmaX);
+    free(PPIsoCalibSigmaY);
+    hdr_cnt++;
 }
 

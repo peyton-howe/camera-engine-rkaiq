@@ -5,6 +5,9 @@
 #endif
 #define LOG_TAG "rkaiq_tool_sysctl.cpp"
 
+#include "uAPI/rk_aiq_api_private.h"
+#include "hwi/CamHwBase.h"
+
 int setCpsLtCfg(rk_aiq_sys_ctx_t* ctx, char* data) {
     return rk_aiq_uapi_sysctl_setCpsLtCfg(ctx, (rk_aiq_cpsl_cfg_t*) data);
 }
@@ -188,6 +191,39 @@ static void copyRkAiqExpParamComb_t2RkToolExpParam_t(RkAiqExpParamComb_t *in, Rk
     out->exp_sensor_params.isp_digital_gain        = in->exp_sensor_params.isp_digital_gain;
 }
 
+static void _getEffWbGain(rk_aiq_sys_ctx_t* ctx, uint32_t fid, RkToolAwbParam_t* out)
+{
+    rkisp_effect_params_v20 ispParams;
+    memset(&ispParams, 0, sizeof(ispParams));
+    ctx->_camHw->getEffectiveIspParams(ispParams, fid);
+
+#if defined(ISP_HW_V21) || defined(ISP_HW_V30)
+    rk_aiq_isp_blc_v21_t blc = ispParams.blc_cfg;
+    struct isp21_awb_gain_cfg* in = NULL;
+#if defined(ISP_HW_V21)
+    in = &ispParams.isp_params_v21.others.awb_gain_cfg;
+#else
+    in = &ispParams.isp_params_v3x[0].others.awb_gain_cfg;
+#endif
+    out->awb_gain_gb = (in->gain0_green_b >> 8) + (in->gain0_green_b & 0xFF) / 256.0f;
+    out->awb_gain_gr = (in->gain0_green_r >> 8) + (in->gain0_green_r & 0xFF) / 256.0f;
+    out->awb_gain_b  = (in->gain0_blue >> 8) + (in->gain0_blue & 0xFF) / 256.0f;
+    out->awb_gain_r  = (in->gain0_red >> 8) + (in->gain0_red & 0xFF) / 256.0f;
+
+    out->awb_gain_gb *= (float)((1 << 12) - 1 - blc.v0.blc_gb) / ((1 << 12) - 1);
+    out->awb_gain_gr *= (float)((1 << 12) - 1 - blc.v0.blc_gr) / ((1 << 12) - 1);
+    out->awb_gain_b  *= (float)((1 << 12) - 1 - blc.v0.blc_b) / ((1 << 12) - 1);
+    out->awb_gain_r  *= (float)((1 << 12) - 1 - blc.v0.blc_r) / ((1 << 12) - 1);
+#else
+    struct isp32_awb_gain_cfg* in = &ispParams.awb_gain_cfg;
+    out->awb_gain_gb = (in->awb1_gain_gb >> 8) + (in->awb1_gain_gb & 0xFF) / 256.0f;
+    out->awb_gain_gr = (in->awb1_gain_gr >> 8) + (in->awb1_gain_gr & 0xFF) / 256.0f;
+    out->awb_gain_b = (in->awb1_gain_b >> 8) + (in->awb1_gain_b & 0xFF) / 256.0f;
+    out->awb_gain_r = (in->awb1_gain_r >> 8) + (in->awb1_gain_r & 0xFF) / 256.0f;
+#endif
+
+}
+
 int getTool3AStats(rk_aiq_sys_ctx_t* ctx, char* data)
 {
     int ret = 0;
@@ -209,6 +245,9 @@ int getTool3AStats(rk_aiq_sys_ctx_t* ctx, char* data)
         copyRkAiqExpParamComb_t2RkToolExpParam_t(&new_stats.aec_stats.ae_exp.HdrExp[1], &tool_stats->hdrExp[1]);
         copyRkAiqExpParamComb_t2RkToolExpParam_t(&new_stats.aec_stats.ae_exp.HdrExp[2], &tool_stats->hdrExp[2]);
 #endif
+
+        _getEffWbGain(ctx, new_stats.frame_id, &tool_stats->awbGain);
+
     }
     return ret;
 }
@@ -235,6 +274,9 @@ int getTool3AStatsBlk(rk_aiq_sys_ctx_t* ctx, char* data)
         copyRkAiqExpParamComb_t2RkToolExpParam_t(&new_stats->aec_stats.ae_exp.HdrExp[2], &tool_stats->hdrExp[2]);
 #endif
         rk_aiq_uapi_sysctl_release3AStatsRef(ctx, new_stats);
+
+        _getEffWbGain(ctx, tool_stats->frameID, &tool_stats->awbGain);
+
         return 0;
     } else {
         return -1;

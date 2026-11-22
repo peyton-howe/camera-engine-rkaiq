@@ -1594,7 +1594,7 @@ bool Isp3xParams::convert3aResultsToIspCfg(SmartPtr<cam3aResult> &result,
 #if defined(ISP_HW_V30)
     {
         RkAiqIspLdchParamsProxy* params = result.get_cast_ptr<RkAiqIspLdchParamsProxy>();
-        if (params && params->data()->is_update) {
+        if (params) {
             convertAiqLdchToIsp3xParams(isp_cfg, isp_cfg_right, params->data()->result, is_multi_isp);
         }
     }

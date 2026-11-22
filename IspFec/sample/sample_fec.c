@@ -1079,7 +1079,7 @@ int32_t main(int argc, char** argv) {
 #ifdef RKFEC_HW_V20
         parse_path(mesh_from, g_ispfec_cfg.u.mesh_file_path, g_ispfec_cfg.mesh_info.mesh_file);
 #else
-        strcpy(g_ispfec_cfg.u.mesh_file_path, "/etc/iqfiles/FEC_mesh_3840_2160_imx415_3.6mm/");
+        strcpy(g_ispfec_cfg.u.mesh_file_path, mesh_from);
         strcpy(g_ispfec_cfg.mesh_xint.mesh_file, "meshxi_level0.bin");
         strcpy(g_ispfec_cfg.mesh_xfra.mesh_file, "meshxf_level0.bin");
         strcpy(g_ispfec_cfg.mesh_yint.mesh_file, "meshyi_level0.bin");
@@ -1156,7 +1156,7 @@ int32_t main(int argc, char** argv) {
 
     ret = read_image_from_file(file_from, g_rkfec_buf_pic_in.map, g_rkfec_buf_pic_in.size);
     if (ret <= 0) {
-        stderr_info("Failed to read image from %d, ret: %s\n", strerror(errno));
+        stderr_info("Failed to read image from %s, ret: %s\n", file_from, strerror(errno));
         goto clean_up;
     }
 

@@ -159,6 +159,7 @@ typedef struct prepare_s {
     int sns_op_height;
     int conf_type;
     unsigned char compr_bit;
+    unsigned char compr_single_bit;
     CamCalibDbContext_t* calib;
     CamCalibDbV2Context_t* calibv2;
 } RkAiqAlgoCom_prepare_t; //for prepare function

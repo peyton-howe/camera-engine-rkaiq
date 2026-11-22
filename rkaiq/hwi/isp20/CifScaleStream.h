@@ -33,6 +33,7 @@ public:
     virtual ~CifSclStream();
     XCamReturn start();
     XCamReturn stop ();
+    XCamReturn stopTreadOnly();
     void set_working_mode(int mode);
     XCamReturn set_format(const struct v4l2_subdev_format& sns_sd_fmt, uint32_t sns_v4l_pix_fmt, int bpp);
     XCamReturn set_format(const struct v4l2_subdev_selection& sns_sd_sel, uint32_t sns_v4l_pix_fmt, int bpp);

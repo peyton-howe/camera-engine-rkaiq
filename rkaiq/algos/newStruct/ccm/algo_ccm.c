@@ -361,11 +361,6 @@ XCamReturn Accm_prepare(RkAiqAlgoCom* params)
         (ccm_calib_attrib_t*)(CALIBDBV2_GET_MODULE_PTR(params->u.prepare.calibv2, ccm));
     pCcmCtx->iso_list = params->u.prepare.calibv2->sensor_info->iso_list;
 
-    pCcmCtx->pre_illu_idx = INVALID_ILLU_IDX;
-    pCcmCtx->pre_saturation = 0.0;
-    pCcmCtx->pre_scale = 0.0;
-    pCcmCtx->pre_iso = 0;
-
     pCcmCtx->fScale = 0.0;
     pCcmCtx->damp_converged = false;
     pCcmCtx->is_calib_update = true;
@@ -386,15 +381,25 @@ XCamReturn Accm_processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outpar
     bool need_recal = pCcmCtx->isReCal_;
 
     bool isReCal_ = inparams->u.proc.is_attrib_update || inparams->u.proc.init;
+
+    if (pCcmCtx->ccm_selector.frame_num == 0 || inparams->u.proc.is_attrib_update) {
+        for (int i = 0; i < pdyn->sw_ccmT_illuLink_len; i++) {
+            selector_add_source(&pCcmCtx->ccm_selector, i,
+                                pdyn->illuLink[i].sw_ccmC_illu_name,
+                                pdyn->illuLink[i].sw_ccmC_wbGainR_val,
+                                pdyn->illuLink[i].sw_ccmC_wbGainB_val);
+        }
+        pCcmCtx->ccm_selector.source_count = MIN(pdyn->sw_ccmT_illuLink_len, ILLUM_MAX_NUM);
+    }
+
     if (isReCal_) {
         need_recal = true;
     }
     LOGD_ACCM("awbGain= (%f, %f)", swinfo->awbGain[0], swinfo->awbGain[1]);
-    int illu_idx = illu_estm_once(pdyn->illuLink, pdyn->sw_ccmT_illuLink_len, swinfo->awbGain);
-    if (illu_idx < 0) {
-        LOGE_ACCM("illu_estm_once failed!");
-        return XCAM_RETURN_ERROR_PARAM;
-    }
+    int illu_idx = -1;
+
+    selector_process_frame(&pCcmCtx->ccm_selector, swinfo->awbGain, &illu_idx);
+
     accm_param_illuLink_t *pIlluCase = &pdyn->illuLink[illu_idx];
 
     if (illu_idx != pCcmCtx->pre_illu_idx || pCcmCtx->is_calib_update) {
@@ -487,6 +492,12 @@ create_context(RkAiqAlgoContext **context, const AlgoCtxInstanceCfg* cfg)
 
     CcmContext_t* ctx = aiq_mallocz(sizeof(CcmContext_t));
     *context = (RkAiqAlgoContext *)(ctx);
+    ctx->pre_illu_idx = INVALID_ILLU_IDX;
+    ctx->pre_saturation = 0.0;
+    ctx->pre_scale = 0.0;
+    ctx->pre_iso = 0;
+
+    selector_init(&ctx->ccm_selector);
 
     LOG1_ACCM("%s: (exit)\n", __FUNCTION__ );
     return result;

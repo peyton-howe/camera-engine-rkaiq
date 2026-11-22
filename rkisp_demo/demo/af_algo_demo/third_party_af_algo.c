@@ -1091,3 +1091,121 @@ int32_t custom_af_run(rk_aiq_sys_ctx_t* ctx)
 
     return 0;
 }
+
+static void set_pdaf_input(const rk_aiq_sys_ctx_t* ctx)
+{
+    rk_aiq_af_attrib_t attr;
+
+    // change af mode to fixed mode
+    rk_aiq_user_api2_af_GetAttrib(ctx, &attr);
+    attr.AfMode = RKAIQ_AF_MODE_FIXED;
+    attr.sync.sync_mode = RK_AIQ_UAPI_MODE_SYNC;
+    rk_aiq_user_api2_af_SetAttrib(ctx, &attr);
+
+    // set pdlib input
+    rk_aiq_pdlib_input pdlib_input;
+
+    pdlib_input.thirdalgo_en = true;
+    // fixed window mode
+    pdlib_input.win_type = RK_PDLIB_FIXEDWIN; // RK_PDLIB_FLEXWIN;
+    if (pdlib_input.win_type == RK_PDLIB_FIXEDWIN) {
+        pdlib_input.fixedwin.hgrid_count = 8; // 16
+        pdlib_input.fixedwin.vgrid_count = 6; // 12
+        pdlib_input.fixedwin.roi.start_x = 0.4;
+        pdlib_input.fixedwin.roi.start_y = 0.4;
+        pdlib_input.fixedwin.roi.end_x = 0.6;
+        pdlib_input.fixedwin.roi.end_y = 0.6;
+    } else {
+        pdlib_input.flexwin.count = 2; // max 8
+        pdlib_input.flexwin.roi[0].start_x = 0.4;
+        pdlib_input.flexwin.roi[0].start_y = 0.4;
+        pdlib_input.flexwin.roi[0].end_x = 0.6;
+        pdlib_input.flexwin.roi[0].end_y = 0.6;
+        pdlib_input.flexwin.roi[1].start_x = 0.5;
+        pdlib_input.flexwin.roi[1].start_y = 0.3;
+        pdlib_input.flexwin.roi[1].end_x = 0.7;
+        pdlib_input.flexwin.roi[1].end_y = 0.6;
+    }
+    rk_aiq_uapi2_setPdafLibInput(ctx, &pdlib_input);
+}
+
+static void print_pdaf_stats(rk_aiq_pdlib_output *pdlib_output)
+{
+    printf("frame_id %d, win_type %d\n",
+        pdlib_output->frame_id, pdlib_output->win_type);
+
+    if (pdlib_output->win_type == RK_PDLIB_FIXEDWIN) {
+        printf("hgrid_count %d, vgrid_count %d\n",
+            pdlib_output->fixedwin.hgrid_count, pdlib_output->fixedwin.vgrid_count);
+        printf("roi %f, %f, %f, %f\n",
+            pdlib_output->fixedwin.roi.start_x, pdlib_output->fixedwin.roi.start_y, pdlib_output->fixedwin.roi.end_x, pdlib_output->fixedwin.roi.end_y);
+        printf("grid confidence\n");
+        for (int i = 0; i < pdlib_output->fixedwin.vgrid_count; i++) {
+            for (int j = 0; j < pdlib_output->fixedwin.hgrid_count; j++) {
+                printf("%08f, ", pdlib_output->fixedwin.grid[pdlib_output->fixedwin.hgrid_count * i + j].confidence);
+            }
+            printf("\n");
+        }
+        printf("grid defocus\n");
+        for (int i = 0; i < pdlib_output->fixedwin.vgrid_count; i++) {
+            for (int j = 0; j < pdlib_output->fixedwin.hgrid_count; j++) {
+                printf("%08d, ", pdlib_output->fixedwin.grid[pdlib_output->fixedwin.hgrid_count * i + j].defocus);
+            }
+            printf("\n");
+        }
+        printf("grid phasediff\n");
+        for (int i = 0; i < pdlib_output->fixedwin.vgrid_count; i++) {
+            for (int j = 0; j < pdlib_output->fixedwin.hgrid_count; j++) {
+                printf("%08d, ", pdlib_output->fixedwin.grid[pdlib_output->fixedwin.hgrid_count * i + j].phasediff);
+            }
+            printf("\n");
+        }
+    } else {
+        for (int i = 0; i < pdlib_output->flexwin.count; i++) {
+            printf("win %d, roi %f, %f, %f, %f, confidence %08f, defocus %08d, phasediff %08d\n",
+                i,
+                pdlib_output->flexwin.roi[i].start_x, pdlib_output->flexwin.roi[i].start_y, pdlib_output->flexwin.roi[i].end_x, pdlib_output->flexwin.roi[i].end_y,
+                pdlib_output->flexwin.win[i].confidence, pdlib_output->flexwin.win[i].defocus, pdlib_output->flexwin.win[i].phasediff);
+        }
+    }
+}
+
+static void* pdaf_thread(void* args) {
+    rk_aiq_sys_ctx_t* ctx = (rk_aiq_sys_ctx_t*)args;
+    XCamReturn ret;
+    pthread_detach (pthread_self());
+    printf("begin pdaf thread\n");
+
+    set_pdaf_input(ctx);
+    while(1) {
+        // get pdaf stats
+        rk_aiq_pdlib_output pdlib_output;
+        ret = rk_aiq_uapi2_getPdafLibOutput(ctx, &pdlib_output, -1);
+        if (ret == XCAM_RETURN_NO_ERROR) {
+            print_pdaf_stats(&pdlib_output);
+        } else {
+            if (ret == XCAM_RETURN_BYPASS) {
+                printf("aiq is not running !\n");
+                break;
+            } else if (ret == XCAM_RETURN_ERROR_TIMEOUT) {
+                printf("aiq timeout!\n");
+                continue;
+            } else if (ret == XCAM_RETURN_ERROR_FAILED) {
+                printf("aiq failed!\n");
+                break;
+            }
+        }
+
+    }
+    printf("end pdaf stats thread\n");
+    return 0;
+}
+
+int32_t custom_pdaf_run(rk_aiq_sys_ctx_t* ctx)
+{
+    pthread_t af_tid;
+    pthread_create(&af_tid, NULL, pdaf_thread, ctx);
+
+    return 0;
+}
+

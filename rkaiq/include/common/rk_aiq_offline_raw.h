@@ -17,6 +17,8 @@
 #define PLATFORM_TAG        0xFF0B
 #define END_TAG             0x00FF
 
+#define START_TAG_VERSION   0x0201
+
 #define TAG_BYTE_LEN        (2)
 #define BLOCK_BYTE_LEN      (4)
 
@@ -54,8 +56,6 @@ struct _raw_format
 
 typedef struct rk_aiq_frame_info_s
 {
-    unsigned short tag;
-    unsigned int size;
     unsigned short vesrion;
     uint32_t frame_id;
 
@@ -81,6 +81,10 @@ typedef struct rk_aiq_frame_info_s
 
     float awg_rgain;
     float awg_bgain;
+
+    float isp_dgain[3];
+
+    uint8_t reserve[248];
 }__attribute__ ((packed)) rk_aiq_frame_info_t;
 
 #endif

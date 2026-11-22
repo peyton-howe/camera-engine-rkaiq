@@ -404,6 +404,92 @@ XCamReturn RkAiqAfHandleInt::setAeStable(bool ae_stable) {
     return ret;
 }
 
+XCamReturn RkAiqAfHandleInt::setPdafLibInput(rk_aiq_pdlib_input* pdlib_in)
+{
+    if (!mEnable) {
+        return XCAM_RETURN_BYPASS;
+    }
+
+    if (pdlib_in->thirdalgo_en) {
+        if (pdlib_in->win_type == RK_PDLIB_FIXEDWIN) {
+            if (pdlib_in->fixedwin.hgrid_count > PDLIB_FIXEDWIN_MAX_WIDTH)
+                pdlib_in->fixedwin.hgrid_count = PDLIB_FIXEDWIN_MAX_WIDTH;
+            if (pdlib_in->fixedwin.vgrid_count > PDLIB_FIXEDWIN_MAX_HEIGHT)
+                pdlib_in->fixedwin.vgrid_count = PDLIB_FIXEDWIN_MAX_HEIGHT;
+            if ((pdlib_in->fixedwin.roi.start_x < 0 || pdlib_in->fixedwin.roi.start_x > 1) ||
+                (pdlib_in->fixedwin.roi.start_y < 0 || pdlib_in->fixedwin.roi.start_y > 1) ||
+                (pdlib_in->fixedwin.roi.end_x < 0 || pdlib_in->fixedwin.roi.end_x > 1) ||
+                (pdlib_in->fixedwin.roi.end_y < 0 || pdlib_in->fixedwin.roi.end_y > 1) ||
+                (pdlib_in->fixedwin.roi.start_x >= pdlib_in->fixedwin.roi.end_x) ||
+                (pdlib_in->fixedwin.roi.start_y >= pdlib_in->fixedwin.roi.end_y)) {
+                LOGE_AF("%s: input fixedwin roi abnormal. roi: %f, %f, %f, %f", __func__,
+                    pdlib_in->fixedwin.roi.start_x,
+                    pdlib_in->fixedwin.roi.start_y,
+                    pdlib_in->fixedwin.roi.end_x,
+                    pdlib_in->fixedwin.roi.end_y);
+                return XCAM_RETURN_ERROR_PARAM;
+            }
+        } else {
+            for (int i = 0; i < pdlib_in->flexwin.count; i++) {
+                if ((pdlib_in->flexwin.roi[i].start_x < 0 || pdlib_in->flexwin.roi[i].start_x > 1) ||
+                    (pdlib_in->flexwin.roi[i].start_y < 0 || pdlib_in->flexwin.roi[i].start_y > 1) ||
+                    (pdlib_in->flexwin.roi[i].end_x < 0 || pdlib_in->flexwin.roi[i].end_x > 1) ||
+                    (pdlib_in->flexwin.roi[i].end_y < 0 || pdlib_in->flexwin.roi[i].end_y > 1) ||
+                    (pdlib_in->flexwin.roi[i].start_x >= pdlib_in->flexwin.roi[i].end_x) ||
+                    (pdlib_in->flexwin.roi[i].start_y >= pdlib_in->flexwin.roi[i].end_y)) {
+                    LOGE_AF("%s: input flexwin roi[%d] abnormal. roi: %f, %f, %f, %f", __func__, i,
+                        pdlib_in->flexwin.roi[i].start_x,
+                        pdlib_in->flexwin.roi[i].start_y,
+                        pdlib_in->flexwin.roi[i].end_x,
+                        pdlib_in->flexwin.roi[i].end_y);
+                    return XCAM_RETURN_ERROR_PARAM;
+                }
+            }
+        }
+    }
+
+    mCfgMutex.lock();
+    rk_aiq_uapi_af_setPdafLibInput(mAlgoCtx, pdlib_in);
+    mCfgMutex.unlock();
+
+    return XCAM_RETURN_NO_ERROR;
+
+}
+
+XCamReturn RkAiqAfHandleInt::getPdafLibOutput(rk_aiq_pdlib_output* pdlib_output, int timeout_ms)
+{
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    int code = 0;
+
+    if (!mEnable) {
+        return XCAM_RETURN_BYPASS;
+    }
+
+    if (!mAiqCore->isRunningState()) {
+        LOGW_AF("aiq not in running state");
+        return XCAM_RETURN_BYPASS;
+    }
+
+    {
+        SmartLock locker (mPdLibOutputMutex);
+
+        if (timeout_ms < 0)
+            code = mPdLibOutputCond.wait(mPdLibOutputMutex);
+        else if (timeout_ms > 0) {
+            code = mPdLibOutputCond.timedwait(mPdLibOutputMutex, timeout_ms * 1000);
+            if (code == ETIMEDOUT)
+                return XCAM_RETURN_ERROR_TIMEOUT;
+        }
+    }
+
+    rk_aiq_uapi_af_getPdafLibOutput(mAlgoCtx, pdlib_output);
+
+    EXIT_ANALYZER_FUNCTION();
+    return ret;
+}
+
 XCamReturn RkAiqAfHandleInt::prepare() {
     ENTER_ANALYZER_FUNCTION();
 
@@ -721,9 +807,27 @@ XCamReturn RkAiqAfHandleInt::genIspResult(RkAiqFullParams* params, RkAiqFullPara
         //LOGD_AF("[%d] focus params needn't update", shared->frameId);
     }
 
+    {
+        SmartLock locker (mPdLibOutputMutex);
+
+        mPdLibOutputCond.broadcast();
+    }
+
     EXIT_ANALYZER_FUNCTION();
 
     return ret;
+}
+
+XCamReturn RkAiqAfHandleInt::stop() {
+    ENTER_ANALYZER_FUNCTION();
+
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    SmartLock locker (mPdLibOutputMutex);
+
+    mPdLibOutputCond.broadcast();
+
+    EXIT_ANALYZER_FUNCTION();
+    return XCAM_RETURN_NO_ERROR;
 }
 
 }  // namespace RkCam

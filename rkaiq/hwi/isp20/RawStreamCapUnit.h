@@ -81,6 +81,7 @@ protected:
     bool check_skip_frame(int32_t buf_seq);
     int mCamPhyId{-1};
     bool _is_1608_stream;
+    bool _is_split;
 protected:
     SmartPtr<V4l2Device> _dev[3];
     SmartPtr<V4l2Device> _dev_bakup[3];

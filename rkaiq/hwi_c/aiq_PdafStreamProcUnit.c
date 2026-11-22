@@ -36,26 +36,36 @@ static int64_t get_systime_us() {
 static XCamReturn _start_stream(AiqPdafStreamProcUnit_t* pProcUnit, bool block) {
     XCAM_FAIL_RETURN(ERROR, pProcUnit, XCAM_RETURN_ERROR_PARAM, "pPdafStreamProc is NULL!");
 
+    bool do_start = false;
+
     if (block) aiqMutex_lock(&pProcUnit->mStreamMutex);
+
     if (pProcUnit->_pdafStream && !pProcUnit->mStartStreamFlag) {
-        pProcUnit->_pdafStream->start(pProcUnit->_pdafStream);
         pProcUnit->mStartStreamFlag = true;
+        do_start = true;
         LOGD_AF("start pdaf stream device");
     }
     if (block) aiqMutex_unlock(&pProcUnit->mStreamMutex);
+
+    if (do_start) pProcUnit->_pdafStream->start(pProcUnit->_pdafStream);
 
     return XCAM_RETURN_NO_ERROR;
 }
 
 static XCamReturn _stop_stream(AiqPdafStreamProcUnit_t* pProcUnit, bool block) {
     XCAM_FAIL_RETURN(ERROR, pProcUnit, XCAM_RETURN_ERROR_PARAM, "pPdafStreamProc is NULL!");
+
+    bool do_stop = false;
+
     if (block) aiqMutex_lock(&pProcUnit->mStreamMutex);
     if (pProcUnit->_pdafStream && pProcUnit->mStartStreamFlag) {
-        pProcUnit->_pdafStream->stop(pProcUnit->_pdafStream);
         pProcUnit->mStartStreamFlag = false;
+        do_stop = true;
         LOGD_AF("stop pdaf stream device");
     }
     if (block) aiqMutex_unlock(&pProcUnit->mStreamMutex);
+
+    if (do_stop) pProcUnit->_pdafStream->stop(pProcUnit->_pdafStream);
 
     return XCAM_RETURN_NO_ERROR;
 }
@@ -92,7 +102,9 @@ static bool _PdafStreamHelperThd_push_attr(PdafStreamHelperThd_t* pHelpThd,
         return false;
     }
 
+    aiqMutex_lock(&pHelpThd->_mutex);
     aiqCond_broadcast(&pHelpThd->_cond);
+    aiqMutex_unlock(&pHelpThd->_mutex);
 
     return true;
 }
@@ -314,32 +326,11 @@ fail:
 void AiqPdafStreamProcUnit_start(AiqPdafStreamProcUnit_t* pProcUnit) {
     if (!pProcUnit) return;
 
-    int32_t mem_mode = 0;
-
     aiqMutex_lock(&pProcUnit->mStreamMutex);
     if (pProcUnit->_pdafStream && !pProcUnit->mStartFlag) {
-        if (pProcUnit->mPdafInf.pdaf_type != PDAF_SENSOR_TYPE3) {
-            pProcUnit->mPdafDev->io_control(pProcUnit->mPdafDev, RKCIF_CMD_GET_CSI_MEMORY_MODE,
-                                            &mem_mode);
-            if (mem_mode != CSI_LVDS_MEM_WORD_LOW_ALIGN) {
-                mem_mode = CSI_LVDS_MEM_WORD_LOW_ALIGN;
-                pProcUnit->mPdafDev->io_control(pProcUnit->mPdafDev, RKCIF_CMD_SET_CSI_MEMORY_MODE,
-                                                &mem_mode);
-                LOGI_AF("memory mode of pdaf video need low align, mem_mode %d", mem_mode);
-            }
-
-            AiqPdafStreamParam attr;
-
-            memset(&attr, 0, sizeof(attr));
-            AiqPdafStreamParam* attrPtr = &attr;
-            attrPtr->valid              = true;
-            attrPtr->stream_flag        = true;
-            aiqList_reset(pProcUnit->mHelperThd.mMsgsQueue);
-            _PdafStreamHelperThd_push_attr(&pProcUnit->mHelperThd, attrPtr);
-        } else {
+        if (pProcUnit->mPdafInf.pdaf_type == PDAF_SENSOR_TYPE3) {
             _start_stream(pProcUnit, false);
         }
-
         pProcUnit->mStartFlag = true;
     }
     aiqMutex_unlock(&pProcUnit->mStreamMutex);
@@ -367,3 +358,34 @@ void AiqPdafStreamProcUnit_stop(AiqPdafStreamProcUnit_t* pProcUnit) {
     }
     aiqMutex_unlock(&pProcUnit->mStreamMutex);
 }
+
+void AiqPdafStreamProcUnit_notify_sof(AiqPdafStreamProcUnit_t* pProcUnit) {
+    if (!pProcUnit) return;
+
+    int32_t mem_mode = 0;
+
+    aiqMutex_lock(&pProcUnit->mStreamMutex);
+    if (pProcUnit->_pdafStream && pProcUnit->mStartFlag && !pProcUnit->mStartStreamFlag) {
+        if (pProcUnit->mPdafInf.pdaf_type != PDAF_SENSOR_TYPE3) {
+            pProcUnit->mPdafDev->io_control(pProcUnit->mPdafDev, RKCIF_CMD_GET_CSI_MEMORY_MODE,
+                                            &mem_mode);
+            if (mem_mode != CSI_LVDS_MEM_WORD_LOW_ALIGN) {
+                mem_mode = CSI_LVDS_MEM_WORD_LOW_ALIGN;
+                pProcUnit->mPdafDev->io_control(pProcUnit->mPdafDev, RKCIF_CMD_SET_CSI_MEMORY_MODE,
+                                                &mem_mode);
+                LOGI_AF("memory mode of pdaf video need low align, mem_mode %d", mem_mode);
+            }
+
+            AiqPdafStreamParam attr;
+
+            memset(&attr, 0, sizeof(attr));
+            AiqPdafStreamParam* attrPtr = &attr;
+            attrPtr->valid       = true;
+            attrPtr->stream_flag = true;
+            aiqList_reset(pProcUnit->mHelperThd.mMsgsQueue);
+            _PdafStreamHelperThd_push_attr(&pProcUnit->mHelperThd, attrPtr);
+        }
+    }
+    aiqMutex_unlock(&pProcUnit->mStreamMutex);
+}
+

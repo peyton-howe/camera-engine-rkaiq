@@ -45,7 +45,7 @@ set(RKAIQ_J2S4B_DEV FALSE CACHE INTERNAL "")
 if (NOT RKAIQ_J2S4B_DEV)
 if (RKAIQ_IQFILES_DIR)
     file(GLOB RKAIQ_IQFILES  ${RKAIQ_IQFILES_DIR}/*.json)
-	file(GLOB RKAIQ_AINR_IQFILES  ${RKAIQ_IQFILES_DIR}/ainr/*.json)
+	file(GLOB_RECURSE  RKAIQ_AINR_IQFILES  ${RKAIQ_IQFILES_DIR}/ainr/*.json)
     file(GLOB RKAIQ_THUNDERBOOT_IQFILES  ${RKAIQ_IQFILES_DIR}/thunderboot/*.json)
     file(GLOB RKAIQ_COMMON_IQFILES  ${RKAIQ_IQFILES_DIR}/common/*.json)
 else()
@@ -115,30 +115,40 @@ foreach(IQPATH ${RKAIQ_IQFILES})
         BYPRODUCTS ${TAGT_NAME}
         DEPENDS j2s4b
         )
-    install(PROGRAMS "${CMAKE_BINARY_DIR}/${TAGT_NAME}" DESTINATION usr/share/iqfiles)
 endforeach()
 
 foreach(IQPATH ${RKAIQ_AINR_IQFILES})
-    string(REGEX MATCH "${RKAIQ_IQFILES_DIR}/ainr/.*" SHORT_NAME ${IQPATH})
-    string(REGEX REPLACE "${RKAIQ_IQFILES_DIR}/ainr/" "" ORIGIN_NAME ${SHORT_NAME})
+    set(SHORT_NAME ${IQPATH})
+    get_filename_component(REAL_FILE_PATH ${IQPATH} REALPATH)
+    get_filename_component(REAL_FILE_NAME ${REAL_FILE_PATH} NAME_WE)
+    get_filename_component(ORIGIN_NAME  ${IQPATH} NAME)
+    get_filename_component(FILE_DIR ${IQPATH} DIRECTORY)
+    string(REGEX MATCH "${RKAIQ_IQFILES_DIR}/ainr/([^/]*)" MATCH_RESULT "${FILE_DIR}")
+    set(SUBDIR_NAME "")
+    message(STATUS "RELATIVE_PATH: ${RELATIVE_PATH}")
+    if(MATCH_RESULT)
+        set(SUBDIR_NAME "${CMAKE_MATCH_1}")
+    endif()
     string(REGEX REPLACE "json" "bin" TAGT_NAME ${ORIGIN_NAME})
-    string(REGEX REPLACE "json" "bin.ainr" TAGT_AINR_NAME ${ORIGIN_NAME})
-    string(REGEX REPLACE ".json" "ainr" BIN_PROJ_NAME ${ORIGIN_NAME})
+    string(REGEX REPLACE "json" "bin.ainr" TAGT_AINR_NAME ${SUBDIR_NAME}_${ORIGIN_NAME})
+    string(REGEX REPLACE ".json" "ainr" BIN_PROJ_NAME ${SUBDIR_NAME}_${ORIGIN_NAME})
+
     if (IS_SYMLINK ${IQPATH})
-        get_filename_component(REAL_FILE_PATH ${IQPATH} REALPATH)
-        get_filename_component(REAL_FILE_NAME ${REAL_FILE_PATH} NAME_WE)
+        #get_filename_component(REAL_FILE_PATH ${IQPATH} REALPATH)
+        #get_filename_component(REAL_FILE_NAME ${REAL_FILE_PATH} NAME_WE)
         set(TARGET_BIN_NAME ${REAL_FILE_NAME}.bin)
         if(NOT EXISTS ${CMAKE_BINARY_DIR}/${TARGET_BIN_NAME})
             # create a empty file for link
             file(WRITE ${CMAKE_BINARY_DIR}/${TARGET_BIN_NAME} "")
         endif()
         execute_process(
-            COMMAND ${CMAKE_COMMAND} -E create_symlink ${TARGET_BIN_NAME} ${TAGT_NAME}
+            COMMAND ${CMAKE_COMMAND} -E create_symlink ${TARGET_BIN_NAME} ${TAGT_AINR_NAME}
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             OUTPUT_VARIABLE SYMLINK_RESULT
         )
-        install(PROGRAMS "${CMAKE_BINARY_DIR}/${TAGT_NAME}" DESTINATION
-            usr/share/iqfiles/ainr)
+        install(PROGRAMS "${CMAKE_BINARY_DIR}/${TAGT_AINR_NAME}" DESTINATION
+            usr/share/iqfiles/ainr/${SUBDIR_NAME}
+            RENAME ${TAGT_NAME})
     else ()
         add_custom_target(
             ${BIN_PROJ_NAME}
@@ -148,7 +158,7 @@ foreach(IQPATH ${RKAIQ_AINR_IQFILES})
             DEPENDS j2s4b
             )
         install(PROGRAMS "${CMAKE_BINARY_DIR}/${TAGT_AINR_NAME}" DESTINATION
-            usr/share/iqfiles/ainr RENAME ${TAGT_NAME})
+            usr/share/iqfiles/ainr/${SUBDIR_NAME} RENAME ${TAGT_NAME})
     endif()
 endforeach()
 
@@ -201,12 +211,13 @@ foreach(IQPATH ${RKAIQ_COMMON_IQFILES})
             file(WRITE ${CMAKE_BINARY_DIR}/${TARGET_BIN_NAME} "")
         endif()
         execute_process(
-            COMMAND ${CMAKE_COMMAND} -E create_symlink ${TARGET_BIN_NAME} ${TAGT_NAME}
+            COMMAND ${CMAKE_COMMAND} -E create_symlink ${TARGET_BIN_NAME} ${TAGT_COMMON_NAME}
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             OUTPUT_VARIABLE SYMLINK_RESULT
         )
-        install(PROGRAMS "${CMAKE_BINARY_DIR}/${TAGT_NAME}" DESTINATION
-            usr/share/iqfiles/common)
+        install(PROGRAMS "${CMAKE_BINARY_DIR}/${TAGT_COMMON_NAME}" DESTINATION
+            usr/share/iqfiles/common
+            RENAME ${TAGT_NAME})
     else ()
         add_custom_target(
             ${BIN_PROJ_NAME}
@@ -222,7 +233,7 @@ endforeach()
 endif()
 
 if (NOT RKAIQ_J2S4B_DEV)
-install(TARGETS j2s4b RUNTIME DESTINATION host)
+install(TARGETS j2s4b RUNTIME DESTINATION bin)
 else()
 install(TARGETS j2s4b_dev RUNTIME DESTINATION bin)
 endif()

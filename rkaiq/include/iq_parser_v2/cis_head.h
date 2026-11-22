@@ -120,7 +120,7 @@ typedef struct {
     rk_aiq_isp_hdr_mode_t hw_cisCfg_hdrMge_mode;
     rk_aiq_sensor_hdr_line_mode_t hw_cisCfg_cisHdr_mode;
     uint32_t regCtrl_num;
-    calibdb_cis_reg_ctrl_t regCtrl[8];
+    calibdb_cis_reg_ctrl_t regCtrl[256];
 } calibdb_cis_hdr_sta_t;
 
 /**

@@ -28,7 +28,18 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#if defined(__ANDROID__) && !CMAKE_BUILD_ANDROID
+#if defined(ISP_HW_V30)
+#include "android/rkfec_config_v10.h"
+#elif defined(ISP_HW_V35)
+#include "android/rkfec_config_v20.h"
+#else
+#error "Please define supported ISP version!!!, eg: -DISP_HW_V30"
+#endif
+#else
 #include "rkfec_config.h"
+#endif
+
 #ifdef RKFEC_HW_V20
 #include "rk-fec-config.h"
 #else

@@ -151,55 +151,55 @@ static calibdb_ctx_member_offset_info_t info_CamCalibDbV2ContextIsp32_t[] = {
     {"debayer_v2_lite", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(debayer_v2_lite)},
 #endif
 #if RKAIQ_HAVE_DEBAYER_V2
-    #ifdef USE_NEWSTRUCT
+#ifdef USE_NEWSTRUCT
     {"demosaic", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(demosaic)},
-    #else
+#else
     {"debayer_v2", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(debayer_v2)},
-    #endif
+#endif
 #endif
     {"colorAsGrey", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(colorAsGrey)},
     {"ccm_calib_v2", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(ccm_calib_v2)},
     {"lut3d_calib", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(lut3d_calib)},
-    #ifdef USE_NEWSTRUCT
+#ifdef USE_NEWSTRUCT
     {"ldch", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(ldch)},
     {"dpcc", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(dpcc)},
-    #else
+#else
     {"aldch", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(aldch)},
     {"adpcc_calib", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(adpcc_calib)},
-    #endif
+#endif
     {"ie", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(ie)},
 #if RKAIQ_HAVE_ASD_V10
     {"cpsl", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(cpsl)},
 #endif
     {"cproc", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(cproc)},
-    #ifdef USE_NEWSTRUCT
+#ifdef USE_NEWSTRUCT
     {"mge", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(mge)},
-    #else
+#else
     {"amerge_calib", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(amerge_calib_v12)},
-    #endif
+#endif
 #if RKAIQ_HAVE_DRC_V12
-    #ifdef USE_NEWSTRUCT
+#ifdef USE_NEWSTRUCT
     {"drc", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(drc)},
-    #else
+#else
     {"adrc_calib", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(adrc_calib_v12)},
-    #endif
+#endif
 #endif
 #if RKAIQ_HAVE_DRC_V12_LITE
     {"adrc_calib", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(adrc_calib_v12_lite)},
 #endif
-    #ifdef USE_NEWSTRUCT
+#ifdef USE_NEWSTRUCT
     {"lsc", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(lsc)},
-    #else
+#else
     {"lsc_v2", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(lsc_v2)},
-    #endif
-    #ifdef USE_NEWSTRUCT
+#endif
+#ifdef USE_NEWSTRUCT
     {"ynr", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(ynr)},
     {"sharp", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(sharp)},
     {"cnr", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(cnr)},
     {"gamma", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(gamma)},
     {"dehaze", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(dhzEhz)},
     {"gic", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(gic)},
-    #else
+#else
     {"ynr_v22", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(ynr_v22)},
     {"cnr_v30", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(cnr_v30)},
     {"sharp_v33", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(sharp_v33)},
@@ -208,22 +208,22 @@ static calibdb_ctx_member_offset_info_t info_CamCalibDbV2ContextIsp32_t[] = {
 #if defined(ISP_HW_V32)
     {"agic_calib_v21", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(agic_calib_v21)},
 #endif
-    #endif
+#endif
     {"ainr_v1", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(ainr_v1)},
 #if (RKAIQ_HAVE_BAYER2DNR_V23)
     {"bayer2dnr_v23", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(bayer2dnr_v23)},
 #endif
-    #ifdef USE_NEWSTRUCT
+#ifdef USE_NEWSTRUCT
     {"bayertnr", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(bayertnr)},
-    #else
+#else
     {"bayertnr_v23", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(bayertnr_v23)},
-    #endif
+#endif
 #if defined(ISP_HW_V32)
-    #ifdef USE_NEWSTRUCT
+#ifdef USE_NEWSTRUCT
     {"cac", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(cac)},
-    #else
+#else
     {"cac_v11", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(cac_v11)},
-    #endif
+#endif
 #endif
 #if defined(ISP_HW_V32)
     {"af_v31", CALIBV2_MODULE_RELATIVE_OFFSET_ISP32(af_v31)},
@@ -251,11 +251,11 @@ static calibdb_ctx_member_offset_info_t info_CamCalibDbV2ContextIsp39_t[] = {
 #endif
     {"adegamma_calib", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(adegamma_calib)},
 #if RKAIQ_HAVE_DEBAYER_V3
-    #ifdef USE_NEWSTRUCT
+#ifdef USE_NEWSTRUCT
     {"demosaic", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(demosaic)},
-    #else
+#else
     {"debayer_v3", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(debayer_v3)},
-    #endif
+#endif
 #endif
     {"colorAsGrey", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(colorAsGrey)},
 #ifdef USE_NEWSTRUCT
@@ -290,12 +290,12 @@ static calibdb_ctx_member_offset_info_t info_CamCalibDbV2ContextIsp39_t[] = {
     {"adrc_calib", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(adrc_calib_v20)},
     {"argbir_calib", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(argbir_calib_v10)},
 #endif
-    #ifdef USE_NEWSTRUCT
+#ifdef USE_NEWSTRUCT
     {"lsc", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(lsc)},
-    #else
+#else
     {"lsc_v2", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(lsc_v2)},
-    #endif
-    #ifdef USE_NEWSTRUCT
+#endif
+#ifdef USE_NEWSTRUCT
     {"bayertnr", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(bayertnr)},
     {"ynr", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(ynr)},
     {"sharp", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(sharp)},
@@ -307,7 +307,7 @@ static calibdb_ctx_member_offset_info_t info_CamCalibDbV2ContextIsp39_t[] = {
     {"yme", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(yme)},
 #endif
     {"histEQ", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(histEQ)},
-    #else
+#else
     {"bayertnr_v30", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(bayertnr_v30)},
     {"ynr_v24", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(ynr_v24)},
     {"sharp_v34", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(sharp_v34)},
@@ -316,20 +316,20 @@ static calibdb_ctx_member_offset_info_t info_CamCalibDbV2ContextIsp39_t[] = {
     {"adehaze_calib", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(adehaze_calib_v14)},
     {"agic_calib_v21", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(agic_calib_v21)},
     {"yuvme_v1", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(yuvme_v1)},
-    #endif
+#endif
 #if defined(ISP_HW_V39)
-    #ifdef USE_NEWSTRUCT
-        {"cac", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(cac)},
-    #else
-        {"cac_v11", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(cac_v11)},
-    #endif
+#ifdef USE_NEWSTRUCT
+    {"cac", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(cac)},
+#else
+    {"cac_v11", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(cac_v11)},
+#endif
 #endif
     {"af_v33", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(af_v33)},
-    #ifdef USE_NEWSTRUCT
+#ifdef USE_NEWSTRUCT
     {"gain", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(gain)},
-    #else
+#else
     {"gain_v2", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(gain_v2)},
-    #endif
+#endif
     {"csm", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(csm)},
     {"cgc", CALIBV2_MODULE_RELATIVE_OFFSET_ISP39(cgc)},
     {NULL, 0},
@@ -414,7 +414,7 @@ static calibdb_ctx_member_offset_info_t info_CamCalibDbV2ContextIsp35_t[] = {
     {"airms", CALIBV2_MODULE_RELATIVE_OFFSET_ISP35(airms)},
     {"aiynr", CALIBV2_MODULE_RELATIVE_OFFSET_ISP35(aiynr)},
     {"fpnSw", CALIBV2_MODULE_RELATIVE_OFFSET_ISP35(fpnSw)},
-    {"bayertnr2", CALIBV2_MODULE_RELATIVE_OFFSET_ISP35(bayertnr2)},
+    {"asd", CALIBV2_MODULE_RELATIVE_OFFSET_ISP35(asd)},
     {NULL, 0},
 };
 #endif
@@ -536,7 +536,7 @@ calibdbv2_get_scene_ptr(CamCalibSubSceneList_t* scene) {
 }
 
 static inline void* calibdbV2_get_module_ptr(void* ctx, calibdb_ctx_infos_t* info_array,
-                                             const char* module_name, const char* node_name) {
+        const char* module_name, const char* node_name) {
     if (strcmp(module_name, "sensor_calib") == 0)
         return ((CamCalibDbV2Context_t*)ctx)->sensor_info;
     else if(strcmp(module_name, "module_calib") == 0)
@@ -593,7 +593,7 @@ static inline int calibdbV2_from_tuningdb(CamCalibDbV2Context_t *dst,
     memcpy(dst->module_info, &src->module_calib, sizeof(CalibDb_Module_ParaV2_t));
     memcpy(dst->sys_cfg, &src->sys_static_cfg,
            sizeof(CalibDb_SysStaticCfg_ParaV2_t));
-    memcpy(&dst->scene_cis, &src->calib_cis, sizeof(calibdb_cis_para_t));
+    memcpy(dst->scene_cis, &src->calib_cis, sizeof(calibdb_cis_para_t));
 #if defined(ISP_HW_V20)
     memcpy(dst->calib_scene, &src->calib_scene,
            sizeof(CamCalibDbV2ContextIsp20_t));

@@ -60,6 +60,11 @@ static void printParam(AibnrContext_t *pAibnrCtx, aibnr_param_t* out, int iso)
               tunning->sw_aiBnrT_noiseAddLumaClip_th, tunning->sw_aiBnrT_noiseAddLumaStatic_th,
               tunning->sw_aiBnrT_nonLinear_scale, tunning->sw_aiBnrT_nonLinear_ratio, tunning->sw_aiBnrT_nonLinear_adjust);
 
+    for (int i = 0; i < AIBNR_VALURENR_STRG_LEN; i++) {
+        LOGD_AIBNR("sw_aiBnrT_bnrValueNr_strg[%d]=%f",
+              i, tunning->sw_aiBnrT_bnrValueNr_strg[i]);
+    }
+
     LOGD_AIBNR("sw_aiBnrCfg_model_dir=%s sw_aiBnrT_model_file=%s",
               sta->model_dir.sw_aiBnrCfg_model_dir, tunning->sw_aiBnrT_model_file);
 
@@ -197,6 +202,11 @@ XCamReturn AibnrSelectParam
                     paut->dyn[ilow].tunning.sw_aiBnrT_nonLinear_ratio, paut->dyn[ihigh].tunning.sw_aiBnrT_nonLinear_ratio, ratio);
     tunning->sw_aiBnrT_nonLinear_adjust = interpolation_f32(
                     paut->dyn[ilow].tunning.sw_aiBnrT_nonLinear_adjust, paut->dyn[ihigh].tunning.sw_aiBnrT_nonLinear_adjust, ratio);
+
+    for (i = 0; i < AIBNR_VALURENR_STRG_LEN; i++) {
+        tunning->sw_aiBnrT_bnrValueNr_strg[i] = interpolation_f32(
+                        paut->dyn[ilow].tunning.sw_aiBnrT_bnrValueNr_strg[i], paut->dyn[ihigh].tunning.sw_aiBnrT_bnrValueNr_strg[i], ratio);
+    }
 
     printParam(pAibnrCtx, out, iso);
     return XCAM_RETURN_NO_ERROR;
@@ -488,6 +498,14 @@ static int dump(const RkAiqAlgoCom* self, st_string* result)
             tunning->sw_aiBnrT_nonLinear_adjust);
     aiq_string_printf(result, buffer);
     aiq_string_printf(result, "\n");
+
+    for (int i = 0; i < AIBNR_VALURENR_STRG_LEN; i++) {
+        memset(buffer, 0, MAX_LINE_LENGTH);
+        snprintf(buffer, MAX_LINE_LENGTH, "sw_aiBnrT_bnrValueNr_strg[%d]=%f",
+            i, tunning->sw_aiBnrT_bnrValueNr_strg[i]);
+        aiq_string_printf(result, buffer);
+        aiq_string_printf(result, "\n");
+    }
 
     memset(buffer, 0, MAX_LINE_LENGTH);
     snprintf(buffer, MAX_LINE_LENGTH, "sw_aiBnrCfg_model_dir=%s",

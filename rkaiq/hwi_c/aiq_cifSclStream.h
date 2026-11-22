@@ -62,5 +62,6 @@ XCamReturn AiqCifSclStream_restart(AiqCifSclStream_t* pCifSclStrm,
                                    AiqPollCallback_t* callback, int mode);
 bool AiqCifSclStream_getIsActive(AiqCifSclStream_t* pCifSclStrm);
 bool AiqCifSclStream_setPollCallback(AiqCifSclStream_t* pCifSclStrm, AiqPollCallback_t* callback);
+XCamReturn AiqCifSclStream_stopThreadOnly(AiqCifSclStream_t* pCifSclStrm);
 
 #endif

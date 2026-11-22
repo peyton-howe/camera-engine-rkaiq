@@ -22,7 +22,6 @@ typedef enum FrameNumber_e {
     LINEAR_NUM = 1,
     HDR_2X_NUM = 2,
     HDR_3X_NUM = 3,
-    SENSOR_MGE = 4,
     HDR_NUM_MAX
 } FrameNumber_t;
 

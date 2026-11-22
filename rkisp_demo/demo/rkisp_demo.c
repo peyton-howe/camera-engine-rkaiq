@@ -71,6 +71,7 @@
 //#define CUSTOM_AWB_DEMO_TEST
 // #define TEST_MEMS_SENSOR_INTF
 // #define CUSTOM_AF_DEMO_TEST
+// #define CUSTOM_PDAF_DEMO_TEST
 // #define CUSTOM_GROUP_AWB_DEMO_TEST
 // #define OTP_API_TEST
 //#define COLOR_CONSISTENCY_TEST
@@ -3723,6 +3724,9 @@ int main(int argc, char **argv)
 #endif
 #ifdef CUSTOM_AF_DEMO_TEST
     custom_af_run(main_ctx.aiq_ctx);
+#endif
+#ifdef CUSTOM_PDAF_DEMO_TEST
+    custom_pdaf_run(main_ctx.aiq_ctx);
 #endif
 
 #ifdef ISPFEC_API

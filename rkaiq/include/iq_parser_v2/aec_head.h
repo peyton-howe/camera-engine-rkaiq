@@ -468,6 +468,132 @@ typedef struct CalibDb_LinearAE_AttrV2_s {
 
 /*****************************************************************************/
 /**
+ * @brief   ISP2.0 AEC algo FaceAE Config Params
+ */
+/*****************************************************************************/
+
+typedef struct CalibDb_FaceAeCtrl_s {
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_faceAe_en),
+        M4_TYPE(bool),
+        M4_DEFAULT(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(0),
+        M4_NOTES(The enable bit of faceAe control.\n
+        Freq of use: high))  */
+    bool Enable;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_tolerance_out),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(15),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(1),
+        M4_NOTES(The tolerance of luma after converged.\n
+        Freq of use: high))  */
+    float FaceWgtMin;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_tolerance_out),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(15),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(1),
+        M4_NOTES(The tolerance of luma after converged.\n
+        Freq of use: high))  */
+    float FaceWgtMax;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_faceSize_min),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(15),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(1),
+        M4_NOTES(The tolerance of luma after converged.\n
+        Freq of use: high))  */
+    float FaceSizeMin;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_faceSize_max),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(15),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(1),
+        M4_NOTES(The tolerance of luma after converged.\n
+        Freq of use: high))  */
+    float FaceSizeMax;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_faceSize_shrink),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(0.8),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(1),
+        M4_NOTES(The tolerance of luma after converged.\n
+        Freq of use: high))  */
+    float FaceSizeShrink;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_noFace2Face_cnt),
+        M4_TYPE(u8),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(5),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(1),
+        M4_NOTES(The tolerance of luma after converged.\n
+        Freq of use: high))  */
+    uint8_t NoFace2FaceCnt;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_face2NoFace_cnt),
+        M4_TYPE(u8),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(5),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(1),
+        M4_NOTES(The tolerance of luma after converged.\n
+        Freq of use: high))  */
+    uint8_t Face2NoFaceCnt;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(faceSetpoint),
+        M4_TYPE(struct),
+        M4_UI_MODULE(array_table_ui),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(3),
+        M4_NOTES(The params for dynamic setpoint control.))  */
+    CalibDb_AecDynamicSetpointV2_t DynSetpoint;
+
+} CalibDb_FaceAeCtrl_t;
+
+/*****************************************************************************/
+/**
  * @brief   ISP2.0 AEC algo HdrAE Config Params
  */
 /*****************************************************************************/
@@ -844,6 +970,9 @@ typedef struct CalibDb_AecIrisCtrlV2_s {
 typedef struct CalibDb_Aec_ParaV2_s {
     // M4_STRUCT_DESC("CommCtrl", "normal_ui_style")
     CalibDb_AecCommon_AttrV2_t          CommCtrl;
+
+    // M4_STRUCT_DESC("FaceAeCtrl", "normal_ui_style")
+    CalibDb_FaceAeCtrl_t                FaceAeCtrl;
 
     // M4_STRUCT_DESC("LinearAeCtrl", "normal_ui_style")
     CalibDb_LinearAE_AttrV2_t           LinearAeCtrl;

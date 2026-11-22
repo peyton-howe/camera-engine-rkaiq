@@ -65,6 +65,7 @@ typedef struct CcmContext_s {
     float pre_saturation;
     float pre_scale;
     int pre_iso;
+    Selector ccm_selector;
 
     float fScale;
     bool damp_converged;

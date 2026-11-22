@@ -41,7 +41,7 @@ rk_aiq_user_api2_fpnSw_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, fpnSw_api_attr
         if (attr->opMode == RK_AIQ_OP_MODE_MANUAL || attr->opMode == RK_AIQ_OP_MODE_AUTO) {
             ret = rk_aiq_user_api2_common_processParams(ctx_array.ctx[i], true,
                     &attr->opMode, &attr->en, &attr->bypass,
-                    type, man_param_size, NULL, aut_param_size,  &attr->stAuto);
+                    type, man_param_size, &attr->stMan, aut_param_size,  &attr->stAuto);
         } else {
             ret = XCAM_RETURN_ERROR_FAILED;
             LOGE_ACP("wrong mode %d !", attr->opMode);
@@ -65,7 +65,7 @@ rk_aiq_user_api2_fpnSw_GetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, fpnSw_api_attr
 
     return rk_aiq_user_api2_common_processParams(ctx, false,
 				&attr->opMode, &attr->en, &attr->bypass,
-				type, man_param_size, NULL, aut_param_size,  &attr->stAuto);
+				type, man_param_size, &attr->stMan, aut_param_size,  &attr->stAuto);
 }
 
 XCamReturn
@@ -78,13 +78,12 @@ rk_aiq_user_api2_fpnSw_QueryStatus(const rk_aiq_sys_ctx_t* sys_ctx, fpnSw_status
 
 	const rk_aiq_sys_ctx_t* ctx = rk_aiq_user_api2_common_getSysCtx(sys_ctx);
 
-	// AiqAlgoHandler_t* algo_handle =
-	// 	ctx->_analyzer->mAlgoHandleMaps[RK_AIQ_ALGO_TYPE_ACP];
-	// if (algo_handle) {
-	// 	ret = AiqAlgoHandler_queryStatus_common(algo_handle,
-	// 			&status->opMode, &status->en, &status->bypass, &status->stMan);
-	// }
-	return ret;
+    if (ctx->_camHw) {
+        ret = AiqCamHw_queryFpnSwStatus(ctx->_camHw, status);
+        return ret;
+    }
+
+	return XCAM_RETURN_ERROR_FAILED;
 }
 
 RKAIQ_END_DECLARE

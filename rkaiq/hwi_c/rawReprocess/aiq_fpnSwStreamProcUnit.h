@@ -37,6 +37,7 @@ typedef struct AiqFpnSwStreamProcUnit_s {
     int mCamPhyId;
     uint32_t _width;
     uint32_t _height;
+    uint32_t _stride;
     float _csi_again_max;
     float _csi_dgain_max;
     bool _fpn_en;
@@ -46,22 +47,30 @@ typedef struct AiqFpnSwStreamProcUnit_s {
 
     rawStream_send_sync_buf_func _send_sync_buf_func;
 
+    bool _is_high_bw_mode;
+    uint32_t* _iso_list;
+    uint32_t _last_iso;
+    float _last_gain;
+
     void* _sensor_dev;
+    void* _fpn_correct_raw;
 } AiqFpnSwStreamProcUnit_t;
 
 XCamReturn AiqFpnSwStreamProcUnit_init(AiqFpnSwStreamProcUnit_t* pFpnProc, void *sns_dev);
 XCamReturn AiqFpnSwStreamProcUnit_deinit(AiqFpnSwStreamProcUnit_t* pFpnProc);
-XCamReturn AiqFpnSwStreamProcUnit_prepare(AiqFpnSwStreamProcUnit_t* pFpnProc, uint32_t width, uint32_t height);
 XCamReturn AiqFpnSwStreamProcUnit_start(AiqFpnSwStreamProcUnit_t* pFpnProc);
 XCamReturn AiqFpnSwStreamProcUnit_stop(AiqFpnSwStreamProcUnit_t* pFpnProc);
+XCamReturn AiqFpnSwStreamProcUnit_setFormat(AiqFpnSwStreamProcUnit_t* pFpnProc, uint32_t width, uint32_t height, uint32_t bpp);
 XCamReturn AiqFpnSwStreamProcUnit_send_sync_buf(void* fpn_ctx, AiqV4l2Buffer_t* buf_s, AiqV4l2Buffer_t* buf_m, AiqV4l2Buffer_t* buf_l);
 
-XCamReturn AiqFpnSwStreamProcUnit_set_fpnSw_attrib(AiqFpnSwStreamProcUnit_t* pFpnProc, fpnSw_api_attrib_t* attr);
+XCamReturn AiqFpnSwStreamProcUnit_setCalib(AiqFpnSwStreamProcUnit_t* pFpnProc, const CamCalibDbV2Context_t* calibv2);
 XCamReturn AiqFpnSwStreamProcUnit_set_csi_gain_max(AiqFpnSwStreamProcUnit_t* pFpnProc, float csi_again_max, float csi_dgain_max);
 XCamReturn AiqFpnSwStreamProcUnit_setCamPhyId(AiqFpnSwStreamProcUnit_t* pFpnProc, int cam_phy_id);
 XCamReturn AiqFpnSwStreamProcUnit_setSwStreamInfo(AiqFpnSwStreamProcUnit_t* pFpnProc, void* stream_ctx, rawStream_send_sync_buf_func func);
 XCamReturn AiqFpnSwStreamProcUnit_set_proc_stream(AiqFpnSwStreamProcUnit_t* pFpnProc, AiqRawStreamProcUnit_t* proc_stream);
 XCamReturn AiqFpnSwStreamProcUnit_set_fpn_offset(AiqFpnSwStreamProcUnit_t* pFpnProc, int fpn_offset);
-
+XCamReturn AiqFpnSwStreamProcUnit_getRawAlignMode(AiqFpnSwStreamProcUnit_t* pFpnProc, bool* need_align, bool* align_mode);
+void AiqFpnSwStreamProcUnit_setWorkingMode(AiqFpnSwStreamProcUnit_t* pFpnProc, bool is_high_bw_mode);
+XCamReturn AiqFpnSwStreamProcUnit_queryStatus(AiqFpnSwStreamProcUnit_t* pFpnProc, void* status);
 
 #endif

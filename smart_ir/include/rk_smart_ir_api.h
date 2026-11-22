@@ -20,7 +20,7 @@
 
 #include "common/rk_aiq_types.h"
 
-#define SMARTIR_VERSION "SMARTIR v2.0.6"
+#define SMARTIR_VERSION "SMARTIR v2.0.7"
 
 typedef struct rk_aiq_sys_ctx_s rk_aiq_sys_ctx_t;
 typedef struct rk_smart_ir_ctx_s rk_smart_ir_ctx_t;
@@ -88,6 +88,11 @@ typedef struct rk_smart_ir_light_cfg_s {
     float light_min;
 } rk_smart_ir_light_cfg_t;
 
+typedef struct rk_smart_ir_switch_test_s {
+    bool switch_en;
+    int switch_interval;
+} rk_smart_ir_switch_test_t;
+
 typedef struct rk_smart_ir_attr_s {
     RK_SMART_IR_STATUS_t init_status;
     RK_SMART_IR_SWTICH_MODE_t switch_mode;
@@ -99,6 +104,7 @@ typedef struct rk_smart_ir_attr_s {
     bool en_grid_weight;
     bool en_auto_n2dth;
     rk_smart_ir_light_cfg_t light_cfg;
+    rk_smart_ir_switch_test_t switch_test;
 } rk_smart_ir_attr_t;
 
 typedef struct rk_smart_ir_result_s {

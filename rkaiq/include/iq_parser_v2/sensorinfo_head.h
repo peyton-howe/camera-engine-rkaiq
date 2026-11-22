@@ -35,6 +35,7 @@ RKAIQ_BEGIN_DECLARE
  */
 /*****************************************************************************/
 #define AE_GAIN_RANGE_MAX_NUM (70)
+#define AE_GAIN_RANGE_LINE (7)
 
 typedef enum _CalibDb_ExpGainModeV2_e {
     EXPGAIN_MODE_LINEAR         = 0,
@@ -46,6 +47,11 @@ typedef enum  _CalibDb_HdrFrmNumV2_e {
     HDR_TWO_FRAME = 0,
     HDR_THREE_FRAME = 1,
 } CalibDb_HdrFrmNumV2_t;
+
+typedef enum  _CalibDb_BuiltInHdr_LfrmBit_e {
+    LFRM_USE_10BIT = 0,
+    LFRM_USE_12BIT = 1,
+} CalibDb_BuiltInHdr_LfrmBit_t;
 
 /*****************************************************************************/
 /**
@@ -64,6 +70,7 @@ typedef struct CalibDb_AecGainRangeV2_s {
 
     // M4_NUMBER_DESC("GainRegDBUnit", "f32", M4_RANGE(0,1), "0.3", M4_DIGIT(4), M4_HIDE(0))
     float GainRegDBUnit;
+
 } CalibDb_AecGainRangeV2_t;
 
 typedef struct CalibDb_CISNormalTimeSetV2_s {
@@ -103,6 +110,26 @@ typedef struct CalibDb_CISHdrTimeSetV2_s {
     float                   CISTimeLinePerReg;
 } CalibDb_CISHdrTimeSetV2_t;
 
+typedef struct CalibDb_CISHdrTimeSetV3_s {
+    // M4_BOOL_DESC("CISTimeRegUnEqualEn", "0")
+    bool                    CISTimeRegUnEqualEn;
+
+    // M4_STRUCT_DESC("CISTimeRegMin", "normal_ui_style")
+    Cam1x3ShortMatrix_t     CISTimeRegMin;
+
+    // M4_STRUCT_DESC("CISHdrTimeRegSumFac", "normal_ui_style")
+    Cam2x1FloatMatrix_t     CISHdrTimeRegSumFac;
+
+    // M4_STRUCT_DESC("CISTimeRegMax", "normal_ui_style")
+    Cam1x3ShortMatrix_t     CISTimeRegMax; //specially for Hdr that has limit on sframe/mframe, requiring max time line.value 0: no limit
+
+    // M4_STRUCT_DESC("CISTimeRegOdevity", "normal_ui_style")
+    Cam2x1FloatMatrix_t     CISTimeRegOdevity;
+
+    // M4_NUMBER_DESC("CISTimeLinePerReg", "f32", M4_RANGE(0,100), "1", M4_DIGIT(3), M4_HIDE(0))
+    float                   CISTimeLinePerReg;
+} CalibDb_CISHdrTimeSetV3_t;
+
 typedef struct CalibDb_CISTimeSet_CombV2_s {
     // M4_STRUCT_DESC("Linear", "normal_ui_style")
     CalibDb_CISNormalTimeSetV2_t Linear;
@@ -118,6 +145,15 @@ typedef struct CalibDb_AeRangeV2_s {
     // M4_NUMBER_DESC("Max", "f32", M4_RANGE(0,65535), "0", M4_DIGIT(3),M4_HIDE(0))
     float                   Max;
 } CalibDb_AeRangeV2_t;
+
+typedef struct CalibDb_AeRangeV3_s {
+    // M4_ARRAY_DESC("Min", "f32", M4_SIZE(1,3), M4_RANGE(0,65535), "0", M4_DIGIT(3),M4_HIDE(0))
+    float                   Min[3];
+
+    // M4_ARRAY_DESC("Max", "f32", M4_SIZE(1,3), M4_RANGE(0,65535), "0", M4_DIGIT(3),M4_HIDE(0))
+    float                   Max[3];
+} CalibDb_AeRangeV3_t;
+
 
 typedef struct CalibDb_CISGainSetV2_s {
     // M4_STRUCT_DESC("CISAgainRange", "normal_ui_style")
@@ -135,6 +171,26 @@ typedef struct CalibDb_CISGainSetV2_s {
     // M4_BOOL_DESC("CISHdrGainIndSetEn", "1")
     bool                   CISHdrGainIndSetEn; //bit 0:use the same value; bit 1: support use different gain value
 } CalibDb_CISGainSetV2_t;
+
+typedef struct CalibDb_CISGainSetV3_s {
+    // M4_STRUCT_DESC("CISAgainRange", "normal_ui_style")
+    CalibDb_AeRangeV3_t       CISAgainRange; //sensor Again or LCG range
+
+    // M4_STRUCT_DESC("CISDgainRange", "normal_ui_style")
+    CalibDb_AeRangeV3_t       CISDgainRange; //sensor Dgain
+
+    // M4_STRUCT_DESC("CISDcgMode", "normal_ui_style")
+    Cam1x3IntMatrix_t         CISDcgMode;
+
+    // M4_STRUCT_DESC("CISDcgMode", "normal_ui_style")
+    Cam1x3IntMatrix_t         CISDgainRegIndSetEn;
+
+    // M4_STRUCT_DESC("Gain2Reg", "normal_ui_style")
+    CalibDb_AecGainRangeV2_t  CISDGain2Reg;
+
+    // M4_BOOL_DESC("CISHdrGainIndSetEn", "1")
+    bool                      CISHdrGainIndSetEn; //bit 0:use the same value; bit 1: support use different gain value
+} CalibDb_CISGainSetV3_t;
 
 typedef struct CalibDb_CISHdrSetV2_s {
     // M4_BOOL_DESC("hdr_en", "0")
@@ -204,6 +260,20 @@ typedef struct CalibDb_ResInfoV2_s {
     uint16_t height;
 } CalibDb_ResInfoV2_t;
 
+typedef struct CalibDb_HdrMultSet_s {
+
+    // M4_ENUM_DESC("ExpMode", "rk_aiq_sensor_hdr_line_mode_t","RKAIQ_SENSOR_HDR_MODE_STAGGER")
+    rk_aiq_sensor_hdr_line_mode_t ExpMode;
+
+    // M4_ENUM_DESC("CISFrmBit", "CalibDb_BuiltInHdr_LfrmBit_t","LFRM_USE_10BIT")
+    CalibDb_BuiltInHdr_LfrmBit_t  CISFrmBit;
+
+    // M4_STRUCT_DESC("CISGainSet", "normal_ui_style")
+    CalibDb_CISGainSetV3_t        CISGainSet;
+
+    // M4_STRUCT_DESC("CISTimeSet", "normal_ui_style")
+    CalibDb_CISHdrTimeSetV3_t     CISTimeSet;
+} CalibDb_HdrMultSet_t;
 
 typedef struct CalibDb_Sensor_ParaV2_s {
     // M4_STRUCT_DESC("Resolution", "normal_ui_style")
@@ -238,6 +308,10 @@ typedef struct CalibDb_Sensor_ParaV2_s {
 
     // M4_ARRAY_DESC("iso_list", "u32", M4_SIZE(1,13), M4_RANGE(0,2048000), "[50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200, 102400, 204800]", M4_DIGIT(1), M4_DYNAMIC(0))
     uint32_t                        iso_list[13];
+
+    // M4_STRUCT_LIST_DESC("CISHdrMultSet", M4_SIZE_DYNAMIC,"normal_ui_style")
+    CalibDb_HdrMultSet_t*           CISHdrMultSet;
+    int                             CISHdrMultSet_len;
 } CalibDb_Sensor_ParaV2_t;
 
 RKAIQ_END_DECLARE

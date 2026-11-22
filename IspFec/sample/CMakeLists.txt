@@ -4,6 +4,8 @@ else()
     string(TOLOWER ${CMAKE_SYSTEM_NAME} OS)
 endif()
 
+include(CheckGlibc)
+
 find_package(libdrm QUIET)
 
 if (libdrm_FOUND)
@@ -11,7 +13,7 @@ if (libdrm_FOUND)
     add_compile_options(-DISPDEMO_ENABLE_DRM=1)
 else()
     # use the local drm library in demo dir
-    if (C_LIBRARY_NAME STREQUAL "glibc")
+    if (C_LIBRARY_NAME STREQUAL "glibc" OR C_LIBRARY_NAME STREQUAL "clang")
         if (ARCH STREQUAL "aarch64")
             set(LOCAL_DRM_LIB_DIR ${CMAKE_SOURCE_DIR}/sample/deps/lib/aarch64/)
         elseif (ARCH STREQUAL "arm")
@@ -44,7 +46,11 @@ if (ENABLE_SAMPLE_ISPFEC)
     link_directories("${ISPFEC_LIB_DIR}" "${LOCAL_DRM_LIB_DIR}")
 
     add_executable(sample_fec ${SAMPLE_FEC_SRCS})
-    target_link_libraries(sample_fec ${ISPFEC_LIB} drm -lpthread)
+    target_link_libraries(sample_fec ${ISPFEC_LIB} drm)
+
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+        target_link_libraries(sample_fec -lpthread)
+    endif()
 
     install(TARGETS sample_fec RUNTIME DESTINATION bin)
 endif()

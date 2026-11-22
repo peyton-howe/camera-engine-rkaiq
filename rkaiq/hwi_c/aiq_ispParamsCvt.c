@@ -75,7 +75,7 @@ static void AiqIspParamsCvt_checkModuleEnable(AiqIspParamsCvt_t* pCvt, AiqList_t
 #endif
     bool update_vaild = false;
 #if ISP_HW_V39
-    if (ynrResult!= NULL && cnrResult != NULL && sharpResult != NULL) {
+    if (ynrResult != NULL && cnrResult != NULL && sharpResult != NULL) {
         if (ynrResult->en == cnrResult->en && ynrResult->en == sharpResult->en) {
             pCvt->mCommonCvtInfo.cnr_path_en = ynrResult->en;
             update_vaild = true;
@@ -138,7 +138,7 @@ static void AiqIspParamsCvt_checkModuleEnable(AiqIspParamsCvt_t* pCvt, AiqList_t
         pCvt->mCommonCvtInfo.warning_count++;
         if (pCvt->mCommonCvtInfo.warning_count > 0 && pCvt->mCommonCvtInfo.warning_count < 5)
             LOGW_ANR("ynr, cnr, and sharp cannot be enabled/disabled individually. they must be enabled together");
-        else if (pCvt->mCommonCvtInfo.warning_count> 0 && pCvt->mCommonCvtInfo.warning_count % 300 == 0) {
+        else if (pCvt->mCommonCvtInfo.warning_count > 0 && pCvt->mCommonCvtInfo.warning_count % 300 == 0) {
             LOGW_ANR("ynr, cnr, and sharp cannot be enabled/disabled individually. they must be enabled together");
         }
     }
@@ -195,7 +195,7 @@ static void AiqIspParamsCvt_checkModuleEnable(AiqIspParamsCvt_t* pCvt, AiqList_t
         pCvt->mCommonCvtInfo.warning_count++;
         if (pCvt->mCommonCvtInfo.warning_count > 0 && pCvt->mCommonCvtInfo.warning_count < 5)
             LOGW_ANR("enh, ynr, cnr, and sharp cannot be enabled/disabled individually. they must be enabled together");
-        else if (pCvt->mCommonCvtInfo.warning_count> 0 && pCvt->mCommonCvtInfo.warning_count % 300 == 0) {
+        else if (pCvt->mCommonCvtInfo.warning_count > 0 && pCvt->mCommonCvtInfo.warning_count % 300 == 0) {
             LOGW_ANR("enh, ynr, cnr, and sharp cannot be enabled/disabled individually. they must be enabled together");
         }
     }
@@ -249,7 +249,7 @@ void AiqIspParamsCvt_getCommonCvtInfo(AiqIspParamsCvt_t* pCvt, AiqList_t* result
             pCvt->mCommonCvtInfo.frameEt[0]    = exptime;
             pCvt->mCommonCvtInfo.frameDGain[0] = isp_dgain;
         } else {
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 3; i++) {
                 int iso = 50 *
                           ae_exp->HdrExp[i].exp_real_params.analog_gain *
                           ae_exp->HdrExp[i].exp_real_params.digital_gain *
@@ -305,7 +305,7 @@ void AiqIspParamsCvt_getCommonCvtInfo(AiqIspParamsCvt_t* pCvt, AiqList_t* result
     aiq_params_base_t* tnrResult =
         AiqIspParamsCvt_get_3a_result(pCvt, results, RESULT_TYPE_TNR_PARAM);
     if (pCvt->mCommonCvtInfo.isFirstFrame) {
-        pCvt->mCommonCvtInfo.btnr_init_en = tnrResult != NULL? tnrResult->en : false;
+        pCvt->mCommonCvtInfo.btnr_init_en = tnrResult != NULL ? tnrResult->en : false;
     }
     if (tnrResult != NULL) {
         btnr_param_t* btnr_param = (btnr_param_t*)tnrResult->_data;
@@ -362,7 +362,7 @@ XCamReturn AiqIspParamsCvt_merge_isp_results(AiqIspParamsCvt_t* pCvt, AiqList_t*
     AIQ_LIST_FOREACH(results, pItem, rm) {
         aiq_params_base_t* params = *(aiq_params_base_t**)(pItem->_pData);
         bool is_pre_cvt = false;
-        for (int k=0; k<pre_cvt_results_len; k++) {
+        for (int k = 0; k < pre_cvt_results_len; k++) {
             if (pre_cvt_results[k] == params->type) {
                 is_pre_cvt = true;
                 break;
@@ -416,8 +416,8 @@ void AiqIspParamsCvt_setCalib(AiqIspParamsCvt_t* pCvt, const CamCalibDbV2Context
     btnr_api_attrib_t * btnr_attrib = (btnr_api_attrib_t*)(CALIBDBV2_GET_MODULE_PTR((void *)calibv2, bayertnr));
     btnr_cvt_info_t *btnr_info = &pCvt->mBtnrInfo;
     pCvt->btnr_attrib = btnr_attrib;
-    btnr_api_attrib_t * btnr2_attrib = (btnr_api_attrib_t*)(CALIBDBV2_GET_MODULE_PTR((void *)calibv2, bayertnr2));
-    pCvt->btnr2_attrib = btnr_attrib;
+    CalibDb_Module_ParaV2_t* module_calib = (CalibDb_Module_ParaV2_t*)(CALIBDBV2_GET_MODULE_PTR((void *)calibv2, module_calib));
+    pCvt->btnr_cis_info = &module_calib->module_cis.cisTnr;
 #endif
 }
 
@@ -485,7 +485,7 @@ void AiqAutoblc_deinit(AiqIspParamsCvt_t* pCvt) {
         pCvt->mBlcInfo.tnr_ds_buf = NULL;
         pCvt->mBlcInfo.ds_size = 0;
     }
-    if(pCvt->mBlcInfo.init_success){
+    if(pCvt->mBlcInfo.init_success) {
         struct blcOps* ops = AiqBlc_GetOps(&pCvt->mBlcInfo.lib_Blc_);
         ops->blc_deinit(&pCvt->mBlcInfo.blc1_param);
         pCvt->mBlcInfo.lib_Blc_.Deinit(&pCvt->mBlcInfo.lib_Blc_);

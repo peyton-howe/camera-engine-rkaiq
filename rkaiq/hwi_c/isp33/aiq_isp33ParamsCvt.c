@@ -853,8 +853,19 @@ static void ConfigBlc2(const blc_res_cvt_t* ablc, const awbStats_cfg_t* awb_meas
     if (awb_meas->hw_awbCfg_statsSrc_mode == awbStats_drcOut_mode ||
             (awb_meas->hw_awbCfg_statsSrc_mode == awbStats_btnrOut_mode &&
              working_mode != RK_AIQ_WORKING_MODE_NORMAL)) {
-        LOGD_AWB("The BLC bias of the awbStats pathway is not effective in the current mode and is consistent with the main pathway");
+        //LOGD_AWB("The BLC bias of the awbStats pathway is not effective in the current mode and is consistent with the main pathway");
         // don't support to use blc2
+        //correct the bug that bls2_en wiil be forced to ture when sw_blcT_autoOB_offset is not zero
+        if (ablc && ablc->en&& awb_meas->hw_awbCfg_statsSrc_mode == awbStats_drcOut_mode ) {
+            awb_cfg_v32->bls2_en   = true;
+            awb_cfg_v32->bls2_val.r  = 0-ablc->obcPostTnr.sw_blcT_autoOB_offset;
+            awb_cfg_v32->bls2_val.b  = 0-ablc->obcPostTnr.sw_blcT_autoOB_offset;
+            awb_cfg_v32->bls2_val.gr = 0-ablc->obcPostTnr.sw_blcT_autoOB_offset;
+            awb_cfg_v32->bls2_val.gb = 0-ablc->obcPostTnr.sw_blcT_autoOB_offset;
+            LOGD_AWB("blc2_cfg %d %0x,%0x,%0x,%0x, oboffset:%0x", ablc->en, awb_cfg_v32->bls2_val.r, awb_cfg_v32->bls2_val.r,
+             awb_cfg_v32->bls2_val.gr, awb_cfg_v32->bls2_val.gb, awb_cfg_v32->bls2_val.b,
+             ablc->obcPostTnr.sw_blcT_autoOB_offset);
+        }
         return;
     }
     awb_cfg_v32->bls2_en   = true;
@@ -1190,8 +1201,9 @@ static void convertAiqAwbToIsp33Params(AiqIspParamsCvt_t* pCvt, aiq_params_base_
     }
     float isp_ob_predgain = pCvt->mCommonCvtInfo.preDGain_drc;
     ConfigBlc2(blc, awb_meas, isp_dgain, isp_ob_predgain, pCvt->_working_mode, awb_cfg_v32, pCvt->mCommonCvtInfo.offset2Blc1);
-    LOGD_AWB("blc2_cfg %d %d,%d,%d,%d", awb_cfg_v32->bls2_en, awb_cfg_v32->bls2_val.r,
-             awb_cfg_v32->bls2_val.gr, awb_cfg_v32->bls2_val.gb, awb_cfg_v32->bls2_val.b);
+    LOGD_AWB("frame_id %d  ,blc2_cfg  %d %d,%d,%d,%d",  pCvt->isp_params.isp_cfg->frame_id,awb_cfg_v32->bls2_en, awb_cfg_v32->bls2_val.r,
+              awb_cfg_v32->bls2_val.gr, awb_cfg_v32->bls2_val.gb, awb_cfg_v32->bls2_val.b);
+
 
     awb_cfg_v32->rawawb_sel = 0;
     if (awb_meas->hw_awbCfg_statsSrc_mode == awbStats_drcOut_mode) {
@@ -1603,6 +1615,7 @@ static void convertAiqAwbToIsp33Params(AiqIspParamsCvt_t* pCvt, aiq_params_base_
     awb_cfg_v32->blk_rtdw_measure_en = 0;
     WriteDataForIcCmodel(awb_cfg_v32);
     WriteAwbReg(awb_cfg_v32);
+    pCvt->mLatestMeasCfg.rawawb = pCvt->isp_params.isp_cfg->meas.rawawb;
 }
 
 #if RKAIQ_HAVE_CAC_V30
@@ -1644,6 +1657,8 @@ static void convertAiqBtnrToIsp33Params(AiqIspParamsCvt_t* pCvt, aiq_params_base
 
     pCvt->isp_params.isp_cfg->others.bay3d_cfg.bypass_en = pBase->bypass;
     pCvt->mBtnrInfo.btnr_attrib = pCvt->btnr_attrib;
+    pCvt->mBtnrInfo.btnr_cis_info = pCvt->btnr_cis_info;
+    pCvt->mBtnrInfo._working_mode = pCvt->_working_mode;
     rk_aiq_btnr41_params_cvt(pBase->_data, &pCvt->isp_params, &pCvt->mCommonCvtInfo, &pCvt->mBtnrInfo, &pCvt->mergeLuma2Wgt);
 }
 #endif

@@ -19,11 +19,13 @@
 #include "hwi_c/aiq_sensorHw.h"
 #include "hwi_c/aiq_lensHw.h"
 
-// #define AE_STATS_DEBUG
+//#define AE_STATS_DEBUG
 #define MAX_8BITS  ((1 << 8) - 1)
-#define MAX_10BITS (1 << 10) - 1
-#define MAX_12BITS (1 << 12) - 1
-#define MAX_29BITS (1 << 29) - 1
+#define MAX_10BITS ((1 << 10) - 1)
+#define MAX_12BITS ((1 << 12) - 1)
+#define MAX_20BITS ((1 << 20) - 1)
+#define MAX_24BITS ((1 << 24) - 1)
+#define MAX_29BITS ((1 << 29) - 1)
 #define MAX_32BITS 0xffffffff
 
 void JudgeWinLocation35(
@@ -133,11 +135,11 @@ static void MergeAecBigWinStatsV35(
                     out->blk_y[i].blk_x[j].b = (left->blk_y[i].blk_x[2 * j].b + left->blk_y[i].blk_x[2 * j + 1].b) / 2;
                 } else if (j > ISP39_MEAN_BLK_X_NUM / 2) {
                     out->blk_y[i].blk_x[j].r = (right->blk_y[i].blk_x[2 * j - ISP39_MEAN_BLK_X_NUM].r +
-                                               right->blk_y[i].blk_x[2 * j + 1 - ISP39_MEAN_BLK_X_NUM].r) / 2;
+                                                right->blk_y[i].blk_x[2 * j + 1 - ISP39_MEAN_BLK_X_NUM].r) / 2;
                     out->blk_y[i].blk_x[j].g = (right->blk_y[i].blk_x[2 * j - ISP39_MEAN_BLK_X_NUM].g +
-                                               right->blk_y[i].blk_x[2 * j + 1 - ISP39_MEAN_BLK_X_NUM].g) / 2;
+                                                right->blk_y[i].blk_x[2 * j + 1 - ISP39_MEAN_BLK_X_NUM].g) / 2;
                     out->blk_y[i].blk_x[j].b = (right->blk_y[i].blk_x[2 * j - ISP39_MEAN_BLK_X_NUM].b +
-                                               right->blk_y[i].blk_x[2 * j + 1 - ISP39_MEAN_BLK_X_NUM].b) / 2;
+                                                right->blk_y[i].blk_x[2 * j + 1 - ISP39_MEAN_BLK_X_NUM].b) / 2;
                 } else {
                     out->blk_y[i].blk_x[j].r = (left->blk_y[i].blk_x[ISP39_MEAN_BLK_X_NUM - 1].r + right->blk_y[i].blk_x[0].r) / 2;
                     out->blk_y[i].blk_x[j].g = (left->blk_y[i].blk_x[ISP39_MEAN_BLK_X_NUM - 1].g + right->blk_y[i].blk_x[0].g) / 2;
@@ -174,11 +176,11 @@ static void MergeAecBigWinStatsVerticalV35(
                     out->blk_y[j].blk_x[i].b = (left->blk_y[2 * j].blk_x[i].b + left->blk_y[2 * j + 1].blk_x[i].b) / 2;
                 } else if (j > ISP39_MEAN_BLK_Y_NUM / 2) {
                     out->blk_y[j].blk_x[i].r = (right->blk_y[2 * j - ISP39_MEAN_BLK_Y_NUM].blk_x[i].r +
-                                               right->blk_y[2 * j + 1 - ISP39_MEAN_BLK_Y_NUM].blk_x[i].r) / 2;
+                                                right->blk_y[2 * j + 1 - ISP39_MEAN_BLK_Y_NUM].blk_x[i].r) / 2;
                     out->blk_y[j].blk_x[i].g = (right->blk_y[2 * j - ISP39_MEAN_BLK_Y_NUM].blk_x[i].g +
-                                               right->blk_y[2 * j + 1 - ISP39_MEAN_BLK_Y_NUM].blk_x[i].g) / 2;
+                                                right->blk_y[2 * j + 1 - ISP39_MEAN_BLK_Y_NUM].blk_x[i].g) / 2;
                     out->blk_y[j].blk_x[i].b = (right->blk_y[2 * j - ISP39_MEAN_BLK_Y_NUM].blk_x[i].b +
-                                               right->blk_y[2 * j + 1 - ISP39_MEAN_BLK_Y_NUM].blk_x[i].b) / 2;
+                                                right->blk_y[2 * j + 1 - ISP39_MEAN_BLK_Y_NUM].blk_x[i].b) / 2;
                 } else {
                     out->blk_y[j].blk_x[i].r = (left->blk_y[ISP39_MEAN_BLK_X_NUM - 1].blk_x[i].r + right->blk_y[0].blk_x[i].r) / 2;
                     out->blk_y[j].blk_x[i].g = (left->blk_y[ISP39_MEAN_BLK_X_NUM - 1].blk_x[i].g + right->blk_y[0].blk_x[i].g) / 2;
@@ -302,39 +304,187 @@ void MergeAecHistBinStats(
 /* for bnr20bit, rawae0 meas LSB(0-9bit) rawae3 meas MSB(10-19bit) */
 /* for bnr20bit, rawhist0 meas LSB(4-11bit) rawhist3 meas MSB(12-19bit) */
 
-XCamReturn Aec20BitGirdMerge
+XCamReturn Aec20BitGirdSpilt
 (
     struct isp33_rawae_stat LSB,
+    aeStats_mainWinStats_t* LSB_out,
     struct isp33_rawae_stat MSB,
-    aeStats_mainWinStats_t* dst
+    aeStats_mainWinStats_t* MSB_out,
+    struct isp2x_bls_fixed_val  bls1_val
 )
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
-    //merge as original 20bit and than scale as bit_num
+    // 1) merge as original 20bit and than substract blc1, no need to multiply awb in isp
 
     for(int i = 0; i < ISP3X_RAWAEBIG_MEAN_NUM; i++) {
-        //r b channel
-        dst->hw_ae_meanBayerR_val[i] = (LSB.blk_y[i / 15].blk_x[i % 15].r | MSB.blk_y[i / 15].blk_x[i % 15].r << 10) >> (20 - 10);
-        dst->hw_ae_meanBayerB_val[i] = (LSB.blk_y[i / 15].blk_x[i % 15].b | MSB.blk_y[i / 15].blk_x[i % 15].b << 10) >> (20 - 10);
-        // g channel
-        dst->hw_ae_meanBayerGrGb_val[i] = (LSB.blk_y[i / 15].blk_x[i % 15].g >> 2 | MSB.blk_y[i / 15].blk_x[i % 15].g << 8) >> (20 - 12);
-    }
 
+        u32 tmp = 0;
+        int bls_gain = 0;
+
+        //r b channel
+        bls_gain = MAX_10BITS * 256  / (MAX_10BITS - bls1_val.r);
+        tmp = CLIP((int)(((MSB.blk_y[i / 15].blk_x[i % 15].r << 10 | LSB.blk_y[i / 15].blk_x[i % 15].r) - bls1_val.r) * bls_gain / 256), 0, MAX_20BITS);
+
+        LSB_out->hw_ae_meanBayerR_val[i] = (u16)(tmp & 0x3ff);
+        MSB_out->hw_ae_meanBayerR_val[i] = (u16)(tmp >> 10 & 0x3ff);
+
+        bls_gain = MAX_10BITS * 256  / (MAX_10BITS - bls1_val.b);
+        tmp = CLIP((int)(((MSB.blk_y[i / 15].blk_x[i % 15].b << 10 | LSB.blk_y[i / 15].blk_x[i % 15].b) - bls1_val.b) * bls_gain / 256), 0, MAX_20BITS);
+        LSB_out->hw_ae_meanBayerB_val[i] = (u16)(tmp & 0x3ff);
+        MSB_out->hw_ae_meanBayerB_val[i] = (u16)(tmp >> 10 & 0x3ff);
+
+        // g channel
+        bls_gain = MAX_12BITS * 256  / (MAX_12BITS - bls1_val.gr);
+        tmp = CLIP((int)(((MSB.blk_y[i / 15].blk_x[i % 15].g << 12 | LSB.blk_y[i / 15].blk_x[i % 15].g) - bls1_val.gr) * bls_gain / 256), 0, MAX_24BITS);
+        LSB_out->hw_ae_meanBayerGrGb_val[i] = (u16)(tmp & 0xfff);
+        MSB_out->hw_ae_meanBayerGrGb_val[i] = (u16)(tmp >> 12 & 0xfff);
+
+    }
 
     return ret;
 }
 
-XCamReturn Aec20BitHistMerge(u32* LSB, u32* MSB, u32* dst)
+XCamReturn Aec20BitGirdMerge
+(
+    struct isp33_rawae_stat LSB,
+    struct isp33_rawae_stat MSB,
+    aeStats_mainWinStats_t* dst,
+    struct isp2x_bls_fixed_val  bls1_val
+)
 {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
 
-    //merge as 256*2 bin, and then scale as 256 bin
-    for(int i = 0; i < ISP3X_HIST_BIN_N_MAX / 2; i++)
-        dst[i] = LSB[i * 2] + LSB[i * 2 + 1];
+    // 1) merge as original 20bit and than scale as bit_num
+    // 2) substract blc, no use ob in 20bit mode
+    u32 tmp = 0;
+    int bls_gain = 0;
 
-    for(int i = ISP3X_HIST_BIN_N_MAX / 2; i < ISP3X_HIST_BIN_N_MAX; i++)
-        dst[i] = MSB[i * 2 - ISP3X_HIST_BIN_N_MAX] + MSB[i * 2 - ISP3X_HIST_BIN_N_MAX + 1];
+    for(int i = 0; i < ISP3X_RAWAEBIG_MEAN_NUM; i++) {
+        //r b channel
+        bls_gain = MAX_10BITS * 256  / (MAX_10BITS - bls1_val.r);
+        tmp = CLIP((int)(((MSB.blk_y[i / 15].blk_x[i % 15].r << 10 | LSB.blk_y[i / 15].blk_x[i % 15].r) - bls1_val.r) * bls_gain / 256), 0, MAX_20BITS);
+
+        dst->hw_ae_meanBayerR_val[i] = (u16) (tmp >> (20 - 10));
+
+        bls_gain = MAX_10BITS * 256  / (MAX_10BITS - bls1_val.b);
+        tmp = CLIP((int)(((MSB.blk_y[i / 15].blk_x[i % 15].b << 10 | LSB.blk_y[i / 15].blk_x[i % 15].b) - bls1_val.b) * bls_gain / 256), 0, MAX_20BITS);
+        dst->hw_ae_meanBayerB_val[i] = (u16) (tmp >> (20 - 10));
+
+        // g channel
+        bls_gain = MAX_12BITS * 256  / (MAX_12BITS - bls1_val.gr);
+        tmp = CLIP((int)(((MSB.blk_y[i / 15].blk_x[i % 15].g << 12 | LSB.blk_y[i / 15].blk_x[i % 15].g) - bls1_val.gr) * bls_gain / 256), 0, MAX_24BITS);
+        dst->hw_ae_meanBayerGrGb_val[i] = (u16) (tmp >> (20 - 12));
+    }
+
+    return ret;
+}
+
+XCamReturn Aec20BitHistSplit(
+    u32* LSB, u32* LSB_out, u32* MSB, u32* MSB_out, u8 hist_mode,
+    struct isp2x_bls_fixed_val  bls1_val
+)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    u32 hist_merge[ISP39_HIST_BIN_N_MAX * 2];
+    memset(hist_merge, 0, ISP39_HIST_BIN_N_MAX * 2 * sizeof(u32));
+
+    //1) calc blc1 wbgain1, no use ob and wb gain in 20bit mode
+    int bls1 = 0, tmp = 0;
+    float bls_gain = 0.0f;
+
+    switch (hist_mode) {
+    // TODO: ae use lower 12bit as Lfrm, and than turn to 8bit
+    case 2: // r
+        bls1 = bls1_val.r >> 4;
+        break;
+    case 3: // g
+        bls1 = bls1_val.gr >> 6;
+        break;
+    case 4: // b
+        bls1 = bls1_val.b >> 4;
+        break;
+    case 5:
+    default:
+        LOGE("Err:wrong hist mode!");
+        bls1 = bls1_val.gr >> 4;
+        break;
+        break;
+    }
+    bls_gain = (float)MAX_8BITS / (float)(MAX_8BITS - bls1);
+
+    // 2) move bin according to blc1
+    for (int i = 0; i < ISP39_HIST_BIN_N_MAX; i++) {
+        //entity0, bin[0]-bin[255]
+        tmp = (i - bls1 > 0) ? round((float)(i - bls1) * bls_gain) : 0;
+        tmp = (tmp > ISP39_HIST_BIN_N_MAX - 1) ? (ISP39_HIST_BIN_N_MAX - 1) : tmp;
+        hist_merge[tmp] += LSB[i];
+    }
+
+    for (int i = 0; i < ISP39_HIST_BIN_N_MAX; i++) {
+        //entity3, bin[0]-bin[255]=bin[256]-bin[511]
+        // TODO: cut 8bit and then cut 4bit, 10bit blc >> 12 = 1/4, whether need to substract blc ?
+        tmp = round((float)(i - (bls1 >> 4)) * bls_gain);
+        tmp = (tmp > ISP39_HIST_BIN_N_MAX - 1) ? (ISP39_HIST_BIN_N_MAX - 1) : tmp;
+        hist_merge[tmp + ISP39_HIST_BIN_N_MAX] += MSB[i];
+    }
+
+    for (int i = 0; i < ISP39_HIST_BIN_N_MAX; i++) {
+        LSB_out[i] = hist_merge[i];
+        MSB_out[i] = hist_merge[i + ISP39_HIST_BIN_N_MAX];
+    }
+    return ret;
+}
+
+XCamReturn Aec20BitHistMerge(
+    u32* LSB, u32* MSB, u32* dst, u8 hist_mode,
+    struct isp2x_bls_fixed_val  bls1_val
+)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    u32 hist_merge[ISP39_HIST_BIN_N_MAX];
+    memset(hist_merge, 0, ISP39_HIST_BIN_N_MAX * sizeof(u32));
+
+    //1) merge as 256*2 bin, and then scale as 256 bin
+    for(int i = 0; i < ISP3X_HIST_BIN_N_MAX / 2; i++) {
+        hist_merge[i] = LSB[i * 2] + LSB[i * 2 + 1];
+    }
+
+    for(int i = ISP3X_HIST_BIN_N_MAX / 2; i < ISP3X_HIST_BIN_N_MAX; i++) {
+        hist_merge[i] = MSB[i * 2 - ISP3X_HIST_BIN_N_MAX] + MSB[i * 2 - ISP3X_HIST_BIN_N_MAX + 1];
+    }
+
+    //2) substract blc, no use ob in 20bit mode
+    int bls1 = 0, tmp = 0;
+    float bls_gain = 0.0f;
+
+    switch (hist_mode) {
+    // TODO: ae use lower 12bit as Lfrm, thus blc >> 2 first, and than turn to 8bit, merge will cut half again
+    case 2: // r
+        bls1 = bls1_val.r >> 5;
+        break;
+    case 3: // g
+        bls1 = bls1_val.gr >> 7;
+        break;
+    case 4: // b
+        bls1 = bls1_val.b >> 5;
+        break;
+    case 5:
+    default:
+        LOGE("Err:wrong hist mode!");
+        bls1 = bls1_val.gr >> 5;
+        break;
+        break;
+    }
+    bls_gain = (float)MAX_8BITS / (float)(MAX_8BITS - bls1);
+
+    for (int i = 0; i < ISP39_HIST_BIN_N_MAX; i++) {
+        tmp = (i - bls1 > 0) ? round((i - bls1) * bls_gain) : 0;
+        tmp = (tmp > ISP39_HIST_BIN_N_MAX - 1) ? (ISP39_HIST_BIN_N_MAX - 1) : tmp;
+        dst[tmp] += hist_merge[i];
+    }
 
     return ret;
 }
@@ -416,7 +566,6 @@ void calcAecHistBinStatsV35(
             hist_bin_out[tmp] += hist_bin_in[i];
         }
 
-
     } else {
 
         memcpy(hist_bin_out, hist_bin_in, ISP39_HIST_BIN_N_MAX * sizeof(u32));
@@ -435,7 +584,7 @@ translateMultiAecStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq_VideoBuff
     uint8_t AeSwapMode, AeSelMode, Bnr20bitEn;
     AeSwapMode             = isp_params->rawae0.rawae_sel & 0x0f;
     AeSelMode              = isp_params->rawae3.rawae_sel & 0x0f;
-    Bnr20bitEn             = isp_params->rawae0.rawae_sel & 0xf0;
+    Bnr20bitEn             = RK_AIQ_HDR_IS_SENSOR_BUILTIN(pStatsTrans->mWorkingMode);
     unsigned int meas_type = 0;
     struct isp2x_window ori_win;
 
@@ -521,10 +670,20 @@ translateMultiAecStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq_VideoBuff
     isp_ob_predgain =  MAX(bls_cfg->isp_ob_predgain >> 8, 1);
 
     if (is_bls1_en) {
-        bls1_ori_val.r  = (bls_cfg->bls1_val.r / isp_ob_predgain) >> 2;
-        bls1_ori_val.gr = bls_cfg->bls1_val.gr / isp_ob_predgain;
-        bls1_ori_val.gb = bls_cfg->bls1_val.gb / isp_ob_predgain;
-        bls1_ori_val.b  = (bls_cfg->bls1_val.b / isp_ob_predgain) >> 2;
+        if(Bnr20bitEn) {
+            // for bnr20bit blc should not bitshift, r/g lower 10bit, gb/gr make lower 10bit to 12bit.
+            // for x3c, expander raw use blc1 as ob to be substracted. blc1 = 10bit ,thus gb/gr need bitshift
+            bls1_ori_val.r  = bls_cfg->bls1_val.r;
+            bls1_ori_val.gr = bls_cfg->bls1_val.gr << 2;
+            bls1_ori_val.gb = bls_cfg->bls1_val.gb << 2;
+            bls1_ori_val.b  = bls_cfg->bls1_val.b;
+        } else {
+            // for normal linear/Hdr, blc1 = 12bit, thus r/b need bitshift
+            bls1_ori_val.r  = (bls_cfg->bls1_val.r / isp_ob_predgain) >> 2;
+            bls1_ori_val.gr = bls_cfg->bls1_val.gr / isp_ob_predgain;
+            bls1_ori_val.gb = bls_cfg->bls1_val.gb / isp_ob_predgain;
+            bls1_ori_val.b  = (bls_cfg->bls1_val.b / isp_ob_predgain) >> 2;
+        }
     } else {
         bls1_ori_val.r  = 0;
         bls1_ori_val.gr = 0;
@@ -594,8 +753,8 @@ translateMultiAecStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq_VideoBuff
                   left_stats->frame_id, left_stats->meas_type);
 
     if(left_stats->frame_id != right_stats->frame_id || left_stats->meas_type != right_stats->meas_type ||
-       bottom_left_stats->frame_id != bottom_right_stats->frame_id || bottom_left_stats->meas_type != bottom_right_stats->meas_type ||
-       left_stats->frame_id != bottom_left_stats->frame_id || left_stats->meas_type != bottom_left_stats->meas_type) {
+            bottom_left_stats->frame_id != bottom_right_stats->frame_id || bottom_left_stats->meas_type != bottom_right_stats->meas_type ||
+            left_stats->frame_id != bottom_left_stats->frame_id || left_stats->meas_type != bottom_left_stats->meas_type) {
         LOGE_ANALYZER("status params(frmid or meas_type) of left isp and right isp are different");
         LOGE_ANALYZER("top left id %d meas %x right id %d meas %x bottom left id %d meas %x right id %d meas %x mode %d",
                       left_stats->frame_id, left_stats->meas_type,
@@ -630,137 +789,7 @@ translateMultiAecStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq_VideoBuff
     // 1.0) RAWAE0 RAWHIST0
     statsInt->aec_stats_v25.ae_data.hw_ae_entityGroup_mode = pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode;
 
-    if(pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_indWk_mode || \
-            pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity0_wkOnly_mode) {
-
-        //RAWAE0 BIG-MODE
-        if (AeWinSplitMode[0] != LEFT_MODE)
-            MergeAecBigWinStatsV35(&left_stats->stat.rawae0, &right_stats->stat.rawae0, &left_stats->stat.rawae0, AeWinSplitMode[0]);
-
-        if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
-            if (AeWinSplitMode[0] != LEFT_MODE)
-                MergeAecBigWinStatsV35(&bottom_left_stats->stat.rawae0, &bottom_right_stats->stat.rawae0, &bottom_left_stats->stat.rawae0, AeWinSplitMode[0]);
-
-            if (AeWinSplitModeV[0] != TOP_MODE)
-                MergeAecBigWinStatsVerticalV35(&left_stats->stat.rawae0, &bottom_left_stats->stat.rawae0, &left_stats->stat.rawae0, AeWinSplitModeV[0]);
-        }
-        //RAWAE0 BIG-MODE
-        calcAecBigWinStatsV35(&left_stats->stat.rawae0, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin,
-                              bls1_val, awb1_gain);
-
-        //RAWHIST0 BIG-MODE
-        rawhist_mode = isp_params->rawhist0.mode;
-        MergeAecHistBinStats(left_stats->stat.rawhist0.bin,
-                             right_stats->stat.rawhist0.bin,
-                             statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val,
-                             HistWinSplitMode[0], rawhist_mode,
-                             isp_ob_offset_rb, isp_ob_offset_g,
-                             bls1_ori_val, awb1_gain, is_hdr);
-
-        if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
-            aeStats_histStats_t bottom_stats;
-            MergeAecHistBinStats(bottom_left_stats->stat.rawhist0.bin, bottom_right_stats->stat.rawhist0.bin,
-                                 bottom_stats.hw_ae_histBin_val,
-                                 HistWinSplitModeV[0], rawhist_mode,
-                                 isp_ob_offset_rb, isp_ob_offset_g,
-                                 bls1_ori_val, awb1_gain, is_hdr);
-
-            switch (HistWinSplitModeV[0])
-            {
-            case TOP_MODE:
-                break;
-            case BOTTOM_MODE:
-                for (int i = 0; i < ISP32L_HIST_LITE_BIN_N_MAX; i++)
-                    statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val[i] = bottom_stats.hw_ae_histBin_val[i];
-                break;
-            case TOP_AND_BOTTOM_MODE:
-                for (int i = 0; i < ISP32L_HIST_LITE_BIN_N_MAX; i++)
-                    statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val[i] += bottom_stats.hw_ae_histBin_val[i];
-                break;
-            default:
-                break;
-            }
-        }
-    }
-
-    // 2.0) RAWAE3 RAWHIST3
-    if(pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_indWk_mode || \
-            pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity3_wkOnly_mode) {
-
-        switch (AeSelMode) {
-        case AEC_RAWSEL_MODE_CHN_0:
-        case AEC_RAWSEL_MODE_CHN_1:
-            break;
-
-        case AEC_RAWSEL_MODE_TMO:
-
-            bls1_val.r = 0;
-            bls1_val.gr = 0;
-            bls1_val.gb = 0;
-            bls1_val.b = 0;
-
-            awb1_gain.r = 256;
-            awb1_gain.gr = 256;
-            awb1_gain.gb = 256;
-            awb1_gain.b = 256;
-
-            break;
-
-        default:
-            LOGE("wrong AeSelMode=%d\n", AeSelMode);
-            return XCAM_RETURN_ERROR_PARAM;
-        }
-
-        if (AeWinSplitMode[0] != LEFT_MODE)
-            MergeAecBigWinStatsV35(&left_stats->stat.rawae3, &right_stats->stat.rawae3, &left_stats->stat.rawae3, AeWinSplitMode[0]);
-
-        if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
-            if (AeWinSplitMode[0] != LEFT_MODE)
-                MergeAecBigWinStatsV35(&bottom_left_stats->stat.rawae3, &bottom_right_stats->stat.rawae3, &bottom_left_stats->stat.rawae3, AeWinSplitMode[0]);
-
-            if (AeWinSplitModeV[0] != TOP_MODE)
-                MergeAecBigWinStatsVerticalV35(&left_stats->stat.rawae3, &bottom_left_stats->stat.rawae3, &left_stats->stat.rawae3, AeWinSplitModeV[0]);
-        }
-
-        calcAecBigWinStatsV35(&left_stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin,
-                              bls1_val, awb1_gain);
-
-
-        rawhist_mode = isp_params->rawhist3.mode;
-        MergeAecHistBinStats(left_stats->stat.rawhist3.bin,
-                             right_stats->stat.rawhist3.bin,
-                             statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val,
-                             HistWinSplitMode[1], rawhist_mode,
-                             isp_ob_offset_rb, isp_ob_offset_g,
-                             bls1_ori_val, awb1_gain, is_hdr);
-
-        if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
-            aeStats_histStats_t bottom_stats;
-            MergeAecHistBinStats(bottom_left_stats->stat.rawhist3.bin, bottom_right_stats->stat.rawhist3.bin,
-                                 bottom_stats.hw_ae_histBin_val,
-                                 HistWinSplitModeV[1], rawhist_mode,
-                                 isp_ob_offset_rb, isp_ob_offset_g,
-                                 bls1_ori_val, awb1_gain, is_hdr);
-
-            switch (HistWinSplitModeV[1])
-            {
-            case TOP_MODE:
-                break;
-            case BOTTOM_MODE:
-                for (int i = 0; i < ISP32L_HIST_LITE_BIN_N_MAX; i++)
-                    statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val[i] = bottom_stats.hw_ae_histBin_val[i];
-                break;
-            case TOP_AND_BOTTOM_MODE:
-                for (int i = 0; i < ISP32L_HIST_LITE_BIN_N_MAX; i++)
-                    statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val[i] += bottom_stats.hw_ae_histBin_val[i];
-                break;
-            default:
-                break;
-            }
-        }
-    }
-
-    if (Bnr20bitEn > 0 && pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_coWk_mode) {
+    if (Bnr20bitEn) {
 
         if (AeWinSplitMode[0] != LEFT_MODE) {
             MergeAecBigWinStatsV35(&left_stats->stat.rawae0, &right_stats->stat.rawae0, &left_stats->stat.rawae0, AeWinSplitMode[0]);
@@ -777,9 +806,7 @@ translateMultiAecStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq_VideoBuff
                 MergeAecBigWinStatsVerticalV35(&left_stats->stat.rawae3, &bottom_left_stats->stat.rawae3, &left_stats->stat.rawae3, AeWinSplitModeV[0]);
             }
         }
-        Aec20BitGirdMerge(left_stats->stat.rawae0, left_stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin);
 
-        u32* bin = (u32*)calloc(ISP3X_HIST_BIN_N_MAX, sizeof(u32));
         if (AeWinSplitMode[0] != LEFT_MODE) {
             MergeAecHistBinStats(left_stats->stat.rawhist0.bin, right_stats->stat.rawhist0.bin,
                                  left_stats->stat.rawhist0.bin, AeWinSplitMode[0],
@@ -815,23 +842,163 @@ translateMultiAecStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq_VideoBuff
             }
         }
 
-        Aec20BitHistMerge(left_stats->stat.rawhist0.bin, left_stats->stat.rawhist3.bin, bin);
 
-        for (int i = 0; i < ISP32_RAWAEBIG_MEAN_NUM; i++) {
-            statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerR_val[i] =
-                    CLIP((int)(statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerR_val[i] * awb1_gain.r / 256 - bls1_val.r), 0, MAX_10BITS);
-            statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerGrGb_val[i] =
-                    CLIP((int)(statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerGrGb_val[i] / 256 - bls1_val.gr), 0, MAX_12BITS);
-            statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerB_val[i] =
-                    CLIP((int)(statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerB_val[i] * awb1_gain.b / 256 - bls1_val.b), 0, MAX_10BITS);
+        if(pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_coWk_mode) {
+
+            Aec20BitGirdMerge(left_stats->stat.rawae0, left_stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin, bls1_val);
+
+            rawhist_mode = pStatsTrans->_ispParams->ae_cfg_v39.entityGroup.coWkEntity03.hist.hw_aeCfg_pix_mode;
+
+            Aec20BitHistMerge(left_stats->stat.rawhist0.bin, left_stats->stat.rawhist3.bin,
+                              statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.hist.hw_ae_histBin_val, rawhist_mode, bls1_val);
+
+
+        } else {
+
+            Aec20BitGirdSpilt(left_stats->stat.rawae0, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin,
+                              left_stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin, bls1_val);
+
+            rawhist_mode = isp_params->rawhist0.mode;
+
+            Aec20BitHistSplit(left_stats->stat.rawhist0.bin, statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val,
+                              left_stats->stat.rawhist3.bin, statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val,
+                              rawhist_mode, bls1_val);
+
+        }
+    } else {
+
+
+        if(pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_indWk_mode || \
+                pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity0_wkOnly_mode) {
+
+            //RAWAE0 BIG-MODE
+            if (AeWinSplitMode[0] != LEFT_MODE)
+                MergeAecBigWinStatsV35(&left_stats->stat.rawae0, &right_stats->stat.rawae0, &left_stats->stat.rawae0, AeWinSplitMode[0]);
+
+            if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
+                if (AeWinSplitMode[0] != LEFT_MODE)
+                    MergeAecBigWinStatsV35(&bottom_left_stats->stat.rawae0, &bottom_right_stats->stat.rawae0, &bottom_left_stats->stat.rawae0, AeWinSplitMode[0]);
+
+                if (AeWinSplitModeV[0] != TOP_MODE)
+                    MergeAecBigWinStatsVerticalV35(&left_stats->stat.rawae0, &bottom_left_stats->stat.rawae0, &left_stats->stat.rawae0, AeWinSplitModeV[0]);
+            }
+            //RAWAE0 BIG-MODE
+            calcAecBigWinStatsV35(&left_stats->stat.rawae0, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin,
+                                  bls1_val, awb1_gain);
+
+            //RAWHIST0 BIG-MODE
+            rawhist_mode = isp_params->rawhist0.mode;
+            MergeAecHistBinStats(left_stats->stat.rawhist0.bin,
+                                 right_stats->stat.rawhist0.bin,
+                                 statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val,
+                                 HistWinSplitMode[0], rawhist_mode,
+                                 isp_ob_offset_rb, isp_ob_offset_g,
+                                 bls1_ori_val, awb1_gain, is_hdr);
+
+            if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
+                aeStats_histStats_t bottom_stats;
+                MergeAecHistBinStats(bottom_left_stats->stat.rawhist0.bin, bottom_right_stats->stat.rawhist0.bin,
+                                     bottom_stats.hw_ae_histBin_val,
+                                     HistWinSplitModeV[0], rawhist_mode,
+                                     isp_ob_offset_rb, isp_ob_offset_g,
+                                     bls1_ori_val, awb1_gain, is_hdr);
+
+                switch (HistWinSplitModeV[0])
+                {
+                case TOP_MODE:
+                    break;
+                case BOTTOM_MODE:
+                    for (int i = 0; i < ISP32L_HIST_LITE_BIN_N_MAX; i++)
+                        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val[i] = bottom_stats.hw_ae_histBin_val[i];
+                    break;
+                case TOP_AND_BOTTOM_MODE:
+                    for (int i = 0; i < ISP32L_HIST_LITE_BIN_N_MAX; i++)
+                        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val[i] += bottom_stats.hw_ae_histBin_val[i];
+                    break;
+                default:
+                    break;
+                }
+            }
         }
 
-        rawhist_mode = pStatsTrans->_ispParams->ae_cfg_v39.entityGroup.coWkEntity03.hist.hw_aeCfg_pix_mode;
-        calcAecHistBinStatsV35(bin, statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val, \
-                               rawhist_mode, isp_ob_offset_rb, isp_ob_offset_g, bls1_ori_val, awb1_gain, is_hdr);
-        if(bin) free(bin);
+        // 2.0) RAWAE3 RAWHIST3
+        if(pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_indWk_mode || \
+                pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity3_wkOnly_mode) {
 
+            switch (AeSelMode) {
+            case AEC_RAWSEL_MODE_CHN_0:
+            case AEC_RAWSEL_MODE_CHN_1:
+                break;
+
+            case AEC_RAWSEL_MODE_TMO:
+
+                bls1_val.r = 0;
+                bls1_val.gr = 0;
+                bls1_val.gb = 0;
+                bls1_val.b = 0;
+
+                awb1_gain.r = 256;
+                awb1_gain.gr = 256;
+                awb1_gain.gb = 256;
+                awb1_gain.b = 256;
+
+                break;
+
+            default:
+                LOGE("wrong AeSelMode=%d\n", AeSelMode);
+                return XCAM_RETURN_ERROR_PARAM;
+            }
+
+            if (AeWinSplitMode[0] != LEFT_MODE)
+                MergeAecBigWinStatsV35(&left_stats->stat.rawae3, &right_stats->stat.rawae3, &left_stats->stat.rawae3, AeWinSplitMode[0]);
+
+            if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
+                if (AeWinSplitMode[0] != LEFT_MODE)
+                    MergeAecBigWinStatsV35(&bottom_left_stats->stat.rawae3, &bottom_right_stats->stat.rawae3, &bottom_left_stats->stat.rawae3, AeWinSplitMode[0]);
+
+                if (AeWinSplitModeV[0] != TOP_MODE)
+                    MergeAecBigWinStatsVerticalV35(&left_stats->stat.rawae3, &bottom_left_stats->stat.rawae3, &left_stats->stat.rawae3, AeWinSplitModeV[0]);
+            }
+
+            calcAecBigWinStatsV35(&left_stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin,
+                                  bls1_val, awb1_gain);
+
+
+            rawhist_mode = isp_params->rawhist3.mode;
+            MergeAecHistBinStats(left_stats->stat.rawhist3.bin,
+                                 right_stats->stat.rawhist3.bin,
+                                 statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val,
+                                 HistWinSplitMode[1], rawhist_mode,
+                                 isp_ob_offset_rb, isp_ob_offset_g,
+                                 bls1_ori_val, awb1_gain, is_hdr);
+
+            if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
+                aeStats_histStats_t bottom_stats;
+                MergeAecHistBinStats(bottom_left_stats->stat.rawhist3.bin, bottom_right_stats->stat.rawhist3.bin,
+                                     bottom_stats.hw_ae_histBin_val,
+                                     HistWinSplitModeV[1], rawhist_mode,
+                                     isp_ob_offset_rb, isp_ob_offset_g,
+                                     bls1_ori_val, awb1_gain, is_hdr);
+
+                switch (HistWinSplitModeV[1])
+                {
+                case TOP_MODE:
+                    break;
+                case BOTTOM_MODE:
+                    for (int i = 0; i < ISP32L_HIST_LITE_BIN_N_MAX; i++)
+                        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val[i] = bottom_stats.hw_ae_histBin_val[i];
+                    break;
+                case TOP_AND_BOTTOM_MODE:
+                    for (int i = 0; i < ISP32L_HIST_LITE_BIN_N_MAX; i++)
+                        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val[i] += bottom_stats.hw_ae_histBin_val[i];
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
     }
+
 
 #ifdef AE_STATS_DEBUG
 
@@ -980,7 +1147,7 @@ XCamReturn translateAecStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq_Vid
     uint8_t AeSwapMode, AeSelMode, Bnr20bitEn;
     AeSwapMode             = isp_params->rawae0.rawae_sel & 0x0f;
     AeSelMode              = isp_params->rawae3.rawae_sel & 0x0f;
-    Bnr20bitEn             = isp_params->rawae0.rawae_sel & 0xf0;
+    Bnr20bitEn             = RK_AIQ_HDR_IS_SENSOR_BUILTIN(pStatsTrans->mWorkingMode);
     unsigned int meas_type = 0;
 
     // ae_stats = (ae_ori_stats_u12/10 - ob_offset_u9 - bls1_val_u12) * awb1_gain_u16 * range_ratio
@@ -994,18 +1161,28 @@ XCamReturn translateAecStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq_Vid
     u16 isp_ob_offset_rb, isp_ob_offset_g, isp_ob_predgain;
     u32 pixel_num      = 0;
     u8  rawhist_mode   = 0;
-    bool is_hdr = ((pStatsTrans->mWorkingMode > 0) ? true : false) | (Bnr20bitEn > 0 ? true : false);
-    bool is_bls1_en = bls_cfg->bls1_en && !is_hdr;
+    bool is_hdr = (pStatsTrans->mWorkingMode == 0 || RK_AIQ_HDR_IS_SENSOR_BUILTIN(pStatsTrans->mWorkingMode)) ? false : true;
+    bool is_bls1_en = bls_cfg->bls1_en;
 
     isp_ob_offset_rb = bls_cfg->isp_ob_offset >> 2;
     isp_ob_offset_g  = bls_cfg->isp_ob_offset;
     isp_ob_predgain =  MAX(bls_cfg->isp_ob_predgain >> 8, 1);
 
     if (is_bls1_en) {
-        bls1_ori_val.r  = (bls_cfg->bls1_val.r / isp_ob_predgain) >> 2;
-        bls1_ori_val.gr = bls_cfg->bls1_val.gr / isp_ob_predgain;
-        bls1_ori_val.gb = bls_cfg->bls1_val.gb / isp_ob_predgain;
-        bls1_ori_val.b  = (bls_cfg->bls1_val.b / isp_ob_predgain) >> 2;
+        if(Bnr20bitEn) {
+            // for bnr20bit blc should not bitshift, r/g lower 10bit, gb/gr make lower 10bit to 12bit.
+            // for x3c, expander raw use blc1 as ob to be substracted. blc1 = 10bit ,thus gb/gr need bitshift
+            bls1_ori_val.r  = bls_cfg->bls1_val.r;
+            bls1_ori_val.gr = bls_cfg->bls1_val.gr << 2;
+            bls1_ori_val.gb = bls_cfg->bls1_val.gb << 2;
+            bls1_ori_val.b  = bls_cfg->bls1_val.b;
+        } else {
+            // for normal linear/Hdr, blc1 = 12bit, thus r/b need bitshift
+            bls1_ori_val.r  = (bls_cfg->bls1_val.r / isp_ob_predgain) >> 2;
+            bls1_ori_val.gr = bls_cfg->bls1_val.gr / isp_ob_predgain;
+            bls1_ori_val.gb = bls_cfg->bls1_val.gb / isp_ob_predgain;
+            bls1_ori_val.b  = (bls_cfg->bls1_val.b / isp_ob_predgain) >> 2;
+        }
     } else {
         bls1_ori_val.r  = 0;
         bls1_ori_val.gr = 0;
@@ -1069,102 +1246,108 @@ XCamReturn translateAecStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq_Vid
 
     statsInt->aec_stats_v25.ae_data.hw_ae_entityGroup_mode = pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode;
 
-    if(pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_indWk_mode || \
-            pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity0_wkOnly_mode) {
+    if(Bnr20bitEn) {
 
-        //RAWAE0 BIG-MODE
-        calcAecBigWinStatsV35(&stats->stat.rawae0, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin,
-                              bls1_val, awb1_gain);
+        if(pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_coWk_mode) {
 
-        pixel_num = pStatsTrans->_ispParams->ae_cfg_v39.entityGroup.entities.entity0.subWin[0].hw_aeCfg_win_width \
-                    * pStatsTrans->_ispParams->ae_cfg_v39.entityGroup.entities.entity0.subWin[0].hw_aeCfg_win_height;
+            Aec20BitGirdMerge(stats->stat.rawae0, stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin, bls1_val);
 
-        //For isp35, only has one sub win
-        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.subWin[0].hw_ae_sumBayerR_val = CLIP((s64)((u64)stats->stat.rawae0.wnd1_sumr * awb1_gain.r / 256 - (pixel_num >> 2) * bls1_val.r), 0, MAX_29BITS);
-        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.subWin[0].hw_ae_sumBayerGrGb_val = CLIP((s64)((u64)stats->stat.rawae0.wnd1_sumg * awb1_gain.gr / 256 - (pixel_num >> 1) * bls1_val.gb), 0, MAX_32BITS);
-        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.subWin[0].hw_ae_sumBayerB_val = CLIP((s64)((u64)stats->stat.rawae0.wnd1_sumb * awb1_gain.b / 256 - (pixel_num >> 2) * bls1_val.b), 0, MAX_29BITS);
+            rawhist_mode = pStatsTrans->_ispParams->ae_cfg_v39.entityGroup.coWkEntity03.hist.hw_aeCfg_pix_mode;
 
-        //RAWHIST0 BIG-MODE
-        rawhist_mode = isp_params->rawhist0.mode;
+            Aec20BitHistMerge(stats->stat.rawhist0.bin, stats->stat.rawhist3.bin,
+                              statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.hist.hw_ae_histBin_val,
+                              rawhist_mode, bls1_val);
 
-        calcAecHistBinStatsV35(stats->stat.rawhist0.bin,
-                               statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val,
-                               rawhist_mode, isp_ob_offset_rb, isp_ob_offset_g,
-                               bls1_ori_val, awb1_gain, is_hdr);
-    }
+        } else {
 
-    if(pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_indWk_mode || \
-            pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity3_wkOnly_mode) {
+            Aec20BitGirdSpilt(stats->stat.rawae0, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin,
+                              stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin, bls1_val);
 
-        switch (AeSelMode) {
-        case AEC_RAWSEL_MODE_CHN_0:
-        case AEC_RAWSEL_MODE_CHN_1:
+            rawhist_mode = isp_params->rawhist0.mode;
 
-            //RAWAE3 BIG-MODE
-            calcAecBigWinStatsV35(&stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin,
+            Aec20BitHistSplit(stats->stat.rawhist0.bin, statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val,
+                              stats->stat.rawhist3.bin, statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val,
+                              rawhist_mode, bls1_val);
+        }
+
+
+    } else {
+
+        if(pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_indWk_mode || \
+                pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity0_wkOnly_mode) {
+
+            //RAWAE0 BIG-MODE
+            calcAecBigWinStatsV35(&stats->stat.rawae0, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin,
                                   bls1_val, awb1_gain);
 
             pixel_num = pStatsTrans->_ispParams->ae_cfg_v39.entityGroup.entities.entity0.subWin[0].hw_aeCfg_win_width \
                         * pStatsTrans->_ispParams->ae_cfg_v39.entityGroup.entities.entity0.subWin[0].hw_aeCfg_win_height;
 
             //For isp35, only has one sub win
-            statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.subWin[0].hw_ae_sumBayerR_val = CLIP((s64)((u64)stats->stat.rawae3.wnd1_sumr * awb1_gain.r / 256 - (pixel_num >> 2) * bls1_val.r), 0, MAX_29BITS);
-            statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.subWin[0].hw_ae_sumBayerGrGb_val = CLIP((s64)((u64)stats->stat.rawae3.wnd1_sumg * awb1_gain.gr / 256 - (pixel_num >> 1) * bls1_val.gb), 0, MAX_32BITS);
-            statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.subWin[0].hw_ae_sumBayerB_val = CLIP((s64)((u64)stats->stat.rawae3.wnd1_sumb * awb1_gain.b / 256 - (pixel_num >> 2) * bls1_val.b), 0, MAX_29BITS);
+            statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.subWin[0].hw_ae_sumBayerR_val = CLIP((s64)((u64)stats->stat.rawae0.wnd1_sumr * awb1_gain.r / 256 - (pixel_num >> 2) * bls1_val.r), 0, MAX_29BITS);
+            statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.subWin[0].hw_ae_sumBayerGrGb_val = CLIP((s64)((u64)stats->stat.rawae0.wnd1_sumg * awb1_gain.gr / 256 - (pixel_num >> 1) * bls1_val.gb), 0, MAX_32BITS);
+            statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.subWin[0].hw_ae_sumBayerB_val = CLIP((s64)((u64)stats->stat.rawae0.wnd1_sumb * awb1_gain.b / 256 - (pixel_num >> 2) * bls1_val.b), 0, MAX_29BITS);
 
-            //RAWHIST3 BIG-MODE
-            rawhist_mode = isp_params->rawhist3.mode;
-            calcAecHistBinStatsV35(stats->stat.rawhist3.bin,
-                                   statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val,
+            //RAWHIST0 BIG-MODE
+            rawhist_mode = isp_params->rawhist0.mode;
+
+            calcAecHistBinStatsV35(stats->stat.rawhist0.bin,
+                                   statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val,
                                    rawhist_mode, isp_ob_offset_rb, isp_ob_offset_g,
                                    bls1_ori_val, awb1_gain, is_hdr);
-            break;
-        case AEC_RAWSEL_MODE_TMO:
-
-            bls1_val.r = 0;
-            bls1_val.gr = 0;
-            bls1_val.gb = 0;
-            bls1_val.b = 0;
-
-            awb1_gain.r = 256;
-            awb1_gain.gr = 256;
-            awb1_gain.gb = 256;
-            awb1_gain.b = 256;
-
-            calcAecBigWinStatsV35(&stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin,
-                                  bls1_val, awb1_gain);
-
-            memcpy(statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val,
-                   stats->stat.rawhist3.bin, ISP39_HIST_BIN_N_MAX * sizeof(u32));
-
-            break;
-
-        default:
-            LOGE("wrong AeSelMode=%d\n", AeSelMode);
-            return XCAM_RETURN_ERROR_PARAM;
-        }
-    }
-
-
-    if(Bnr20bitEn > 0 && pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_coWk_mode) {
-
-        Aec20BitGirdMerge(stats->stat.rawae0, stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin);
-        u32* bin = (u32*)aiq_mallocz(ISP3X_HIST_BIN_N_MAX * sizeof(u32));
-        Aec20BitHistMerge(stats->stat.rawhist0.bin, stats->stat.rawhist3.bin, bin);
-
-        for (int i = 0; i < ISP32_RAWAEBIG_MEAN_NUM; i++) {
-            statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerR_val[i] = \
-                    CLIP((int)(statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerR_val[i] * awb1_gain.r / 256 - bls1_val.r), 0, MAX_10BITS);
-            statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerGrGb_val[i] = \
-                    CLIP((int)(statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerGrGb_val[i] / 256 - bls1_val.gr), 0, MAX_12BITS);
-            statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerB_val[i] = \
-                    CLIP((int)(statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerB_val[i] * awb1_gain.b / 256 - bls1_val.b), 0, MAX_10BITS);
         }
 
-        rawhist_mode = pStatsTrans->_ispParams->ae_cfg_v39.entityGroup.coWkEntity03.hist.hw_aeCfg_pix_mode;
-        calcAecHistBinStatsV35(bin, statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val, \
-                               rawhist_mode, isp_ob_offset_rb, isp_ob_offset_g, bls1_ori_val, awb1_gain, is_hdr);
-        if(bin) free(bin);
+        if(pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity03_indWk_mode || \
+                pStatsTrans->_ispParams->ae_cfg_v39.hw_aeCfg_entityGroup_mode == aeStats_entity3_wkOnly_mode) {
+
+            switch (AeSelMode) {
+            case AEC_RAWSEL_MODE_CHN_0:
+            case AEC_RAWSEL_MODE_CHN_1:
+
+                //RAWAE3 BIG-MODE
+                calcAecBigWinStatsV35(&stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin,
+                                      bls1_val, awb1_gain);
+
+                pixel_num = pStatsTrans->_ispParams->ae_cfg_v39.entityGroup.entities.entity3.subWin[0].hw_aeCfg_win_width \
+                            * pStatsTrans->_ispParams->ae_cfg_v39.entityGroup.entities.entity3.subWin[0].hw_aeCfg_win_height;
+
+                //For isp35, only has one sub win
+                statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.subWin[0].hw_ae_sumBayerR_val = CLIP((s64)((u64)stats->stat.rawae3.wnd1_sumr * awb1_gain.r / 256 - (pixel_num >> 2) * bls1_val.r), 0, MAX_29BITS);
+                statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.subWin[0].hw_ae_sumBayerGrGb_val = CLIP((s64)((u64)stats->stat.rawae3.wnd1_sumg * awb1_gain.gr / 256 - (pixel_num >> 1) * bls1_val.gb), 0, MAX_32BITS);
+                statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.subWin[0].hw_ae_sumBayerB_val = CLIP((s64)((u64)stats->stat.rawae3.wnd1_sumb * awb1_gain.b / 256 - (pixel_num >> 2) * bls1_val.b), 0, MAX_29BITS);
+
+                //RAWHIST3 BIG-MODE
+                rawhist_mode = isp_params->rawhist3.mode;
+                calcAecHistBinStatsV35(stats->stat.rawhist3.bin,
+                                       statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val,
+                                       rawhist_mode, isp_ob_offset_rb, isp_ob_offset_g,
+                                       bls1_ori_val, awb1_gain, is_hdr);
+                break;
+            case AEC_RAWSEL_MODE_TMO:
+
+                bls1_val.r = 0;
+                bls1_val.gr = 0;
+                bls1_val.gb = 0;
+                bls1_val.b = 0;
+
+                awb1_gain.r = 256;
+                awb1_gain.gr = 256;
+                awb1_gain.gb = 256;
+                awb1_gain.b = 256;
+
+                calcAecBigWinStatsV35(&stats->stat.rawae3, &statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin,
+                                      bls1_val, awb1_gain);
+
+                memcpy(statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val,
+                       stats->stat.rawhist3.bin, ISP39_HIST_BIN_N_MAX * sizeof(u32));
+
+                break;
+
+            default:
+                LOGE("wrong AeSelMode=%d\n", AeSelMode);
+                return XCAM_RETURN_ERROR_PARAM;
+            }
+        }
     }
 
 
@@ -1176,31 +1359,73 @@ XCamReturn translateAecStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq_Vid
 
             for (int i = 0; i < 15; i++) {
                 for (int j = 0; j < 15; j++) {
-                    printf("coWkEnt03[%d,%d]:r 0x%x, g 0x%x, b 0x%x\n", i, j,
+                    printf("frm%d coWkEnt03[%d,%d]:r 0x%x, g 0x%x, b 0x%x\n", stats->frame_id, i, j,
                            statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerR_val[i * 15 + j],
                            statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerGrGb_val[i * 15 + j],
                            statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.mainWin.hw_ae_meanBayerB_val[i * 15 + j]);
                 }
             }
 
-            printf("====================hist_result========================\n");
+            printf("====================frm%d hist_result=====================\n", stats->frame_id);
 
             for (int i = 0; i < 256; i++)
                 printf("coWkEnt03 bin[%d]= 0x%08x\n", i, statsInt->aec_stats_v25.ae_data.entityGroup.coWkEnt03.hist.hw_ae_histBin_val[i]);
         } else {
             for (int i = 0; i < 15; i++) {
                 for (int j = 0; j < 15; j++) {
-                    printf("entity0[%d,%d]:r 0x%x, g 0x%x, b 0x%x\n", i, j,
+                    printf("frm%d entity0[%d,%d]:r 0x%x, g 0x%x, b 0x%x\n", stats->frame_id, i, j,
                            statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin.hw_ae_meanBayerR_val[i * 15 + j],
                            statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin.hw_ae_meanBayerGrGb_val[i * 15 + j],
                            statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin.hw_ae_meanBayerB_val[i * 15 + j]);
                 }
             }
 
-            printf("====================hist_result========================\n");
+            printf("====================frm%d hist_result=====================\n", stats->frame_id);
 
             for (int i = 0; i < 256; i++)
                 printf("entity0 bin[%d]= 0x%08x\n", i, statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val[i]);
+
+            for (int i = 0; i < 15; i++) {
+                for (int j = 0; j < 15; j++) {
+                    printf("frm%d entity3[%d,%d]:r 0x%x, g 0x%x, b 0x%x\n", stats->frame_id, i, j,
+                           statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin.hw_ae_meanBayerR_val[i * 15 + j],
+                           statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin.hw_ae_meanBayerGrGb_val[i * 15 + j],
+                           statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin.hw_ae_meanBayerB_val[i * 15 + j]);
+                }
+            }
+
+            printf("====================frm%d hist_result=====================\n", stats->frame_id);
+
+            for (int i = 0; i < 256; i++)
+                printf("entity3 bin[%d]= 0x%08x\n", i, statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val[i]);
+
+            for (int i = 0; i < 15; i++) {
+                for (int j = 0; j < 15; j++) {
+                    printf("frm%d rawae0[%d,%d]:r 0x%x, g 0x%x, b 0x%x\n", stats->frame_id, i, j,
+                           stats->stat.rawae0.blk_y[i].blk_x[j].r, stats->stat.rawae0.blk_y[i].blk_x[j].g,
+                           stats->stat.rawae0.blk_y[i].blk_x[j].b);
+                }
+            }
+
+            printf("====================frm%d hist_result=====================\n", stats->frame_id);
+
+            for (int i = 0; i < 256; i++)
+                printf("hist0 bin[%d]= 0x%08x\n", i, stats->stat.rawhist0.bin[i]);
+
+            for (int i = 0; i < 15; i++) {
+                for (int j = 0; j < 15; j++) {
+                    printf("frm%d rawae3[%d,%d]:r 0x%x, g 0x%x, b 0x%x\n", stats->frame_id, i, j,
+                           stats->stat.rawae3.blk_y[i].blk_x[j].r, stats->stat.rawae3.blk_y[i].blk_x[j].g,
+                           stats->stat.rawae3.blk_y[i].blk_x[j].b);
+                }
+            }
+
+            printf("====================frm%d hist_result=====================\n", stats->frame_id);
+
+            for (int i = 0; i < 256; i++)
+                printf("hist3 bin[%d]= 0x%08x\n", i, stats->stat.rawhist3.bin[i]);
+
+
 
         }
 
@@ -1208,28 +1433,28 @@ XCamReturn translateAecStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq_Vid
 
         for (int i = 0; i < 15; i++) {
             for (int j = 0; j < 15; j++) {
-                printf("entity0[%d,%d]:r 0x%x, g 0x%x, b 0x%x\n", i, j,
+                printf("frm%d entity0[%d,%d]:r 0x%x, g 0x%x, b 0x%x\n", stats->frame_id, i, j,
                        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin.hw_ae_meanBayerR_val[i * 15 + j],
                        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin.hw_ae_meanBayerGrGb_val[i * 15 + j],
                        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.mainWin.hw_ae_meanBayerB_val[i * 15 + j]);
             }
         }
 
-        printf("====================hist_result========================\n");
+        printf("====================frm%d hist_result=====================\n", stats->frame_id);
 
         for (int i = 0; i < 256; i++)
             printf("entity0 bin[%d]= 0x%08x\n", i, statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity0.hist.hw_ae_histBin_val[i]);
 
         for (int i = 0; i < 15; i++) {
             for (int j = 0; j < 15; j++) {
-                printf("entity3[%d,%d]:r 0x%x, g 0x%x, b 0x%x\n", i, j,
+                printf("frm%d entity3[%d,%d]:r 0x%x, g 0x%x, b 0x%x\n", stats->frame_id, i, j,
                        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin.hw_ae_meanBayerR_val[i * 15 + j],
                        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin.hw_ae_meanBayerGrGb_val[i * 15 + j],
                        statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.mainWin.hw_ae_meanBayerB_val[i * 15 + j]);
             }
         }
 
-        printf("====================hist_result========================\n");
+        printf("====================frm%d hist_result=====================\n", stats->frame_id);
 
         for (int i = 0; i < 256; i++)
             printf("entity3 bin[%d]= 0x%08x\n", i, statsInt->aec_stats_v25.ae_data.entityGroup.entities.entity3.hist.hw_ae_histBin_val[i]);
@@ -1708,8 +1933,8 @@ XCamReturn translateMultiAwbStatsV35(AiqStatsTranslator_t* pStatsTrans, const ai
     }
 
     if(left_stats->frame_id != right_stats->frame_id || left_stats->meas_type != right_stats->meas_type ||
-       bottom_left_stats->frame_id != bottom_right_stats->frame_id || bottom_left_stats->meas_type != bottom_right_stats->meas_type ||
-       left_stats->frame_id != bottom_left_stats->frame_id || left_stats->meas_type != bottom_left_stats->meas_type) {
+            bottom_left_stats->frame_id != bottom_right_stats->frame_id || bottom_left_stats->meas_type != bottom_right_stats->meas_type ||
+            left_stats->frame_id != bottom_left_stats->frame_id || left_stats->meas_type != bottom_left_stats->meas_type) {
         LOGE_ANALYZER("status params(frmid or meas_type) of left isp and right isp are different");
         LOGE_ANALYZER("top left id %d meas %x right id %d meas %x bottom left id %d meas %x right id %d meas %x mode %d",
                       left_stats->frame_id, left_stats->meas_type,
@@ -1736,7 +1961,7 @@ XCamReturn translateMultiAwbStatsV35(AiqStatsTranslator_t* pStatsTrans, const ai
         statsInt->awb_stats_v32.dbginfo_fd = -1;
     }
     statsInt->awb_stats_v39.awb_cfg_effect.blkMeasureMode =
-        pStatsTrans->_ispParams->awb_cfg_v35.com.pixEngine.hw_awbCfg_zoneStatsSrc_mode>awbStats_pixAll_mode;
+        pStatsTrans->_ispParams->awb_cfg_v35.com.pixEngine.hw_awbCfg_zoneStatsSrc_mode > awbStats_pixAll_mode;
     statsInt->awb_stats_v39.awb_cfg_effect.mode = pStatsTrans->_ispParams->awb_cfg_v35.mode;
     statsInt->awb_stats_v39.awb_cfg_effect.lightNum = pStatsTrans->_ispParams->awb_cfg_v35.com.wpEngine.hw_awbCfg_lightSrcNum_val;
     statsInt->awb_stats_v39.awb_cfg_effect.groupIllIndxCurrent = pStatsTrans->_ispParams->awb_cfg_v35.groupIllIndxCurrent;
@@ -1762,7 +1987,7 @@ XCamReturn translateMultiAwbStatsV35(AiqStatsTranslator_t* pStatsTrans, const ai
     JudgeWinLocation35(&ori_win, &AwbWinSplitMode, pStatsTrans->left_isp_rect_, pStatsTrans->right_isp_rect_);
     JudgeWinLocationVertical35(&ori_win, &AwbWinSplitModeV, pStatsTrans->left_isp_rect_, pStatsTrans->bottom_left_isp_rect_);
     MergeAwbWinStats( &awb_stats_v39->wpEngine, &left_stats->stat.rawawb, &right_stats->stat.rawawb,
-                     statsInt->awb_stats_v39.awb_cfg_effect.lightNum, AwbWinSplitMode);
+                      statsInt->awb_stats_v39.awb_cfg_effect.lightNum, AwbWinSplitMode);
 
     if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
         MergeAwbWinStats(&bottom_awb_stats_v39->wpEngine, &bottom_left_stats->stat.rawawb, &bottom_right_stats->stat.rawawb,
@@ -2046,8 +2271,8 @@ XCamReturn translateMultiAfStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq
                   left_stats->frame_id, left_stats->meas_type);
 
     if(left_stats->frame_id != right_stats->frame_id || left_stats->meas_type != right_stats->meas_type ||
-       bottom_left_stats->frame_id != bottom_right_stats->frame_id || bottom_left_stats->meas_type != bottom_right_stats->meas_type ||
-       left_stats->frame_id != bottom_left_stats->frame_id || left_stats->meas_type != bottom_left_stats->meas_type) {
+            bottom_left_stats->frame_id != bottom_right_stats->frame_id || bottom_left_stats->meas_type != bottom_right_stats->meas_type ||
+            left_stats->frame_id != bottom_left_stats->frame_id || left_stats->meas_type != bottom_left_stats->meas_type) {
         LOGE_ANALYZER("status params(frmid or meas_type) of left isp and right isp are different");
         LOGE_ANALYZER("top left id %d meas %x right id %d meas %x bottom left id %d meas %x right id %d meas %x mode %d",
                       left_stats->frame_id, left_stats->meas_type,
@@ -2389,31 +2614,31 @@ XCamReturn translateMultiAfStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq
         statsInt->stat_motor.comp_bls = 0;
         if (af_split_info.winb_side_info == LEFT_AND_RIGHT_MODE) {
             statsInt->afStats_stats.subWin.hw_af_luma_val     = left_stats->stat.rawaf.sumy_winb * af_split_info.winb_l_ratio +
-                                               right_stats->stat.rawaf.sumy_winb * af_split_info.winb_r_ratio;
+                    right_stats->stat.rawaf.sumy_winb * af_split_info.winb_r_ratio;
             statsInt->afStats_stats.subWin.hw_af_hLumaCnt_val = left_stats->stat.rawaf.highlit_cnt_winb +
-                                                      right_stats->stat.rawaf.highlit_cnt_winb;
+                    right_stats->stat.rawaf.highlit_cnt_winb;
             statsInt->afStats_stats.subWin.hw_af_vFilt1Fv_val = left_stats->stat.rawaf.v1iir_sumb * af_split_info.winb_l_ratio +
-                                                right_stats->stat.rawaf.v1iir_sumb * af_split_info.winb_r_ratio;
+                    right_stats->stat.rawaf.v1iir_sumb * af_split_info.winb_r_ratio;
             statsInt->afStats_stats.subWin.hw_af_vFilt2Fv_val = left_stats->stat.rawaf.v2iir_sumb * af_split_info.winb_l_ratio +
-                                                right_stats->stat.rawaf.v2iir_sumb * af_split_info.winb_r_ratio;
+                    right_stats->stat.rawaf.v2iir_sumb * af_split_info.winb_r_ratio;
             statsInt->afStats_stats.subWin.hw_af_hFilt1Fv_val = left_stats->stat.rawaf.h1iir_sumb * af_split_info.winb_l_ratio +
-                                                right_stats->stat.rawaf.h1iir_sumb * af_split_info.winb_r_ratio;
+                    right_stats->stat.rawaf.h1iir_sumb * af_split_info.winb_r_ratio;
             statsInt->afStats_stats.subWin.hw_af_hFilt2Fv_val = left_stats->stat.rawaf.h2iir_sumb * af_split_info.winb_l_ratio +
-                                                right_stats->stat.rawaf.h2iir_sumb * af_split_info.winb_r_ratio;
+                    right_stats->stat.rawaf.h2iir_sumb * af_split_info.winb_r_ratio;
 
             if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
                 b_afStats_stats->subWin.hw_af_luma_val     = bottom_left_stats->stat.rawaf.sumy_winb * af_split_info_v.winb_l_ratio +
-                                                             bottom_right_stats->stat.rawaf.sumy_winb * af_split_info_v.winb_r_ratio;
+                        bottom_right_stats->stat.rawaf.sumy_winb * af_split_info_v.winb_r_ratio;
                 b_afStats_stats->subWin.hw_af_hLumaCnt_val = bottom_left_stats->stat.rawaf.highlit_cnt_winb +
-                                                             bottom_right_stats->stat.rawaf.highlit_cnt_winb;
+                        bottom_right_stats->stat.rawaf.highlit_cnt_winb;
                 b_afStats_stats->subWin.hw_af_vFilt1Fv_val = bottom_left_stats->stat.rawaf.v1iir_sumb * af_split_info_v.winb_l_ratio +
-                                                             bottom_right_stats->stat.rawaf.v1iir_sumb * af_split_info_v.winb_r_ratio;
+                        bottom_right_stats->stat.rawaf.v1iir_sumb * af_split_info_v.winb_r_ratio;
                 b_afStats_stats->subWin.hw_af_vFilt2Fv_val = bottom_left_stats->stat.rawaf.v2iir_sumb * af_split_info_v.winb_l_ratio +
-                                                             bottom_right_stats->stat.rawaf.v2iir_sumb * af_split_info_v.winb_r_ratio;
+                        bottom_right_stats->stat.rawaf.v2iir_sumb * af_split_info_v.winb_r_ratio;
                 b_afStats_stats->subWin.hw_af_hFilt1Fv_val = bottom_left_stats->stat.rawaf.h1iir_sumb * af_split_info_v.winb_l_ratio +
-                                                             bottom_right_stats->stat.rawaf.h1iir_sumb * af_split_info_v.winb_r_ratio;
+                        bottom_right_stats->stat.rawaf.h1iir_sumb * af_split_info_v.winb_r_ratio;
                 b_afStats_stats->subWin.hw_af_hFilt2Fv_val = bottom_left_stats->stat.rawaf.h2iir_sumb * af_split_info_v.winb_l_ratio +
-                                                             bottom_right_stats->stat.rawaf.h2iir_sumb * af_split_info_v.winb_r_ratio;
+                        bottom_right_stats->stat.rawaf.h2iir_sumb * af_split_info_v.winb_r_ratio;
             }
         } else if (af_split_info.winb_side_info == LEFT_MODE) {
             statsInt->afStats_stats.subWin.hw_af_luma_val     = left_stats->stat.rawaf.sumy_winb;
@@ -2603,44 +2828,44 @@ XCamReturn translateMultiAfStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq
                     l_idx = j * ISP39_MEAN_BLK_Y_NUM + (ISP39_MEAN_BLK_X_NUM - 1);
                     r_idx = j * ISP39_MEAN_BLK_Y_NUM;
                     statsInt->afStats_stats.mainWin.hw_af_vFilt1Fv_val[dst_idx] =
-                        left_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[ISP39_MEAN_BLK_X_NUM -1].v1 * af_split_info.wina_l_ratio +
+                        left_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[ISP39_MEAN_BLK_X_NUM - 1].v1 * af_split_info.wina_l_ratio +
                         right_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[0].v1 * af_split_info.wina_r_ratio;
                     statsInt->afStats_stats.mainWin.hw_af_vFilt2Fv_val[dst_idx] =
-                        left_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[ISP39_MEAN_BLK_X_NUM -1].v2 * af_split_info.wina_l_ratio +
+                        left_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[ISP39_MEAN_BLK_X_NUM - 1].v2 * af_split_info.wina_l_ratio +
                         right_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[0].v2 * af_split_info.wina_r_ratio;
                     statsInt->afStats_stats.mainWin.hw_af_hFilt1Fv_val[dst_idx] =
-                        left_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[ISP39_MEAN_BLK_X_NUM -1].h1 * af_split_info.wina_l_ratio +
+                        left_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[ISP39_MEAN_BLK_X_NUM - 1].h1 * af_split_info.wina_l_ratio +
                         right_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[0].h1 * af_split_info.wina_r_ratio;
                     statsInt->afStats_stats.mainWin.hw_af_hFilt2Fv_val[dst_idx] =
-                        left_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[ISP39_MEAN_BLK_X_NUM -1].h2 * af_split_info.wina_l_ratio +
+                        left_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[ISP39_MEAN_BLK_X_NUM - 1].h2 * af_split_info.wina_l_ratio +
                         right_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[0].h2 * af_split_info.wina_r_ratio;
 
-                    temp_luma = left_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[ISP39_MEAN_BLK_X_NUM -1].average +
+                    temp_luma = left_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[ISP39_MEAN_BLK_X_NUM - 1].average +
                                 right_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[0].average;
                     statsInt->afStats_stats.mainWin.hw_af_luma_val[dst_idx] = MAX(temp_luma, 0);
                     statsInt->afStats_stats.mainWin.hw_af_hLumaCnt_val[dst_idx] =
-                        left_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[ISP39_MEAN_BLK_X_NUM -1].highlight +
+                        left_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[ISP39_MEAN_BLK_X_NUM - 1].highlight +
                         right_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[0].highlight;
 
                     if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
                         b_afStats_stats->mainWin.hw_af_vFilt1Fv_val[dst_idx] =
-                            bottom_left_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[ISP39_MEAN_BLK_X_NUM -1].v1 * af_split_info.wina_l_ratio +
+                            bottom_left_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[ISP39_MEAN_BLK_X_NUM - 1].v1 * af_split_info.wina_l_ratio +
                             bottom_right_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[0].v1 * af_split_info.wina_r_ratio;
                         b_afStats_stats->mainWin.hw_af_vFilt2Fv_val[dst_idx] =
-                            bottom_left_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[ISP39_MEAN_BLK_X_NUM -1].v2 * af_split_info.wina_l_ratio +
+                            bottom_left_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[ISP39_MEAN_BLK_X_NUM - 1].v2 * af_split_info.wina_l_ratio +
                             bottom_right_stats->stat.rawaf.viir_blk_y[j].viir_blk_x[0].v2 * af_split_info.wina_r_ratio;
                         b_afStats_stats->mainWin.hw_af_hFilt1Fv_val[dst_idx] =
-                            bottom_left_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[ISP39_MEAN_BLK_X_NUM -1].h1 * af_split_info.wina_l_ratio +
+                            bottom_left_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[ISP39_MEAN_BLK_X_NUM - 1].h1 * af_split_info.wina_l_ratio +
                             bottom_right_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[0].h1 * af_split_info.wina_r_ratio;
                         b_afStats_stats->mainWin.hw_af_hFilt2Fv_val[dst_idx] =
-                            bottom_left_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[ISP39_MEAN_BLK_X_NUM -1].h2 * af_split_info.wina_l_ratio +
+                            bottom_left_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[ISP39_MEAN_BLK_X_NUM - 1].h2 * af_split_info.wina_l_ratio +
                             bottom_right_stats->stat.rawaf.hiir_blk_y[j].hiir_blk_x[0].h2 * af_split_info.wina_r_ratio;
 
-                        temp_luma = bottom_left_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[ISP39_MEAN_BLK_X_NUM -1].average +
+                        temp_luma = bottom_left_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[ISP39_MEAN_BLK_X_NUM - 1].average +
                                     bottom_right_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[0].average;
                         b_afStats_stats->mainWin.hw_af_luma_val[dst_idx] = MAX(temp_luma, 0);
                         b_afStats_stats->mainWin.hw_af_hLumaCnt_val[dst_idx] =
-                            bottom_left_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[ISP39_MEAN_BLK_X_NUM -1].highlight +
+                            bottom_left_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[ISP39_MEAN_BLK_X_NUM - 1].highlight +
                             bottom_right_stats->stat.rawaf.aehgl_blk_y[j].aehgl_blk_x[0].highlight;
                     }
                 }
@@ -2700,17 +2925,17 @@ XCamReturn translateMultiAfStatsV35(AiqStatsTranslator_t* pStatsTrans, const aiq
         if (ispUniteMode == RK_AIQ_ISP_UNITE_MODE_FOUR_GRID) {
             if (af_split_info_v.winb_side_info == LEFT_AND_RIGHT_MODE) {
                 statsInt->afStats_stats.subWin.hw_af_luma_val = statsInt->afStats_stats.subWin.hw_af_luma_val * af_split_info_v.winb_l_ratio +
-                                                                b_afStats_stats->subWin.hw_af_luma_val * af_split_info_v.winb_r_ratio;
+                        b_afStats_stats->subWin.hw_af_luma_val * af_split_info_v.winb_r_ratio;
                 statsInt->afStats_stats.subWin.hw_af_hLumaCnt_val = statsInt->afStats_stats.subWin.hw_af_hLumaCnt_val +
-                                                                    b_afStats_stats->subWin.hw_af_hLumaCnt_val;
+                        b_afStats_stats->subWin.hw_af_hLumaCnt_val;
                 statsInt->afStats_stats.subWin.hw_af_vFilt1Fv_val = statsInt->afStats_stats.subWin.hw_af_vFilt1Fv_val * af_split_info_v.winb_l_ratio +
-                                                                    b_afStats_stats->subWin.hw_af_vFilt1Fv_val * af_split_info_v.winb_r_ratio;
+                        b_afStats_stats->subWin.hw_af_vFilt1Fv_val * af_split_info_v.winb_r_ratio;
                 statsInt->afStats_stats.subWin.hw_af_vFilt2Fv_val = statsInt->afStats_stats.subWin.hw_af_vFilt2Fv_val * af_split_info_v.winb_l_ratio +
-                                                                    b_afStats_stats->subWin.hw_af_vFilt2Fv_val * af_split_info_v.winb_r_ratio;
+                        b_afStats_stats->subWin.hw_af_vFilt2Fv_val * af_split_info_v.winb_r_ratio;
                 statsInt->afStats_stats.subWin.hw_af_hFilt1Fv_val = statsInt->afStats_stats.subWin.hw_af_hFilt1Fv_val * af_split_info_v.winb_l_ratio +
-                                                                    b_afStats_stats->subWin.hw_af_hFilt1Fv_val * af_split_info_v.winb_r_ratio;
+                        b_afStats_stats->subWin.hw_af_hFilt1Fv_val * af_split_info_v.winb_r_ratio;
                 statsInt->afStats_stats.subWin.hw_af_hFilt2Fv_val = statsInt->afStats_stats.subWin.hw_af_hFilt2Fv_val * af_split_info_v.winb_l_ratio +
-                                                                    b_afStats_stats->subWin.hw_af_hFilt2Fv_val * af_split_info_v.winb_r_ratio;
+                        b_afStats_stats->subWin.hw_af_hFilt2Fv_val * af_split_info_v.winb_r_ratio;
             } else if (af_split_info_v.winb_side_info == RIGHT_MODE) {
                 statsInt->afStats_stats.subWin.hw_af_luma_val     = b_afStats_stats->subWin.hw_af_luma_val;
                 statsInt->afStats_stats.subWin.hw_af_hLumaCnt_val = b_afStats_stats->subWin.hw_af_hLumaCnt_val;

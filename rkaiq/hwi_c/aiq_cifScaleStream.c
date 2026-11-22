@@ -166,6 +166,16 @@ XCamReturn AiqCifSclStream_start(AiqCifSclStream_t* pCifSclStrm) {
     return XCAM_RETURN_NO_ERROR;
 }
 
+XCamReturn AiqCifSclStream_stopThreadOnly(AiqCifSclStream_t* pCifSclStrm) {
+    if (!pCifSclStrm) return XCAM_RETURN_ERROR_PARAM;
+
+    for (int32_t i = 0; i < pCifSclStrm->_index; i++) {
+        if (pCifSclStrm->_stream[i])
+            pCifSclStrm->_stream[i]->_base.stopThreadOnly(&pCifSclStrm->_stream[i]->_base);
+    }
+    return XCAM_RETURN_NO_ERROR;
+}
+
 XCamReturn AiqCifSclStream_stop(AiqCifSclStream_t* pCifSclStrm) {
     if (!pCifSclStrm) return XCAM_RETURN_ERROR_PARAM;
 

@@ -112,6 +112,46 @@ typedef struct {
     dm_status_t info;
 } dm_uapi_t;
 
+// copy from rk_aiq_module_btnr_common.h
+typedef struct {
+    /* M4_GENERIC_DESC(
+       M4_ALIAS(frameId),
+       M4_TYPE(u32),
+       M4_SIZE_EX(1,1),
+       M4_RANGE_EX(0,1048575),
+       M4_DEFAULT(0),
+       M4_HIDE_EX(0),
+       M4_RO(1),
+       M4_ORDER(0),
+       M4_NOTES(sigma stats frame id, read only.\n
+       Freq of use: low))  */
+    uint32_t id;
+    /* M4_GENERIC_DESC(
+       M4_ALIAS(sigma_num),
+       M4_TYPE(u32),
+       M4_SIZE_EX(1,1),
+       M4_RANGE_EX(0,20),
+       M4_DEFAULT(0),
+       M4_HIDE_EX(0),
+       M4_RO(1),
+       M4_ORDER(0),
+       M4_NOTES(sigma stats array size, read only.\n
+       Freq of use: low))  */
+    uint32_t sigma_num;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sigma_y),
+        M4_TYPE(u16),
+        M4_SIZE_EX(0,20),
+        M4_RANGE_EX(0,65535),
+        M4_DEFAULT(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(0),
+        M4_NOTES(sigma stats array, read only.\n
+        Freq of use: low))  */
+    uint16_t sigma_y[20];
+} btnr_stats_cp_t;
+
 typedef struct {
     /* M4_GENERIC_DESC(
        M4_ALIAS(attr),
@@ -121,18 +161,10 @@ typedef struct {
     btnr_api_attrib_t attr;
     // M4_STRUCT_DESC("info", "tuning_status")
     btnr_status_t info;
+    // M4_STRUCT_DESC("stats", "normal_ui_style")
+    btnr_stats_cp_t stats;
 } btnr_uapi_t;
 
-typedef struct {
-    /* M4_GENERIC_DESC(
-       M4_ALIAS(attr),
-       M4_TYPE(struct),
-       M4_UI_MODULE(tuning_param),
-       M4_REF(/bayertnr2)) */
-    btnr_api_attrib_t attr;
-    // M4_STRUCT_DESC("info", "tuning_status")
-    btnr_status_t info;
-} btnr2_uapi_t;
 
 typedef struct {
     /* M4_GENERIC_DESC(
@@ -480,6 +512,19 @@ typedef struct {
 } ccm_uapi_t;
 #endif
 
+#if defined(ISP_HW_V35)
+typedef struct {
+    /* M4_GENERIC_DESC(
+       M4_ALIAS(attr),
+       M4_TYPE(struct),
+       M4_UI_MODULE(tuning_param),
+       M4_REF(/asd)) */
+    asd_api_attrib_t attr;
+    // M4_STRUCT_DESC("info", "tuning_status")
+    asd_status_t info;
+} asd_uapi_t;
+#endif
+
 #ifndef USE_NEWSTRUCT
 typedef struct __ae_uapi {
     // M4_STRUCT_DESC("expsw_attr", "normal_ui_style")
@@ -497,11 +542,11 @@ typedef struct __awb_uapi {
        M4_UI_MODULE(tuning_param),
        M4_REF(/wb)) */
     awb_api_attrib_t attr;
+#endif
     // M4_STRUCT_DESC("mode", "normal_ui_style")
     uapi_wb_mode_t mode;
     // M4_STRUCT_DESC("wbgain", "normal_ui_style")
     uapi_wb_gain_t wbgain;
-#endif
 } awb_uapi_t;
 
 typedef struct __amerge_uapi {
@@ -1098,6 +1143,8 @@ typedef struct __aiq_uapi_t {
 #if (USE_NEWSTRUCT == 0)
     // M4_STRUCT_DESC("ae_uapi", "normal_ui_style")
     ae_uapi_t ae_uapi;
+    // M4_STRUCT_DESC("awb_uapi", "normal_ui_style")
+    awb_uapi_t awb_uapi;
 #endif
 #if defined(ISP_HW_V20)
     // M4_STRUCT_DESC("atmo_uapi", "normal_ui_style")
@@ -1189,8 +1236,6 @@ typedef struct __aiq_uapi_t {
     dm_uapi_t dm_uapi;
     // M4_STRUCT_DESC("btnr_uapi", "iso_list_template")
     btnr_uapi_t btnr_uapi;
-    // M4_STRUCT_V2_DESC("btnr2_uapi", "iso_list_template", "0", "0", "/uapi/0/btnr_uapi")
-    btnr2_uapi_t btnr2_uapi;
     // M4_STRUCT_DESC("gamma_uapi", "iso_list_template")
     gamma_uapi_t gamma_uapi;
     // M4_STRUCT_DESC("drc_uapi", "iso_list_template")
@@ -1281,6 +1326,8 @@ typedef struct __aiq_uapi_t {
     algo_interp_iso_list_t interpIso_uapi;
     // M4_STRUCT_DESC("cp_uapi", "iso_list_template")
     fpnSw_uapi_t fpnSw_uapi;
+    // M4_STRUCT_DESC("asd_uapi", "iso_list_template")
+    asd_uapi_t asd_uapi;
 #endif
 } RkaiqUapi_t;
 

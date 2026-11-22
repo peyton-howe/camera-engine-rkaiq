@@ -39,68 +39,68 @@ struct CTimer_s {
 static uint32_t rk_format_to_media_format(rk_aiq_format_t format) {
     uint32_t pixelformat = -1;
     switch (format) {
-        case RK_PIX_FMT_SBGGR8:
-            pixelformat = MEDIA_BUS_FMT_SBGGR8_1X8;
-            break;
-        case RK_PIX_FMT_SRGGB8:
-            pixelformat = MEDIA_BUS_FMT_SRGGB8_1X8;
-            break;
-        case RK_PIX_FMT_SGBRG8:
-            pixelformat = MEDIA_BUS_FMT_SGBRG8_1X8;
-            break;
-        case RK_PIX_FMT_SGRBG8:
-            pixelformat = MEDIA_BUS_FMT_SGRBG8_1X8;
-            break;
-        case RK_PIX_FMT_SBGGR10:
-            pixelformat = MEDIA_BUS_FMT_SBGGR10_1X10;
-            break;
-        case RK_PIX_FMT_SRGGB10:
-            pixelformat = MEDIA_BUS_FMT_SRGGB10_1X10;
-            break;
-        case RK_PIX_FMT_SGBRG10:
-            pixelformat = MEDIA_BUS_FMT_SGBRG10_1X10;
-            break;
-        case RK_PIX_FMT_SGRBG10:
-            pixelformat = MEDIA_BUS_FMT_SGRBG10_1X10;
-            break;
-        case RK_PIX_FMT_SBGGR12:
-            pixelformat = MEDIA_BUS_FMT_SBGGR12_1X12;
-            break;
-        case RK_PIX_FMT_SRGGB12:
-            pixelformat = MEDIA_BUS_FMT_SRGGB12_1X12;
-            break;
-        case RK_PIX_FMT_SGBRG12:
-            pixelformat = MEDIA_BUS_FMT_SGBRG12_1X12;
-            break;
-        case RK_PIX_FMT_SGRBG12:
-            pixelformat = MEDIA_BUS_FMT_SGRBG12_1X12;
-            break;
-        case RK_PIX_FMT_SBGGR14:
-            pixelformat = MEDIA_BUS_FMT_SBGGR14_1X14;
-            break;
-        case RK_PIX_FMT_SRGGB14:
-            pixelformat = MEDIA_BUS_FMT_SRGGB14_1X14;
-            break;
-        case RK_PIX_FMT_SGBRG14:
-            pixelformat = MEDIA_BUS_FMT_SGBRG14_1X14;
-            break;
-        case RK_PIX_FMT_SGRBG14:
-            pixelformat = MEDIA_BUS_FMT_SGRBG14_1X14;
-            break;
-        case RK_PIX_FMT_SBGGR16:
-            pixelformat = MEDIA_BUS_FMT_SBGGR16_1X16;
-            break;
-        case RK_PIX_FMT_SGBRG16:
-            pixelformat = MEDIA_BUS_FMT_SGBRG16_1X16;
-            break;
-        case RK_PIX_FMT_SGRBG16:
-            pixelformat = MEDIA_BUS_FMT_SGRBG16_1X16;
-            break;
-        case RK_PIX_FMT_SRGGB16:
-            pixelformat = MEDIA_BUS_FMT_SRGGB16_1X16;
-            break;
-        default:
-            LOGE_CAMHW_SUBM(FAKECAM_SUBM, "%s no support format: %d\n", __func__, format);
+    case RK_PIX_FMT_SBGGR8:
+        pixelformat = MEDIA_BUS_FMT_SBGGR8_1X8;
+        break;
+    case RK_PIX_FMT_SRGGB8:
+        pixelformat = MEDIA_BUS_FMT_SRGGB8_1X8;
+        break;
+    case RK_PIX_FMT_SGBRG8:
+        pixelformat = MEDIA_BUS_FMT_SGBRG8_1X8;
+        break;
+    case RK_PIX_FMT_SGRBG8:
+        pixelformat = MEDIA_BUS_FMT_SGRBG8_1X8;
+        break;
+    case RK_PIX_FMT_SBGGR10:
+        pixelformat = MEDIA_BUS_FMT_SBGGR10_1X10;
+        break;
+    case RK_PIX_FMT_SRGGB10:
+        pixelformat = MEDIA_BUS_FMT_SRGGB10_1X10;
+        break;
+    case RK_PIX_FMT_SGBRG10:
+        pixelformat = MEDIA_BUS_FMT_SGBRG10_1X10;
+        break;
+    case RK_PIX_FMT_SGRBG10:
+        pixelformat = MEDIA_BUS_FMT_SGRBG10_1X10;
+        break;
+    case RK_PIX_FMT_SBGGR12:
+        pixelformat = MEDIA_BUS_FMT_SBGGR12_1X12;
+        break;
+    case RK_PIX_FMT_SRGGB12:
+        pixelformat = MEDIA_BUS_FMT_SRGGB12_1X12;
+        break;
+    case RK_PIX_FMT_SGBRG12:
+        pixelformat = MEDIA_BUS_FMT_SGBRG12_1X12;
+        break;
+    case RK_PIX_FMT_SGRBG12:
+        pixelformat = MEDIA_BUS_FMT_SGRBG12_1X12;
+        break;
+    case RK_PIX_FMT_SBGGR14:
+        pixelformat = MEDIA_BUS_FMT_SBGGR14_1X14;
+        break;
+    case RK_PIX_FMT_SRGGB14:
+        pixelformat = MEDIA_BUS_FMT_SRGGB14_1X14;
+        break;
+    case RK_PIX_FMT_SGBRG14:
+        pixelformat = MEDIA_BUS_FMT_SGBRG14_1X14;
+        break;
+    case RK_PIX_FMT_SGRBG14:
+        pixelformat = MEDIA_BUS_FMT_SGRBG14_1X14;
+        break;
+    case RK_PIX_FMT_SBGGR16:
+        pixelformat = MEDIA_BUS_FMT_SBGGR16_1X16;
+        break;
+    case RK_PIX_FMT_SGBRG16:
+        pixelformat = MEDIA_BUS_FMT_SGBRG16_1X16;
+        break;
+    case RK_PIX_FMT_SGRBG16:
+        pixelformat = MEDIA_BUS_FMT_SGRBG16_1X16;
+        break;
+    case RK_PIX_FMT_SRGGB16:
+        pixelformat = MEDIA_BUS_FMT_SRGGB16_1X16;
+        break;
+    default:
+        LOGE_CAMHW_SUBM(FAKECAM_SUBM, "%s no support format: %d\n", __func__, format);
     }
     return pixelformat;
 }
@@ -123,7 +123,7 @@ static void _OnTimer(CTimer_t* pTimer) {
 
     ENTER_CAMHW_FUNCTION();
     if (pSnsHw->_working_mode == RK_AIQ_WORKING_MODE_NORMAL ||
-        RK_AIQ_HDR_IS_SENSOR_BUILTIN(pSnsHw->_working_mode)) {
+            RK_AIQ_HDR_IS_SENSOR_BUILTIN(pSnsHw->_working_mode)) {
         fake_v4l2_dev = (AiqFakeV4l2Device_t*)(pTimer->_dev->_mipi_tx_dev[0]);
         (*fake_v4l2_dev->on_timer_proc)(fake_v4l2_dev);
     } else if (pSnsHw->_working_mode == RK_AIQ_ISP_HDR_MODE_2_FRAME_HDR ||
@@ -225,7 +225,7 @@ static int _get_dcg_ratio(rk_aiq_sensor_dcg_ratio_t* dcg_ratio) {
 }
 
 static XCamReturn _get_sensor_descriptor(AiqSensorHw_t* pSnsHw,
-                                         rk_aiq_exposure_sensor_descriptor* sns_des) {
+        rk_aiq_exposure_sensor_descriptor* sns_des) {
     AiqFakeSensorHw_t* pFakeSnsHw = (AiqFakeSensorHw_t*)pSnsHw;
     float fps                     = 0;
 
@@ -359,7 +359,7 @@ static XCamReturn _set_working_mode(AiqSensorHw_t* pSnsHw, int mode) {
     } else if (mode == RK_AIQ_ISP_HDR_MODE_3_FRAME_HDR || mode == RK_AIQ_ISP_HDR_MODE_3_LINE_HDR) {
         hdr_mode = HDR_X3;
     } else if (RK_AIQ_HDR_IS_SENSOR_BUILTIN(mode)) {
-        hdr_mode = HDR_COMPR;
+        hdr_mode = HDR_CIS_MERGE;
     } else {
         LOGE_CAMHW_SUBM(FAKECAM_SUBM, "failed to set hdr mode to %d", mode);
         return XCAM_RETURN_ERROR_FAILED;
@@ -467,7 +467,7 @@ static XCamReturn _enqueue_rawbuffer(AiqFakeSensorHw_t* pFakeSns, struct rk_aiq_
 
     ENTER_CAMHW_FUNCTION();
     if (pSnsHw->_working_mode == RK_AIQ_WORKING_MODE_NORMAL ||
-        RK_AIQ_HDR_IS_SENSOR_BUILTIN(pSnsHw->_working_mode)) {
+            RK_AIQ_HDR_IS_SENSOR_BUILTIN(pSnsHw->_working_mode)) {
         max_count = 1;
     } else if (pSnsHw->_working_mode == RK_AIQ_ISP_HDR_MODE_2_FRAME_HDR ||
                pSnsHw->_working_mode == RK_AIQ_ISP_HDR_MODE_2_LINE_HDR) {
@@ -478,7 +478,7 @@ static XCamReturn _enqueue_rawbuffer(AiqFakeSensorHw_t* pFakeSns, struct rk_aiq_
     }
 
     if (pSnsHw->_frame_sequence != (uint32_t)(-1) &&
-        vbuf->buf_info[0].frame_id != pSnsHw->_frame_sequence + 1) {
+            vbuf->buf_info[0].frame_id != pSnsHw->_frame_sequence + 1) {
         LOGW_CAMHW_SUBM(FAKECAM_SUBM, "enqueue frame id(%u) isn't contiguous, change the id to %u",
                         vbuf->buf_info[0].frame_id, pSnsHw->_frame_sequence + 1);
         vbuf->buf_info[0].frame_id = ++pSnsHw->_frame_sequence;
@@ -510,20 +510,20 @@ static XCamReturn _enqueue_rawbuffer(AiqFakeSensorHw_t* pFakeSns, struct rk_aiq_
 #if 1
     // check float exposure, not reg value
     if (fabs(vbuf->buf_info[0].exp_time - 0.0f) < FLT_EPSILON ||
-        fabs(vbuf->buf_info[0].exp_gain - 0.0f) < FLT_EPSILON)
+            fabs(vbuf->buf_info[0].exp_gain - 0.0f) < FLT_EPSILON)
         exp_val_valid = false;
 
     if (exp_val_valid &&
-        (RK_AIQ_HDR_GET_WORKING_MODE(pSnsHw->_working_mode) == RK_AIQ_WORKING_MODE_ISP_HDR2)) {
+            (RK_AIQ_HDR_GET_WORKING_MODE(pSnsHw->_working_mode) == RK_AIQ_WORKING_MODE_ISP_HDR2)) {
         if (fabs(vbuf->buf_info[1].exp_time - 0.0f) < FLT_EPSILON ||
-            fabs(vbuf->buf_info[1].exp_gain - 0.0f) < FLT_EPSILON)
+                fabs(vbuf->buf_info[1].exp_gain - 0.0f) < FLT_EPSILON)
             exp_val_valid = false;
     }
 
     if (exp_val_valid &&
-        (RK_AIQ_HDR_GET_WORKING_MODE(pSnsHw->_working_mode) == RK_AIQ_WORKING_MODE_ISP_HDR3)) {
+            (RK_AIQ_HDR_GET_WORKING_MODE(pSnsHw->_working_mode) == RK_AIQ_WORKING_MODE_ISP_HDR3)) {
         if (fabs(vbuf->buf_info[2].exp_time - 0.0f) < FLT_EPSILON ||
-            fabs(vbuf->buf_info[2].exp_gain - 0.0f) < FLT_EPSILON)
+                fabs(vbuf->buf_info[2].exp_gain - 0.0f) < FLT_EPSILON)
             exp_val_valid = false;
     }
 
@@ -531,12 +531,12 @@ static XCamReturn _enqueue_rawbuffer(AiqFakeSensorHw_t* pFakeSns, struct rk_aiq_
     if ((vbuf->buf_info[0].exp_gain_reg) == 0) exp_val_valid = false;
 
     if (exp_val_valid &&
-        (RK_AIQ_HDR_GET_WORKING_MODE(_working_mode) == RK_AIQ_WORKING_MODE_ISP_HDR2)) {
+            (RK_AIQ_HDR_GET_WORKING_MODE(_working_mode) == RK_AIQ_WORKING_MODE_ISP_HDR2)) {
         if (vbuf->buf_info[1].exp_gain_reg == 0) exp_val_valid = false;
     }
 
     if (exp_val_valid &&
-        (RK_AIQ_HDR_GET_WORKING_MODE(_working_mode) == RK_AIQ_WORKING_MODE_ISP_HDR3)) {
+            (RK_AIQ_HDR_GET_WORKING_MODE(_working_mode) == RK_AIQ_WORKING_MODE_ISP_HDR3)) {
         if (vbuf->buf_info[2].exp_gain_reg == 0) exp_val_valid = false;
     }
 #endif
@@ -556,11 +556,12 @@ static XCamReturn _enqueue_rawbuffer(AiqFakeSensorHw_t* pFakeSns, struct rk_aiq_
         pSnsExp->aecExpInfo.LinearExp.exp_sensor_params.coarse_integration_time =
             vbuf->buf_info[0].exp_time_reg;
         pSnsExp->aecExpInfo.LinearExp.exp_real_params.analog_gain      = vbuf->buf_info[0].exp_gain;
+        pSnsExp->aecExpInfo.LinearExp.exp_real_params.cis_total_gain   = vbuf->buf_info[0].exp_gain;
         pSnsExp->aecExpInfo.LinearExp.exp_real_params.integration_time = vbuf->buf_info[0].exp_time;
         pSnsExp->aecExpInfo.LinearExp.exp_sensor_params.digital_gain_global = 1;
         pSnsExp->aecExpInfo.LinearExp.exp_sensor_params.isp_digital_gain    = 1;
         pSnsExp->aecExpInfo.LinearExp.exp_real_params.digital_gain          = 1.0f;
-        pSnsExp->aecExpInfo.LinearExp.exp_real_params.isp_dgain             = 1.0f;
+        pSnsExp->aecExpInfo.LinearExp.exp_real_params.isp_dgain             = vbuf->buf_info[0].exp_ispdgain;
 
         pSnsExp->aecExpInfo.HdrExp[2].exp_sensor_params.analog_gain_code_global =
             vbuf->buf_info[2].exp_gain_reg;
@@ -571,7 +572,7 @@ static XCamReturn _enqueue_rawbuffer(AiqFakeSensorHw_t* pFakeSns, struct rk_aiq_
         pSnsExp->aecExpInfo.HdrExp[2].exp_sensor_params.digital_gain_global = 1;
         pSnsExp->aecExpInfo.HdrExp[2].exp_sensor_params.isp_digital_gain    = 1;
         pSnsExp->aecExpInfo.HdrExp[2].exp_real_params.digital_gain          = 1.0f;
-        pSnsExp->aecExpInfo.HdrExp[2].exp_real_params.isp_dgain             = 1.0f;
+        pSnsExp->aecExpInfo.HdrExp[2].exp_real_params.isp_dgain             = vbuf->buf_info[2].exp_ispdgain;
 
         pSnsExp->aecExpInfo.HdrExp[1].exp_sensor_params.analog_gain_code_global =
             vbuf->buf_info[1].exp_gain_reg;
@@ -582,7 +583,7 @@ static XCamReturn _enqueue_rawbuffer(AiqFakeSensorHw_t* pFakeSns, struct rk_aiq_
         pSnsExp->aecExpInfo.HdrExp[1].exp_sensor_params.digital_gain_global = 1;
         pSnsExp->aecExpInfo.HdrExp[1].exp_sensor_params.isp_digital_gain    = 1;
         pSnsExp->aecExpInfo.HdrExp[1].exp_real_params.digital_gain          = 1.0f;
-        pSnsExp->aecExpInfo.HdrExp[1].exp_real_params.isp_dgain             = 1.0f;
+        pSnsExp->aecExpInfo.HdrExp[1].exp_real_params.isp_dgain             = vbuf->buf_info[1].exp_ispdgain;
 
         pSnsExp->aecExpInfo.HdrExp[0].exp_sensor_params.analog_gain_code_global =
             vbuf->buf_info[0].exp_gain_reg;
@@ -593,7 +594,7 @@ static XCamReturn _enqueue_rawbuffer(AiqFakeSensorHw_t* pFakeSns, struct rk_aiq_
         pSnsExp->aecExpInfo.HdrExp[0].exp_sensor_params.digital_gain_global = 1;
         pSnsExp->aecExpInfo.HdrExp[0].exp_sensor_params.isp_digital_gain    = 1;
         pSnsExp->aecExpInfo.HdrExp[0].exp_real_params.digital_gain          = 1.0f;
-        pSnsExp->aecExpInfo.HdrExp[0].exp_real_params.isp_dgain             = 1.0f;
+        pSnsExp->aecExpInfo.HdrExp[0].exp_real_params.isp_dgain             = vbuf->buf_info[0].exp_ispdgain;
 
         aiqMap_insert(pSnsHw->_effecting_exp_map, (void*)(intptr_t)fid, &pSnsExp);
         LOGD_CAMHW_SUBM(FAKECAM_SUBM, "add id[%d] to the effected exp map", fid);
@@ -615,7 +616,7 @@ static XCamReturn _enqueue_rawbuffer(AiqFakeSensorHw_t* pFakeSns, struct rk_aiq_
 }
 
 static XCamReturn _register_rawdata_callback(AiqFakeSensorHw_t* pFakeSnsHw,
-                                             void (*callback)(void*)) {
+        void (*callback)(void*)) {
     ENTER_XCORE_FUNCTION();
     XCamReturn ret    = XCAM_RETURN_NO_ERROR;
     pFakeSnsHw->pFunc = callback;
@@ -717,26 +718,26 @@ static XCamReturn _on_dqueue(AiqFakeSensorHw_t* pFakeSns, int dev_idx, AiqV4l2Bu
             struct rk_aiq_vbuf* buf = (struct rk_aiq_vbuf*)(next_item->_pData);
 
             switch (pSnsHw->_working_mode) {
-                case RK_AIQ_WORKING_MODE_NORMAL:
-                case RK_AIQ_ISP_HDR_MODE_2_BUILTIN:
-                case RK_AIQ_ISP_HDR_MODE_3_BUILTIN:
-                    if (!buf->buf_info[0].valid) {
-                        goto out;
-                    }
-                    break;
-                case RK_AIQ_ISP_HDR_MODE_2_FRAME_HDR:
-                case RK_AIQ_ISP_HDR_MODE_2_LINE_HDR:
-                    if (!buf->buf_info[0].valid && !buf->buf_info[1].valid) {
-                        goto out;
-                    }
-                    break;
-                case RK_AIQ_ISP_HDR_MODE_3_FRAME_HDR:
-                case RK_AIQ_ISP_HDR_MODE_3_LINE_HDR:
-                    if (!buf->buf_info[0].valid && !buf->buf_info[1].valid &&
+            case RK_AIQ_WORKING_MODE_NORMAL:
+            case RK_AIQ_ISP_HDR_MODE_2_BUILTIN:
+            case RK_AIQ_ISP_HDR_MODE_3_BUILTIN:
+                if (!buf->buf_info[0].valid) {
+                    goto out;
+                }
+                break;
+            case RK_AIQ_ISP_HDR_MODE_2_FRAME_HDR:
+            case RK_AIQ_ISP_HDR_MODE_2_LINE_HDR:
+                if (!buf->buf_info[0].valid && !buf->buf_info[1].valid) {
+                    goto out;
+                }
+                break;
+            case RK_AIQ_ISP_HDR_MODE_3_FRAME_HDR:
+            case RK_AIQ_ISP_HDR_MODE_3_LINE_HDR:
+                if (!buf->buf_info[0].valid && !buf->buf_info[1].valid &&
                         !buf->buf_info[2].valid) {
-                        goto out;
-                    }
-                    break;
+                    goto out;
+                }
+                break;
             }
         }
     }
@@ -769,7 +770,7 @@ static XCamReturn _set_mipi_tx_devs(AiqFakeSensorHw_t* pFakeSns, AiqV4l2Device_t
 
 static XCamReturn
 _set_fake_sensor_format(AiqFakeSensorHw_t* pFakeSns,
-                    int width, int height, uint32_t fmt_core)
+                        int width, int height, uint32_t fmt_core)
 {
     ENTER_CAMHW_FUNCTION();
     pFakeSns->_width = width;

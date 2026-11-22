@@ -117,6 +117,7 @@ typedef struct RkAiqAlgosComShared_s {
     int mCamPhyId;
     uint8_t hdr_mode;
     int aibnr_fixIndex;
+    rk_aiq_face_roi_t selfaceinfo;
 } RkAiqAlgosComShared_t;
 
 // following vars shared among itself by algo handlers

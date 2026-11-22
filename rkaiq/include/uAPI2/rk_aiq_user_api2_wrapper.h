@@ -321,4 +321,10 @@ rk_aiq_get_ayuvme_info(const rk_aiq_sys_ctx_t *sys_ctx,
 XCamReturn
 rk_aiq_uapi2_query_algoInterpIsoInfo(const rk_aiq_sys_ctx_t *sys_ctx,
                        algo_interp_iso_list_t* info);
+
+#if USE_NEWSTRUCT
+XCamReturn
+rk_aiq_user_api2_btnr_QueryStats(const rk_aiq_sys_ctx_t* sys_ctx,
+                                  btnr_stats_cp_t* stats);
+#endif
 #endif /*__RK_AIQ_USER_API2_WRAPPER_H__*/

@@ -43,6 +43,7 @@ struct AiqAlgoHandler_s {
     XCamReturn (*genIspResult)(AiqAlgoHandler_t* pAlgoHandler, AiqFullParams_t* params,
                                AiqFullParams_t* cur_params);
     XCamReturn (*queryInterpIso)(AiqAlgoHandler_t* pAlgoHandler, uint32_t* interpIso, uint32_t* isoH, uint32_t* isoL);
+    XCamReturn (*stop)(AiqAlgoHandler_t* pAlgoHandler);
     // internal used
     XCamReturn (*configInparamsCom)(AiqAlgoHandler_t* pAlgoHandler, RkAiqAlgoCom* com, int type);
     void (*init)(AiqAlgoHandler_t* pAlgoHandler);

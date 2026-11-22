@@ -25,6 +25,56 @@ RKAIQ_BEGIN_DECLARE
 #define CHECK_USER_API_ENABLE
 #endif
 
+static XCamReturn _histeq_SetUsrCfgStrg(const rk_aiq_sys_ctx_t* sys_ctx, bool en, float strength)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    AiqHisteqHandler_t* algo_handle =
+        (AiqHisteqHandler_t*)sys_ctx->_analyzer->mAlgoHandleMaps[RK_AIQ_ALGO_TYPE_AHISTEQ];
+    if (algo_handle) {
+        return AiqHisteqHandler_setUsrCfgStrg(algo_handle, en, strength);
+    }
+
+    return ret;
+}
+
+static XCamReturn _histeq_GetUsrCfgStrg(const rk_aiq_sys_ctx_t* sys_ctx, bool *en, float *strength)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    AiqHisteqHandler_t* algo_handle =
+        (AiqHisteqHandler_t*)sys_ctx->_analyzer->mAlgoHandleMaps[RK_AIQ_ALGO_TYPE_AHISTEQ];
+    if (algo_handle) {
+        return AiqHisteqHandler_getUsrCfgStrg(algo_handle, en, strength);
+    }
+
+    return ret;
+}
+
+XCamReturn
+rk_aiq_user_api2_histeq_SetUsrCfgStrg(const rk_aiq_sys_ctx_t* sys_ctx, bool en, float strength)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    CHECK_USER_API_ENABLE2(sys_ctx);
+    CHECK_USER_API_ENABLE(RK_AIQ_ALGO_TYPE_AHISTEQ);
+    RKAIQ_API_SMART_LOCK(sys_ctx);
+
+	const rk_aiq_sys_ctx_t* _ctx = rk_aiq_user_api2_common_getSysCtx(sys_ctx);
+    return _histeq_SetUsrCfgStrg(_ctx, en, strength);
+}
+
+XCamReturn
+rk_aiq_user_api2_histeq_GetUsrCfgStrg(const rk_aiq_sys_ctx_t* sys_ctx, bool *en, float *strength)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    CHECK_USER_API_ENABLE2(sys_ctx);
+    CHECK_USER_API_ENABLE(RK_AIQ_ALGO_TYPE_AHISTEQ);
+    RKAIQ_API_SMART_LOCK(sys_ctx);
+
+	const rk_aiq_sys_ctx_t* _ctx = rk_aiq_user_api2_common_getSysCtx(sys_ctx);
+    return _histeq_GetUsrCfgStrg(_ctx, en, strength);
+}
+
 XCamReturn
 rk_aiq_user_api2_histeq_SetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, histeq_api_attrib_t* attr)
 {

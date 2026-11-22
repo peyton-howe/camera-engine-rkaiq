@@ -165,6 +165,12 @@ static const capture_fmt_t csirx_fmts[] = {
         .bpp       = {10},
     },
     {
+        .fourcc    = V4L2_PIX_FMT_Y10,
+        .bayer_fmt = 0,
+        .pcpp      = 4,
+        .bpp       = {10},
+    },
+    {
         .fourcc    = V4L2_PIX_FMT_SRGGB12,
         .bayer_fmt = 3,
         .pcpp      = 2,
@@ -354,11 +360,11 @@ void aiq_dumpRkRaw_setIspInfo(aiq_DumpRkRaw_t* pDpRkRaw, struct ispInfo_s* info)
     pDpRkRaw->ispInfo.stridePerLine = info->stridePerLine;
 
     const capture_fmt_t* fmt = NULL;
-    if ((fmt = findFmt(pDpRkRaw->ispInfo.pixelformat)))
+    if ((fmt = findFmt(pDpRkRaw->ispInfo.pixelformat))) {
         calculate_stride_per_line(&pDpRkRaw->ispInfo, *fmt, &pDpRkRaw->ispInfo.bytesPerLine);
-    pDpRkRaw->ispInfo.bpp       = fmt->bpp[0];
-    pDpRkRaw->ispInfo.bayer_fmt = fmt->bayer_fmt;
-
+        pDpRkRaw->ispInfo.bpp       = fmt->bpp[0];
+        pDpRkRaw->ispInfo.bayer_fmt = fmt->bayer_fmt;
+    }
     LOGV_CAMHW_SUBM(
         CAPTURERAW_SUBM,
         "sns_name(%s), mode(%d), rect(%dx%d), bpp(%d), bytesPerLine(%d), stridePerLine(%d)\n",

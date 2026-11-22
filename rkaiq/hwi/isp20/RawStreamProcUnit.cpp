@@ -32,6 +32,8 @@ RawStreamProcUnit::RawStreamProcUnit (const rk_sensor_full_info_t *s_info, bool 
     _raw_proc_thread = new RawProcThread(this);
     _PollCallback = NULL;
     _rawCap = NULL;
+    if(s_info->split)
+        _is_split = true;
     //short frame
     if (strlen(s_info->isp_info->rawrd2_s_path)) {
         _dev[0] = new V4l2Device (s_info->isp_info->rawrd2_s_path);//rkisp_rawrd2_s
@@ -627,7 +629,7 @@ RawStreamProcUnit::set_csi_mem_word_big_align(uint32_t width, uint32_t height,
             break;
         }
 
-        if (((width / 2 - RKMOUDLE_UNITE_EXTEND_PIXEL) *  sns_bpp / 8) & 0xf) {
+        if ((((width / 2 - RKMOUDLE_UNITE_EXTEND_PIXEL) *  sns_bpp / 8) & 0xf) || _is_split) {
             int mem_mode = CSI_MEM_WORD_BIG_ALIGN;
             int ret1 = _dev[i]->io_control (RKISP_CMD_SET_CSI_MEMORY_MODE, &mem_mode);
             if (ret1) {

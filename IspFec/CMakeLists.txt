@@ -22,6 +22,10 @@ configure_file(
     "${PROJECT_BINARY_DIR}/rkfec_config.h"
     )
 
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+    add_compile_options(${ISP_HW_VERSION})
+endif()
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
 
@@ -68,13 +72,20 @@ if(RK_GDC_GEN_MESH_ONLINE)
 	     )
 
     set(GENMESH_LIBS genMeshLib)
+
+    if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+        set(RKFEC_SYSTEM_NAME "android")
+    else()
+        set(RKFEC_SYSTEM_NAME "linux")
+    endif()
+
     if(ARCH STREQUAL "aarch64")
         set(GENMESH_LIBS_DIR
-            ${PROJECT_SOURCE_DIR}/src/gen_mesh/linux/genMesh_static_64bit/
+            ${PROJECT_SOURCE_DIR}/src/gen_mesh/${RKFEC_SYSTEM_NAME}/genMesh_static_64bit/
             )
     else()
         set(GENMESH_LIBS_DIR
-            ${PROJECT_SOURCE_DIR}/src/gen_mesh/linux/genMesh_static_32bit/
+            ${PROJECT_SOURCE_DIR}/src/gen_mesh/${RKFEC_SYSTEM_NAME}/genMesh_static_32bit/
             )
     endif()
 
@@ -98,8 +109,14 @@ link_directories("${RK_ISPFEC_LIB_DIR}" "${GENMESH_LIBS_DIR}")
 add_library(IspFec SHARED ${IspFec_SRC})
 
 target_link_libraries(IspFec
-	PRIVATE
+    PRIVATE
     ${GENMESH_LIBS})
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+    target_link_libraries(IspFec
+        PRIVATE
+        log)
+endif()
 
 add_library(IspFec_static STATIC ${IspFec_SRC})
 set_target_properties(IspFec_static PROPERTIES FOLDER "IspFec")

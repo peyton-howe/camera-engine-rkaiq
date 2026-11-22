@@ -385,7 +385,7 @@ XCamReturn RkAiqAldchHandleInt::genIspResult(RkAiqFullParams* params, RkAiqFullP
         cur_params->mLdchParams = params->mLdchParams;
         ldch_param->is_update = true;
         LOGD_ALDCH("[%d] params from algo", mSyncFlag);
-    } else if (mSyncFlag != ldch_param->sync_flag) {
+    } else if (!shared->frameId || mSyncFlag != ldch_param->sync_flag) {
         ldch_param->sync_flag = mSyncFlag;
         // copy from latest result
         if (cur_params->mLdchParams.ptr()) {

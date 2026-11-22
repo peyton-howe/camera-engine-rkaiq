@@ -33,6 +33,10 @@ XCamReturn
 rk_aiq_user_api2_histeq_GetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, histeq_api_attrib_t* attr);
 XCamReturn
 rk_aiq_user_api2_histeq_QueryStatus(const rk_aiq_sys_ctx_t* sys_ctx, histeq_status_t* status);
+XCamReturn
+rk_aiq_user_api2_histeq_SetUsrCfgStrg(const rk_aiq_sys_ctx_t* sys_ctx, bool en, float strength);
+XCamReturn
+rk_aiq_user_api2_histeq_GetUsrCfgStrg(const rk_aiq_sys_ctx_t* sys_ctx, bool *en, float *strength);
 
 RKAIQ_END_DECLARE
 

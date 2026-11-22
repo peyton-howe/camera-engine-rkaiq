@@ -1328,6 +1328,8 @@ static void ConfigAfBlc(const blc_res_cvt_t *ablc, const afStats_cfg_t* af_data,
         //update by offset +blc1
         rawaf->bls_offset = bls_offset + 0.5;
     }
+    // change to 10bit
+    rawaf->bls_offset >>= 2;
     rawaf->bls_en = 1;
 }
 

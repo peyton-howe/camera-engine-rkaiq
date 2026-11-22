@@ -71,7 +71,7 @@ RkIspFecHwMgr::~RkIspFecHwMgr()
 RkIspFecHwMgr* RkIspFecHwMgr::getInstance()
 {
     RkIspFecHwMgr* mgr = NULL;
-    int ret = pthread_mutex_lock (&mMutex);
+    pthread_mutex_lock(&mMutex);
 
     if (!mInstance) {
         mgr = new RkIspFecHwMgr();
@@ -81,7 +81,7 @@ RkIspFecHwMgr* RkIspFecHwMgr::getInstance()
     }
 
     mRefCnt++;
-    ret = pthread_mutex_unlock (&mMutex);
+    pthread_mutex_unlock(&mMutex);
 
     return mgr;
 }
@@ -89,7 +89,7 @@ RkIspFecHwMgr* RkIspFecHwMgr::getInstance()
 void
 RkIspFecHwMgr::deinit()
 {
-    int ret = pthread_mutex_lock (&mMutex);
+    pthread_mutex_lock(&mMutex);
 
     if (mRefCnt > 0 && mRefCnt--) {
         if (mInstance && mRefCnt == 0) {
@@ -98,7 +98,7 @@ RkIspFecHwMgr::deinit()
         }
     }
 
-    ret = pthread_mutex_unlock (&mMutex);
+    pthread_mutex_unlock(&mMutex);
 
     return;
 }
@@ -129,19 +129,23 @@ int RkIspFecHwMgr::readFileList(const char *basePath) {
                 if (fp) {
                     char buf[128];
                     const char* ret = fgets(buf, 128, fp);
-                    rkfec_dbg(5, rkfec_debug, "Enumerate sysfs node info: %s", buf);
+                    if (ret != NULL) {
+                        rkfec_dbg(5, rkfec_debug, "Enumerate sysfs node info: %s", buf);
 #ifdef RKFEC_HW_V20
-                    if (strstr(buf, "rkfec_offline") != NULL) {
+                        if (strstr(buf, "rkfec_offline") != NULL) {
 #else
-                    if (strstr(buf, "rkispp_fec") != NULL) {
+                        if (strstr(buf, "rkispp_fec") != NULL) {
 #endif
-                        rkfec_info("found rk fec node: %s", buf);
-                        found = 1;
-                        fclose(fp);
-                        break;
+                            rkfec_info("found rk fec node: %s", buf);
+                            found = 1;
+                            fclose(fp);
+                            break;
+                        }
+                    } else {
+                        rkfec_err("fgets failed");
                     }
-                    fclose(fp);
                 }
+                fclose(fp);
             }
         } else if (ptr->d_type == 10) {
             // TODO: nothing
@@ -195,7 +199,7 @@ RkIspFecHwMgr::selectFecHw()
     static Profiler prof = {0};
     if (rkfec_debug > 4) rkfec_profiling_start(&prof);
 
-    int ret = pthread_mutex_lock (&mMutex);
+    pthread_mutex_lock(&mMutex);
 
     while (fecHw == -1) {
         for (int i = 0; i < mFecVdNum; i++) {
@@ -207,11 +211,11 @@ RkIspFecHwMgr::selectFecHw()
         }
 
         if (fecHw == -1) {
-            ret = pthread_cond_wait(&mCond, &mMutex);
+            pthread_cond_wait(&mCond, &mMutex);
         }
     }
 
-    ret = pthread_mutex_unlock (&mMutex);
+    pthread_mutex_unlock(&mMutex);
 
     rkfec_dbg(3, rkfec_debug, "selectFecHw: %d ", fecHw);
 

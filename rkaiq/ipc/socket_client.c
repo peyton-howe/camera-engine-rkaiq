@@ -243,6 +243,12 @@ void socket_client_exit(SocketClientCtx_t *ctx) {
         ctx->quit = true;
         ssize_t size = write(ctx->stopfd[1], &c, sizeof(c));
         pthread_join(ctx->client_thread, NULL);
+        int try_times = 300;
+        while (ctx->thread_running && try_times--) {
+            usleep(3*1000);
+        }
+        if (ctx->thread_running || try_times == 0)
+            LOGE_IPC("%s[%d]: quit timeout ", __func__, cid);
     }
 
     if (ctx->recvbuf)

@@ -16,6 +16,7 @@
    case is used to retrieve a setting. */
 enum Option {
     OptUseRkaiq = 'a',
+    OptHDR = 'b',
     OptSetFrameDir = 'd',
     OptSetEntityName = 'e',
     OptSetIqfileDir = 'f',
