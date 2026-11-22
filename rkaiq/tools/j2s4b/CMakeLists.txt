@@ -115,7 +115,6 @@ foreach(IQPATH ${RKAIQ_IQFILES})
         BYPRODUCTS ${TAGT_NAME}
         DEPENDS j2s4b
         )
-    install(PROGRAMS "${CMAKE_BINARY_DIR}/${TAGT_NAME}" DESTINATION usr/share/iqfiles)
 endforeach()
 
 foreach(IQPATH ${RKAIQ_AINR_IQFILES})
@@ -234,7 +233,7 @@ endforeach()
 endif()
 
 if (NOT RKAIQ_J2S4B_DEV)
-install(TARGETS j2s4b RUNTIME DESTINATION host)
+install(TARGETS j2s4b RUNTIME DESTINATION bin)
 else()
 install(TARGETS j2s4b_dev RUNTIME DESTINATION bin)
 endif()

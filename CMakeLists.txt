@@ -23,3 +23,6 @@ add_subdirectory(rkaiq_tool_server)
 if(EXISTS ${PROJECT_SOURCE_DIR}/rkaiq_3A_server)
     add_subdirectory(rkaiq_3A_server)
 endif()
+
+install(DIRECTORY rkaiq/iqfiles/isp3x/ DESTINATION ../etc/iqfiles
+        PATTERN "*")

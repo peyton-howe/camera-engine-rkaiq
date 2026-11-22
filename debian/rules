@@ -42,5 +42,14 @@ override_dh_auto_configure:
     -DRKAIQ_ENABLE_AF=ON \
     -DRKAIQ_ENABLE_CAMGROUP=ON
 
+# Upstream installs some files to usr/share/... relative to the prefix, which
+# ends up as /usr/usr/... when the prefix is /usr. Fold that back into /usr.
+override_dh_auto_install:
+	dh_auto_install
+	if [ -d debian/camera-engine-rkaiq-rk3588/usr/usr ]; then \
+		cp -a debian/camera-engine-rkaiq-rk3588/usr/usr/. debian/camera-engine-rkaiq-rk3588/usr/ && \
+		rm -rf debian/camera-engine-rkaiq-rk3588/usr/usr; \
+	fi
+
 override_dh_auto_test:
 override_dh_installdocs:

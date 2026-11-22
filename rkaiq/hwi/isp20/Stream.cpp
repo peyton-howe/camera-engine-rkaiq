@@ -516,6 +516,7 @@ bool RKStatsStream::set_rx_handle_dev(CamHwIsp20* dev)
     return true;
 }
 
+
 SmartPtr<VideoBuffer>
 RKStatsStream::new_video_buffer(SmartPtr<V4l2Buffer> buf,
                                        SmartPtr<V4l2Device> dev)
