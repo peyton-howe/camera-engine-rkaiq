@@ -18,15 +18,17 @@
 #ifndef _SENSOR_HW_BASE_H_
 #define _SENSOR_HW_BASE_H_
 
-#include <map>
-#include <list>
 #include <istream>
-#include "v4l2_device.h"
-#include "rk_aiq_pool.h"
+#include <list>
+#include <map>
+
 #include "common/rk-camera-module.h"
-#include "v4l2_buffer_proxy.h"
-#include "rk_aiq_offline_raw.h"
+#include "common/rkcif-config.h"
 #include "rk_aiq.h"
+#include "rk_aiq_offline_raw.h"
+#include "rk_aiq_pool.h"
+#include "v4l2_buffer_proxy.h"
+#include "v4l2_device.h"
 
 /************ BELOW FROM kernel/include/uapi/linux/rk-preisp.h ************/
 
@@ -77,7 +79,11 @@ public:
     virtual void setCamPhyId(int phyId) {
         mCamPhyId = phyId;
     }
-     virtual XCamReturn setExposureParams(SmartPtr<RkAiqExpParamsProxy>& expPar) { return XCAM_RETURN_NO_ERROR;}
+    virtual void setVicapExpFd(int fd) { mVicapExpFd = fd; }
+    virtual XCamReturn setExposureParams(SmartPtr<RkAiqExpParamsProxy>& expPar)
+    {
+        return XCAM_RETURN_NO_ERROR;
+    }
     virtual XCamReturn getSensorModeData(const char* sns_ent_name,
                                  rk_aiq_exposure_sensor_descriptor& sns_des) { return XCAM_RETURN_NO_ERROR;}
 
@@ -101,6 +107,7 @@ public:
 protected:
     XCAM_DEAD_COPY (BaseSensorHw);
     uint32_t get_v4l2_pixelformat(uint32_t pixelcode);
+    int mVicapExpFd{-1};
     int mCamPhyId{-1};
 };
 

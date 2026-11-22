@@ -363,6 +363,7 @@ public:
             xcam_mem_clear(ctxCfigs);
             xcam_mem_clear(cpslCfg);
             xcam_mem_clear(snsDes);
+            xcam_mem_clear(otp_lsc_Cfg);
 #ifdef RKAIQ_ENABLE_PARSER_V1
             calib = NULL;
 #endif

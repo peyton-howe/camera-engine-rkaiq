@@ -188,6 +188,7 @@ typedef struct ae_api_expSwAttr_s {
     ae_advanced_t advanced;
 } ae_api_expSwAttr_t;
 
+typedef ae_faceAeCtrl_t ae_api_faceExpAttr_t;
 typedef ae_linAeCtrl_t ae_api_linExpAttr_t;
 typedef ae_hdrAeCtrl_t ae_api_hdrExpAttr_t;
 typedef ae_irisCtrl_t ae_api_irisAttr_t;

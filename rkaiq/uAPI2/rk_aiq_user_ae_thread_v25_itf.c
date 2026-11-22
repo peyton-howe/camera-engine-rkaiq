@@ -831,7 +831,7 @@ static XCamReturn AeDemoPrepare(RkAiqAlgoCom* params)
 
             RkAiqAlgoConfigAe* AeCfgParam = (RkAiqAlgoConfigAe*)params;
 
-            if(AeCfgParam->compr_bit > 0)
+            if(algo_ctx->aeCfg.workMode == RK_AIQ_ISP_HDR_MODE_2_BUILTIN || algo_ctx->aeCfg.workMode == RK_AIQ_ISP_HDR_MODE_3_BUILTIN)
                 algo_ctx->aeCfg.isBuildInHdr = true;
             else
                 algo_ctx->aeCfg.isBuildInHdr = false;
@@ -1343,9 +1343,15 @@ rk_aiq_uapi2_ae_register(const rk_aiq_sys_ctx_t* ctx, rk_aiq_pfnAe_t* cbs)
 
     if(!cbs) {
         LOGD_AEC_SUBM(0xff, "RK AE");
+        cast_ctx->_isCustomAe = false;
+        if (cast_ctx->next_ctx)
+            cast_ctx->next_ctx->_isCustomAe = false;
     } else {
         LOGD_AEC_SUBM(0xff, "CUSTOM AE");
         algoCtx->aiq_ctx = (rk_aiq_sys_ctx_t*)(ctx);
+        cast_ctx->_isCustomAe = true;
+        if (cast_ctx->next_ctx)
+            cast_ctx->next_ctx->_isCustomAe = true;
         LOGD_AEC_SUBM(0xff, "register custom ae algo sucess for sys_ctx %p, lib_id %d !",
                       ctx,
                       desc->common.id);

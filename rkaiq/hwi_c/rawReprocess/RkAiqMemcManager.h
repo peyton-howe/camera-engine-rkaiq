@@ -165,6 +165,8 @@ typedef struct AiqMencManager_s {
     AiqV4l2Buffer_t *pre_buf_scl;
     btnr_api_attrib_t *btnr_attr;
     int _memc_mode;
+
+    void *_last_btnr_cfg_params;
 } AiqMemcManager_t;
 
 XCamReturn AiqMemcManager_init(AiqMemcManager_t* pMemcMan, const isp_drv_share_mem_ops_t *mem_ops, AiqCamHwBase_t* camHw);

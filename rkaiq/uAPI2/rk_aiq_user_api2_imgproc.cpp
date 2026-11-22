@@ -4208,6 +4208,25 @@ XCamReturn rk_aiq_uapi2_setAngleZ(const rk_aiq_sys_ctx_t* ctx, float angleZ)
     return ret;
 }
 
+XCamReturn rk_aiq_uapi2_setPdafLibInput(const rk_aiq_sys_ctx_t* ctx, rk_aiq_pdlib_input* pdlib_input)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    IMGPROC_FUNC_ENTER
+    ret = rk_aiq_user_api2_af_SetPdafLibInput(ctx, pdlib_input);
+    IMGPROC_FUNC_EXIT
+
+    return ret;
+}
+
+XCamReturn rk_aiq_uapi2_getPdafLibOutput(const rk_aiq_sys_ctx_t* ctx, rk_aiq_pdlib_output* pdlib_output, int timeout_ms)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    IMGPROC_FUNC_ENTER
+    ret = rk_aiq_user_api2_af_GetPdafLibOutput(ctx, pdlib_output, timeout_ms);
+    IMGPROC_FUNC_EXIT
+
+    return ret;
+}
 
 XCamReturn rk_aiq_uapi2_setAcolorSwInfo(const rk_aiq_sys_ctx_t* ctx,
                                         rk_aiq_color_info_t aColor_sw_info)
@@ -4221,7 +4240,6 @@ XCamReturn rk_aiq_uapi2_setAcolorSwInfo(const rk_aiq_sys_ctx_t* ctx,
 
     return ret;
 }
-
 
 
 /*

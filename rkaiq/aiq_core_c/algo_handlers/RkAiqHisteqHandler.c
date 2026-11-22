@@ -81,6 +81,28 @@ AiqAlgoHandler_t* AiqAlgoHandlerHisteq_constructor(RkAiqAlgoDesComm* des, AiqCor
 	return pHdl;
 }
 
+XCamReturn AiqHisteqHandler_setUsrCfgStrg(AiqHisteqHandler_t* pHdlHisteq,  bool en, float strength)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    GlobalParamsManager_lockAlgoParam(pHdlHisteq->mAiqCore->mGlobalParamsManger, pHdlHisteq->mResultType);
+    ret = algo_histeq_SetUsrCfgStrg(pHdlHisteq->mAlgoCtx, en, strength);
+    GlobalParamsManager_unlockAlgoParam(pHdlHisteq->mAiqCore->mGlobalParamsManger, pHdlHisteq->mResultType);
+    EXIT_ANALYZER_FUNCTION();
+	return ret;
+}
+
+XCamReturn AiqHisteqHandler_getUsrCfgStrg(AiqHisteqHandler_t* pHdlHisteq,  bool *en, float *strength)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+
+    GlobalParamsManager_lockAlgoParam(pHdlHisteq->mAiqCore->mGlobalParamsManger, pHdlHisteq->mResultType);
+    ret = algo_histeq_GetUsrCfgStrg(pHdlHisteq->mAlgoCtx, en, strength);
+    GlobalParamsManager_unlockAlgoParam(pHdlHisteq->mAiqCore->mGlobalParamsManger, pHdlHisteq->mResultType);
+    EXIT_ANALYZER_FUNCTION();
+	return ret;
+}
+
 #if 0
 XCamReturn AiqHisteqHandler_setAttrib(AiqHisteqHandler_t* pHdlHisteq, histeq_api_attrib_t* attr)
 {

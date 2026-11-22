@@ -259,20 +259,6 @@ typedef struct ae_speed_s {
     float sw_aeT_damp_over;
 
     /* M4_GENERIC_DESC(
-        M4_ALIAS(sw_aeT_damp_dark2Bright),
-        M4_TYPE(f32),
-        M4_SIZE_EX(1,1),
-        M4_RANGE_EX(0,1),
-        M4_DEFAULT(0.15),
-        M4_DIGIT_EX(2),
-        M4_HIDE_EX(0),
-        M4_RO(0),
-        M4_ORDER(3),
-        M4_NOTES(The damp value for dark2bright environment used in speed control.\n
-        Freq of use: low))  */
-    float sw_aeT_damp_dark2Bright;
-
-    /* M4_GENERIC_DESC(
         M4_ALIAS(sw_aeT_damp_bright2Dark),
         M4_TYPE(f32),
         M4_SIZE_EX(1,1),
@@ -281,10 +267,24 @@ typedef struct ae_speed_s {
         M4_DIGIT_EX(2),
         M4_HIDE_EX(0),
         M4_RO(0),
-        M4_ORDER(4),
+        M4_ORDER(3),
         M4_NOTES(The damp value for bright2dark environment used in speed control.\n
         Freq of use: low))  */
     float sw_aeT_damp_bright2Dark;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_damp_dark2Bright),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.15),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(4),
+        M4_NOTES(The damp value for dark2bright environment used in speed control.\n
+        Freq of use: low))  */
+    float sw_aeT_damp_dark2Bright;
 
     /* M4_GENERIC_DESC(
         M4_ALIAS(dynDamp),
@@ -758,7 +758,7 @@ typedef struct ae_envLvCalib_s {
         M4_TYPE(f32),
         M4_SIZE_EX(1,2),
         M4_RANGE_EX(0,1024),
-        M4_DEFAULT(1.0),
+        M4_DEFAULT([32,1.5]),
         M4_DIGIT_EX(5),
         M4_HIDE_EX(0),
         M4_RO(0),
@@ -1738,7 +1738,7 @@ typedef struct ae_hdrRoute_s {
         M4_ALIAS(sw_aeT_frm0Gain_dot),
         M4_TYPE(f32),
         M4_SIZE_EX(1,12),
-        M4_RANGE_EX(1,4096),
+        M4_RANGE_EX(1,65535),
         M4_DEFAULT(1),
         M4_DIGIT_EX(3),
         M4_HIDE_EX(0),
@@ -1780,7 +1780,7 @@ typedef struct ae_hdrRoute_s {
         M4_ALIAS(sw_aeT_frm1Gain_dot),
         M4_TYPE(f32),
         M4_SIZE_EX(1,12),
-        M4_RANGE_EX(1,4096),
+        M4_RANGE_EX(1,262140),
         M4_DEFAULT(1),
         M4_DIGIT_EX(3),
         M4_HIDE_EX(0),
@@ -1822,7 +1822,7 @@ typedef struct ae_hdrRoute_s {
         M4_ALIAS(sw_aeT_frm2Gain_dot),
         M4_TYPE(f32),
         M4_SIZE_EX(1,12),
-        M4_RANGE_EX(1,4096),
+        M4_RANGE_EX(1,262140),
         M4_DEFAULT(1),
         M4_DIGIT_EX(3),
         M4_HIDE_EX(0),
@@ -3098,6 +3098,210 @@ typedef struct ae_irisCtrl_s {
     ae_hdcIrisCtrl_t hdcIrisCtrl;
 } ae_irisCtrl_t;
 
+typedef struct ae_faceAeCtrl_s {
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_faceAe_en),
+        M4_TYPE(bool),
+        M4_DEFAULT(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(0),
+        M4_NOTES(The enable bit of faceAe control.\n
+        Freq of use: high))  */
+    bool sw_aeT_faceAe_en;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_tolerance_in),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(12),
+        M4_DIGIT_EX(1),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(1),
+        M4_NOTES(The tolerance of luma before converged.\n
+        Freq of use: high))  */
+    float sw_aeT_tolerance_in;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_tolerance_out),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(20),
+        M4_DIGIT_EX(1),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(2),
+        M4_NOTES(The tolerance of luma after converged.\n
+        Freq of use: high))  */
+    float sw_aeT_tolerance_out;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_dampOver_val),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.8),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(3),
+        M4_NOTES(The damp coef for bright scene.\n
+        Freq of use: high))  */
+    float sw_aeT_dampOver_val;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_dampUnder_val),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.9),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(4),
+        M4_NOTES(The damp coef for dark scene.\n
+        Freq of use: high))  */
+    float sw_aeT_dampUnder_val;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_dampIn_cnt),
+        M4_TYPE(u8),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(8),
+        M4_DIGIT_EX(1),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(5),
+        M4_NOTES(The frame cnt before switching to face damp coef.\n
+        Freq of use: high))  */
+    uint8_t sw_aeT_dampIn_cnt;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_dampOut_cnt),
+        M4_TYPE(u8),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(15),
+        M4_DIGIT_EX(1),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(6),
+        M4_NOTES(The frame cnt before swtiching to global damp coef.\n
+        Freq of use: high))  */
+    uint8_t sw_aeT_dampOut_cnt;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_faceWgt_min),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.2),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(7),
+        M4_NOTES(The min value of face weight.\n
+        Freq of use: high))  */
+    float sw_aeT_faceWgt_min;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_faceWgt_max),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.8),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(8),
+        M4_NOTES(The max value of face weight.\n
+        Freq of use: high))  */
+    float sw_aeT_faceWgt_max;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_faceSize_min),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.01),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(9),
+        M4_NOTES(The min size of face using min weight.\n
+        Freq of use: high))  */
+    float sw_aeT_faceSize_min;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_faceSize_max),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.1),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(10),
+        M4_NOTES(The max size of face using max weight.\n
+        Freq of use: high))  */
+    float sw_aeT_faceSize_max;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_faceSize_shrink),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.8),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(11),
+        M4_NOTES(The shrink value of face size.\n
+        Freq of use: high))  */
+    float sw_aeT_faceSize_shrink;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_noFace2Face_cnt),
+        M4_TYPE(u8),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(5),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(12),
+        M4_NOTES(The frame cnt switching noface to face.\n
+        Freq of use: high))  */
+    uint8_t sw_aeT_noFace2Face_cnt;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aeT_face2NoFace_cnt),
+        M4_TYPE(u8),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,100),
+        M4_DEFAULT(8),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(13),
+        M4_NOTES(The frame cnt switching face to noface.\n
+        Freq of use: high))  */
+    uint8_t sw_aeT_face2NoFace_cnt;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(dynSetpoint),
+        M4_TYPE(struct),
+        M4_UI_MODULE(array_table_ui),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(14),
+        M4_NOTES(The params for dynamic setpoint control.))  */
+    ae_dynSetpoint_t dynSetpoint;
+
+} ae_faceAeCtrl_t;
+
 /*****************************************************************************/
 /**
  * @brief   AEC Params: Global AEC tuning structure
@@ -3114,6 +3318,16 @@ typedef struct ae_param_s {
         M4_ORDER(0),
         M4_NOTES(The params for ae common control.))  */
     ae_commCtrl_t commCtrl;
+
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(faceAeCtrl),
+        M4_TYPE(struct),
+        M4_UI_MODULE(normal_ui_style),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(0),
+        M4_NOTES(The params for faceAe  control.))  */
+    ae_faceAeCtrl_t faceAeCtrl;
 
     /* M4_GENERIC_DESC(
         M4_ALIAS(linAeCtrl),

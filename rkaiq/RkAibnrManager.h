@@ -35,6 +35,7 @@ RKAIQ_BEGIN_DECLARE
 #define AIBNR_ISP_BUF_MAX                AIBNR_GAIN_BUF_CNT
 #define AIBNR_AIISP_MODE                 BOTHEVENT_TO_AIQ
 #define AIBNR_INBUF_MAX_WIDTH            (4096)
+#define AIBNR_DOAIISP_ON_DELAYCNT        (6)
 
 #if RKAIQ_HAVE_AIBNR
 
@@ -141,6 +142,11 @@ typedef struct AibnrManager_s {
     AiqMutex_t apiFrmRate_mutex;
     enum rkaiisp_mem_mode mMemMode;
     bool pBtnr2En;
+    uint32_t doAiisp_delaycnt;
+    uint32_t doAiisp_framecnt;
+
+    uint16_t feBuf_cnt;
+    uint16_t beBuf_cnt;
 } AibnrManager_t;
 
 XCamReturn AibnrManager_init(AiqManager_t* pAiqManager, AibnrManager_t* pAibnrManager);
@@ -157,6 +163,7 @@ bool AibnrManager_isNeedRknn(AibnrManager_t* pAibnrManager);
 int AibnrManager_dumpRaw(AibnrManager_t* pAibnrManager, int dump_raw_num);
 XCamReturn AibnrManager_setFrmRate(AiqAlgoHandler_t* aeHandler, bool is_group,
     AibnrManager_t* pAibnrManager, ae_api_expSwAttr_t *expSwAttr);
+XCamReturn AibnrManager_notify_sof(AibnrManager_t* pAibnrManager);
 
 #endif
 

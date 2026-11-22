@@ -109,7 +109,7 @@
 
 #define ISP33_ENH_LUMA_NUM		17
 #define ISP33_ENH_DETAIL_NUM		8
-#define ISP33_ENH_IIR_ROW_MAX		18
+#define ISP33_ENH_IIR_ROW_MAX		26
 #define ISP33_ENH_IIR_COL_MAX		24
 
 #define ISP33_HIST_ALPHA_NUM		17
@@ -1362,6 +1362,7 @@ struct isp33_isp_params_cfg {
 	__u32 frame_id;
 	struct isp33_isp_meas_cfg meas;
 	struct isp33_isp_other_cfg others;
+    struct sensor_exposure_cfg exposure;
 } __attribute__((packed));
 
 struct rkisp33_thunderboot_resmem_head {

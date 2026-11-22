@@ -110,8 +110,7 @@ static XCamReturn groupDrcProcessing(const RkAiqAlgoCom* inparams, RkAiqAlgoResC
     else
         pDrcGroupCtx->FrameNumber = HDR_3X_NUM;
 
-    if (pDrcGroupCtx->FrameNumber == HDR_2X_NUM || pDrcGroupCtx->FrameNumber == HDR_3X_NUM ||
-        pDrcGroupCtx->FrameNumber == SENSOR_MGE)
+    if (pDrcGroupCtx->FrameNumber == HDR_2X_NUM || pDrcGroupCtx->FrameNumber == HDR_3X_NUM)
         outparams->en = true;
     else if (pDrcGroupCtx->FrameNumber == LINEAR_NUM) {
         if (pDrcGroupCtx->blc_ob_enable)
@@ -187,16 +186,6 @@ static XCamReturn groupDrcProcessing(const RkAiqAlgoCom* inparams, RkAiqAlgoResC
                                                   .exp_real_params.isp_dgain *
                                               pExpInfo.HdrExp[2]
                                                   .exp_real_params.integration_time;
-    } else if (pDrcGroupCtx->FrameNumber == SENSOR_MGE) {
-        pDrcGroupCtx->NextData.AEData.MExpo =
-            pExpInfo.LinearExp.exp_real_params.analog_gain *
-            pExpInfo.LinearExp.exp_real_params.digital_gain *
-            pExpInfo.LinearExp.exp_real_params.isp_dgain *
-            pExpInfo.LinearExp.exp_real_params.integration_time;
-        pDrcGroupCtx->NextData.AEData.LExpo = pDrcGroupCtx->NextData.AEData.MExpo;
-        pDrcGroupCtx->NextData.AEData.SExpo =
-            pDrcGroupCtx->NextData.AEData.MExpo /
-            pow(2.0f, (float)(pDrcGroupCtx->compr_bit - ISP_HDR_BIT_NUM_MIN));
     }
     if (pDrcGroupCtx->NextData.AEData.SExpo > FLT_EPSILON) {
         pDrcGroupCtx->NextData.AEData.L2S_Ratio =
@@ -276,7 +265,7 @@ static XCamReturn groupDrcProcessing(const RkAiqAlgoCom* inparams, RkAiqAlgoResC
         !procParaGroup->camgroupParmasArray[0]->aec._aeProcRes.IsConverged) 
         pDrcGroupCtx->isReCal_ = true;
 
-#if RKAIQ_HAVE_DRC_V20
+#if RKAIQ_HAVE_DRC_V20 || RKAIQ_HAVE_DRC_V21
     bool isIIRReclac = false;
     if (pDrcGroupCtx->CurrData.autoCurveIIRParams.sw_drcT_drcCurve_mode == adrc_auto_mode) {
         if (procParaGroup->camgroupParmasArray[0]->aec._aeProcRes.IsConverged) {
@@ -300,7 +289,7 @@ static XCamReturn groupDrcProcessing(const RkAiqAlgoCom* inparams, RkAiqAlgoResC
         DrcSelectParam(pDrcGroupCtx, &drc_param->result, iso);
         DrcExpoParaProcessing(pDrcGroupCtx, &drc_param->result);
 #endif
-#if RKAIQ_HAVE_DRC_V20
+#if RKAIQ_HAVE_DRC_V20 || RKAIQ_HAVE_DRC_V21
         drc_param->L2S_Ratio = pDrcGroupCtx->NextData.AEData.L2S_Ratio;
         drc_param->compr_bit = pDrcGroupCtx->compr_bit;
         DrcSelectParam(pDrcGroupCtx, &drc_param->drc_param, &drc_param->trans_attr.stMan.sta, iso);

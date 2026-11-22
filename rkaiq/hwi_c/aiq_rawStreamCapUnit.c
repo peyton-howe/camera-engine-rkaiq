@@ -143,8 +143,9 @@ XCamReturn RawStreamCapUnit_poll_buffer_ready(void* ctx, AiqHwEvt_t* evt, int de
         struct timespec time;
         clock_gettime(CLOCK_MONOTONIC, &time);
 
-        pRawStrCapUnit->fe.frameloss +=
-            evt->frame_id ? evt->frame_id - pRawStrCapUnit->fe.id - 1 : 0;
+        if (evt->frame_id > pRawStrCapUnit->fe.id)
+            pRawStrCapUnit->fe.frameloss +=
+                evt->frame_id ? evt->frame_id - pRawStrCapUnit->fe.id - 1 : 0;
         pRawStrCapUnit->fe.id        = evt->frame_id;
         pRawStrCapUnit->fe.timestamp = evt->mTimestamp;
         pRawStrCapUnit->fe.delay     = XCAM_TIMESPEC_2_USEC(time) - evt->mTimestamp;
@@ -204,6 +205,9 @@ XCamReturn AiqRawStreamCapUnit_init(AiqRawStreamCapUnit_t* pRawStrCapUnit,
     pRawStrCapUnit->_mipi_dev_max   = 1;
     pRawStrCapUnit->_state          = RAW_CAP_STATE_INVALID;
     pRawStrCapUnit->_isExtDev       = false;
+
+    pRawStrCapUnit->_single_buffer_async_mode = false;
+
 #if RKAIQ_HAVE_DUMPSYS
     pRawStrCapUnit->data_mode = 0;
 #endif
@@ -235,27 +239,27 @@ XCamReturn AiqRawStreamCapUnit_init(AiqRawStreamCapUnit_t* pRawStrCapUnit,
     }
 
     const char* dev_str = NULL;
-    // short frame
-    if (strlen(s_info->isp_info->rawrd2_s_path)) {
-        if (linked_to_isp) {
-            dev_str = s_info->isp_info->rawwr2_path;
-        } else {
-            if (s_info->dvp_itf) {
-                if (strlen(s_info->cif_info->stream_cif_path)) {
-                    dev_str = s_info->cif_info->stream_cif_path;
-                } else {
-                    dev_str = s_info->cif_info->dvp_id0;
-                }
-            } else {
-                if (!s_info->linked_to_1608) {
-                    // normal mode
+    int lvds_fd = -1;
+    pRawStrCapUnit->_is_split = s_info->split;
+    if (s_info->linked_to_serdes || s_info->split) {
+        if (strlen(s_info->isp_info->linked_vicap_sd_path) || strlen(s_info->cif_info->mipi_id0) ||
+            strlen(s_info->cif_info->mipi_id1) || strlen(s_info->cif_info->mipi_id2) ||
+            strlen(s_info->cif_info->mipi_id3)) {
+            switch (s_info->connect_id) {
+                case 0:
                     dev_str = s_info->cif_info->mipi_id0;
-                } else {
-                    if (start_en) {
-                        // 1608 sensor mode.
-                        dev_str = s_info->cif_info->mipi_id0;
-                    }
-                }
+                    break;
+                case 1:
+                    dev_str = s_info->cif_info->mipi_id1;
+                    break;
+                case 2:
+                    dev_str = s_info->cif_info->mipi_id2;
+                    break;
+                case 3:
+                    dev_str = s_info->cif_info->mipi_id3;
+                    break;
+                default:
+                    LOGE_CAMHW_SUBM(SENSOR_SUBM, "no matched mipi id\n");
             }
         }
         if (dev_str) {
@@ -267,64 +271,99 @@ XCamReturn AiqRawStreamCapUnit_init(AiqRawStreamCapUnit_t* pRawStrCapUnit,
             AiqV4l2Device_init(pRawStrCapUnit->_dev[0], dev_str);
             pRawStrCapUnit->_dev[0]->open(pRawStrCapUnit->_dev[0], false);
         }
-    }
-    // mid frame
-    dev_str = NULL;
-    if (strlen(s_info->isp_info->rawrd0_m_path)) {
-        if (linked_to_isp)
-            dev_str = s_info->isp_info->rawwr0_path;  // rkisp_rawwr0
-        else {
-            if (!s_info->dvp_itf) {
-                if (!s_info->linked_to_1608) {
-                    // normal mode.
-                    dev_str = s_info->cif_info->mipi_id1;
+    } else {
+        // short frame
+        if (strlen(s_info->isp_info->rawrd2_s_path)) {
+            if (linked_to_isp) {
+                dev_str = s_info->isp_info->rawwr2_path;
+            } else {
+                if (s_info->dvp_itf) {
+                    if (strlen(s_info->cif_info->stream_cif_path)) {
+                        dev_str = s_info->cif_info->stream_cif_path;
+                    } else {
+                        dev_str = s_info->cif_info->dvp_id0;
+                    }
                 } else {
-                    if (start_en) {
-                        // 1608 sensor mode.
+                    if (!s_info->linked_to_1608) {
+                        // normal mode
+                        dev_str = s_info->cif_info->mipi_id0;
+                    } else {
+                        if (start_en) {
+                            // 1608 sensor mode.
+                            dev_str = s_info->cif_info->mipi_id0;
+                        }
+                    }
+                }
+            }
+            if (dev_str) {
+                pRawStrCapUnit->_dev[0] = (AiqV4l2Device_t*)aiq_mallocz(sizeof(AiqV4l2Device_t));
+                if (!pRawStrCapUnit->_dev[0]) {
+                    LOGE_CAMHW_SUBM(ISP20HW_SUBM, "%d: alloc fail !", __LINE__);
+                    goto fail;
+                }
+                AiqV4l2Device_init(pRawStrCapUnit->_dev[0], dev_str);
+                pRawStrCapUnit->_dev[0]->open(pRawStrCapUnit->_dev[0], false);
+            }
+        }
+        // mid frame
+        dev_str = NULL;
+        if (strlen(s_info->isp_info->rawrd0_m_path)) {
+            if (linked_to_isp)
+                dev_str = s_info->isp_info->rawwr0_path;  // rkisp_rawwr0
+            else {
+                if (!s_info->dvp_itf) {
+                    if (!s_info->linked_to_1608) {
+                        // normal mode.
                         dev_str = s_info->cif_info->mipi_id1;
+                    } else {
+                        if (start_en) {
+                            // 1608 sensor mode.
+                            dev_str = s_info->cif_info->mipi_id1;
+                        }
                     }
                 }
             }
-        }
 
-        if (dev_str) {
-            pRawStrCapUnit->_dev[1] = (AiqV4l2Device_t*)aiq_mallocz(sizeof(AiqV4l2Device_t));
-            if (!pRawStrCapUnit->_dev[1]) {
-                LOGE_CAMHW_SUBM(ISP20HW_SUBM, "%d: alloc fail !", __LINE__);
-                goto fail;
+            if (dev_str) {
+                pRawStrCapUnit->_dev[1] = (AiqV4l2Device_t*)aiq_mallocz(sizeof(AiqV4l2Device_t));
+                if (!pRawStrCapUnit->_dev[1]) {
+                    LOGE_CAMHW_SUBM(ISP20HW_SUBM, "%d: alloc fail !", __LINE__);
+                    goto fail;
+                }
+                AiqV4l2Device_init(pRawStrCapUnit->_dev[1], dev_str);
+                pRawStrCapUnit->_dev[1]->open(pRawStrCapUnit->_dev[1], false);
             }
-            AiqV4l2Device_init(pRawStrCapUnit->_dev[1], dev_str);
-            pRawStrCapUnit->_dev[1]->open(pRawStrCapUnit->_dev[1], false);
         }
-    }
-    dev_str = NULL;
-    // long frame
-    if (strlen(s_info->isp_info->rawrd1_l_path)) {
-        if (linked_to_isp)
-            dev_str = s_info->isp_info->rawwr1_path;  // rkisp_rawwr1
-        else {
-            if (!s_info->dvp_itf) {
-                if (!s_info->linked_to_1608) {
-                    // normal mode.
-                    dev_str = s_info->cif_info->mipi_id2;  // rkisp_rawwr1
-                } else {
-                    if (start_en) {
-                        // 1608 sensor mode.
+        dev_str = NULL;
+        // long frame
+        if (strlen(s_info->isp_info->rawrd1_l_path)) {
+            if (linked_to_isp)
+                dev_str = s_info->isp_info->rawwr1_path;  // rkisp_rawwr1
+            else {
+                if (!s_info->dvp_itf) {
+                    if (!s_info->linked_to_1608) {
+                        // normal mode.
                         dev_str = s_info->cif_info->mipi_id2;  // rkisp_rawwr1
+                    } else {
+                        if (start_en) {
+                            // 1608 sensor mode.
+                            dev_str = s_info->cif_info->mipi_id2;  // rkisp_rawwr1
+                        }
                     }
                 }
             }
-        }
-        if (dev_str) {
-            pRawStrCapUnit->_dev[2] = (AiqV4l2Device_t*)aiq_mallocz(sizeof(AiqV4l2Device_t));
-            if (!pRawStrCapUnit->_dev[2]) {
-                LOGE_CAMHW_SUBM(ISP20HW_SUBM, "%d: alloc fail !", __LINE__);
-                goto fail;
+            if (dev_str) {
+                pRawStrCapUnit->_dev[2] = (AiqV4l2Device_t*)aiq_mallocz(sizeof(AiqV4l2Device_t));
+                if (!pRawStrCapUnit->_dev[2]) {
+                    LOGE_CAMHW_SUBM(ISP20HW_SUBM, "%d: alloc fail !", __LINE__);
+                    goto fail;
+                }
+                AiqV4l2Device_init(pRawStrCapUnit->_dev[2], dev_str);
+                pRawStrCapUnit->_dev[2]->open(pRawStrCapUnit->_dev[2], false);
             }
-            AiqV4l2Device_init(pRawStrCapUnit->_dev[2], dev_str);
-            pRawStrCapUnit->_dev[2]->open(pRawStrCapUnit->_dev[2], false);
         }
     }
+
     int buf_cnt = tx_buf_cnt;
     if (tx_buf_cnt == 0) {
         if (linked_to_isp) {
@@ -720,14 +759,8 @@ XCamReturn AiqRawStreamCapUnit_reset_hardware(AiqRawStreamCapUnit_t* pRawStrCapU
     return ret;
 }
 
-XCamReturn AiqRawStreamCapUnit_set_csi_mem_word_big_align(AiqRawStreamCapUnit_t* pRawStrCapUnit,
-                                                          uint32_t width, uint32_t height,
-                                                          uint32_t sns_v4l_pix_fmt,
-                                                          int8_t sns_bpp) {
+XCamReturn AiqRawStreamCapUnit_set_csi_mem_word_align_mode(AiqRawStreamCapUnit_t* pRawStrCapUnit, int mode) {
     XCamReturn ret = XCAM_RETURN_NO_ERROR;
-
-    LOGD_CAMHW_SUBM(ISP20HW_SUBM, "sensor fmt 0x%x, %dx%d, sns_bpp: %d", sns_v4l_pix_fmt, width,
-                    height, sns_bpp);
 
     int i = 0;
     for (i = 0; i < 3; i++) {
@@ -736,19 +769,17 @@ XCamReturn AiqRawStreamCapUnit_set_csi_mem_word_big_align(AiqRawStreamCapUnit_t*
             break;
         }
 
-        if (((width / 2 - RKMOUDLE_UNITE_EXTEND_PIXEL) * sns_bpp / 8) & 0xf) {
-            int mem_mode = CSI_LVDS_MEM_WORD_HIGH_ALIGN;
-            int ret1     = pRawStrCapUnit->_dev[i]->io_control(
-                pRawStrCapUnit->_dev[i], RKCIF_CMD_SET_CSI_MEMORY_MODE, &mem_mode);
-            if (ret1) {
-                LOGE_CAMHW_SUBM(ISP20HW_SUBM, "set CSI_MEM_WORD_BIG_ALIGN failed!\n");
-                ret = XCAM_RETURN_ERROR_IOCTL;
-            } else {
-                LOGD_CAMHW_SUBM(ISP20HW_SUBM, "set the memory mode of vicap to big align");
+        int mem_mode = mode;
+        int ret1     = pRawStrCapUnit->_dev[i]->io_control(
+            pRawStrCapUnit->_dev[i], RKCIF_CMD_SET_CSI_MEMORY_MODE, &mem_mode);
+        if (ret1) {
+            LOGE_CAMHW_SUBM(ISP20HW_SUBM, "set CSI_MEM_WORD_BIG_ALIGN failed!\n");
+            ret = XCAM_RETURN_ERROR_IOCTL;
+        } else {
+            LOGD_CAMHW_SUBM(ISP20HW_SUBM, "set the memory mode of vicap to big align");
 #if RKAIQ_HAVE_DUMPSYS
-                pRawStrCapUnit->data_mode = mem_mode;
+            pRawStrCapUnit->data_mode = mem_mode;
 #endif
-            }
         }
     }
 
@@ -804,6 +835,40 @@ XCamReturn AiqRawStreamCapUnit_setSwStreamInfo(AiqRawStreamCapUnit_t* pRawStrCap
     pRawStrCapUnit->_send_sync_buf_func = send_sync_buf_func;
 
     return XCAM_RETURN_NO_ERROR;
+}
+
+XCamReturn AiqRawStreamCapUnit_setSingleBufAsyncMode(AiqRawStreamCapUnit_t* pRawStrCapUnit, bool async)
+{
+
+    int mode = async ? 1 : 0;
+
+    if (pRawStrCapUnit->_dev[0]) {
+
+        int buf_cnt = AiqV4l2Device_getBufCnt(pRawStrCapUnit->_dev[0]);
+        if (buf_cnt != 1) {
+            LOGE_CAMHW_SUBM(ISP20HW_SUBM, "set single buffer async mode, but buf cnt is %d!", buf_cnt);
+            return XCAM_RETURN_ERROR_FAILED;
+        }
+
+        int ret = pRawStrCapUnit->_dev[0]->io_control(pRawStrCapUnit->_dev[0], RKCIF_CMD_SINGLE_BUF_MODE,
+                                            &mode);
+        if (ret < 0) {
+            LOGE_CAMHW_SUBM(ISP20HW_SUBM, "set single buffer async mode failed!");
+            return XCAM_RETURN_ERROR_IOCTL;
+        }
+    }
+
+    return XCAM_RETURN_NO_ERROR;
+}
+
+bool AiqRawStreamCapUnit_getStreamOnStatus(AiqRawStreamCapUnit_t* pRawStrCapUnit) {
+    bool stream_on = true;
+    for (int i = 0; i < pRawStrCapUnit->_mipi_dev_max; i++) {
+        if (pRawStrCapUnit->_dev[i]) {
+            stream_on &= AiqV4l2Device_isActivated(pRawStrCapUnit->_dev[i]);
+        }
+    }
+    return stream_on;
 }
 
 #if RKAIQ_HAVE_DUMPSYS

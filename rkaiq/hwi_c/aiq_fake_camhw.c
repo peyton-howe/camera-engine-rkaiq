@@ -220,8 +220,18 @@ static void parse_rk_rawdata(AiqCamHwFake_t* pFakeCamHw, void* rawdata, struct r
                 break;
             }
             case STATS_TAG: {
-                pFakeCamHw->_finfo = *((rk_aiq_frame_info_t*)p);
-                p                  = p + sizeof(struct _block_header) + pFakeCamHw->_finfo.size;
+                header = *((struct _block_header *)p);
+                p      += sizeof(struct _block_header);
+                if (header.block_length <= sizeof(pFakeCamHw->_finfo)) {
+                    pFakeCamHw->_finfo = *((rk_aiq_frame_info_t *)p);
+                    if (START_TAG_VERSION != pFakeCamHw->_finfo.vesrion)
+                        LOGE_CAMHW("%s tag version error, STATS_TAG version need %x, raw file version is %x",
+                                    __func__, START_TAG_VERSION, pFakeCamHw->_finfo.vesrion);
+                } else {
+                    LOGE_CAMHW("%s tag size error, block size %d, struct size %u, please check rkraw and aiq version",
+                                __func__, header.block_length, sizeof(pFakeCamHw->_finfo));
+                }
+                p = p + header.block_length;
                 break;
             }
             case ISP_REG_FMT_TAG: {
@@ -269,6 +279,11 @@ static void parse_rk_rawdata(AiqCamHwFake_t* pFakeCamHw, void* rawdata, struct r
     vbuf->frame_width  = pFakeCamHw->_rawfmt.width;
     vbuf->frame_height = pFakeCamHw->_rawfmt.height;
     vbuf->base_addr    = rawdata;
+    for (int i = 0; i < 3; i++) {
+        if (pFakeCamHw->_finfo.isp_dgain[i] < 1.0) {
+            pFakeCamHw->_finfo.isp_dgain[i] = 1.0;
+        }
+    }
     if (pFakeCamHw->_rawfmt.hdr_mode == 1) {
         if (is_actual_rawdata) {
             vbuf->buf_info[0].data_addr   = actual_raw[0];
@@ -297,6 +312,7 @@ static void parse_rk_rawdata(AiqCamHwFake_t* pFakeCamHw, void* rawdata, struct r
         vbuf->buf_info[0].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[0].exp_gain     = (float)pFakeCamHw->_finfo.normal_gain;
         vbuf->buf_info[0].exp_time     = (float)pFakeCamHw->_finfo.normal_exp;
+        vbuf->buf_info[0].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[0];
         vbuf->buf_info[0].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.normal_gain_reg;
         vbuf->buf_info[0].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.normal_exp_reg;
         vbuf->buf_info[0].valid        = true;
@@ -327,6 +343,7 @@ static void parse_rk_rawdata(AiqCamHwFake_t* pFakeCamHw, void* rawdata, struct r
         vbuf->buf_info[0].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[0].exp_gain     = (float)pFakeCamHw->_finfo.hdr_gain_s;
         vbuf->buf_info[0].exp_time     = (float)pFakeCamHw->_finfo.hdr_exp_s;
+        vbuf->buf_info[0].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[0];
         vbuf->buf_info[0].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.hdr_gain_s_reg;
         vbuf->buf_info[0].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.hdr_exp_s_reg;
         vbuf->buf_info[0].valid        = true;
@@ -359,6 +376,7 @@ static void parse_rk_rawdata(AiqCamHwFake_t* pFakeCamHw, void* rawdata, struct r
         vbuf->buf_info[1].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[1].exp_gain     = (float)pFakeCamHw->_finfo.hdr_gain_m;
         vbuf->buf_info[1].exp_time     = (float)pFakeCamHw->_finfo.hdr_exp_m;
+        vbuf->buf_info[1].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[1];
         vbuf->buf_info[1].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.hdr_gain_m_reg;
         vbuf->buf_info[1].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.hdr_exp_m_reg;
         vbuf->buf_info[1].valid        = true;
@@ -392,6 +410,7 @@ static void parse_rk_rawdata(AiqCamHwFake_t* pFakeCamHw, void* rawdata, struct r
         vbuf->buf_info[0].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[0].exp_gain     = (float)pFakeCamHw->_finfo.hdr_gain_s;
         vbuf->buf_info[0].exp_time     = (float)pFakeCamHw->_finfo.hdr_exp_s;
+        vbuf->buf_info[0].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[0];
         vbuf->buf_info[0].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.hdr_gain_s_reg;
         vbuf->buf_info[0].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.hdr_exp_s_reg;
         vbuf->buf_info[0].valid        = true;
@@ -425,6 +444,7 @@ static void parse_rk_rawdata(AiqCamHwFake_t* pFakeCamHw, void* rawdata, struct r
         vbuf->buf_info[1].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[1].exp_gain     = (float)pFakeCamHw->_finfo.hdr_gain_m;
         vbuf->buf_info[1].exp_time     = (float)pFakeCamHw->_finfo.hdr_exp_m;
+        vbuf->buf_info[1].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[1];
         vbuf->buf_info[1].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.hdr_gain_m_reg;
         vbuf->buf_info[1].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.hdr_exp_m_reg;
         vbuf->buf_info[1].valid        = true;
@@ -458,6 +478,7 @@ static void parse_rk_rawdata(AiqCamHwFake_t* pFakeCamHw, void* rawdata, struct r
         vbuf->buf_info[2].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[2].exp_gain     = (float)pFakeCamHw->_finfo.hdr_gain_l;
         vbuf->buf_info[2].exp_time     = (float)pFakeCamHw->_finfo.hdr_exp_l;
+        vbuf->buf_info[2].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[2];
         vbuf->buf_info[2].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.hdr_gain_l_reg;
         vbuf->buf_info[2].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.hdr_exp_l_reg;
         vbuf->buf_info[2].valid        = true;
@@ -545,7 +566,17 @@ static XCamReturn parse_rk_rawfile(AiqCamHwFake_t* pFakeCamHw, FILE* fp, struct 
                 break;
             }
             case STATS_TAG: {
-                fread(&pFakeCamHw->_finfo, sizeof(pFakeCamHw->_finfo), 1, fp);
+                fread(&header, sizeof(header), 1, fp);
+                if (header.block_length <= sizeof(pFakeCamHw->_finfo)) {
+                    fread(&pFakeCamHw->_finfo, header.block_length, 1, fp);
+                    if (START_TAG_VERSION != pFakeCamHw->_finfo.vesrion)
+                        LOGE_CAMHW("%s tag version error, STATS_TAG version need %x, raw file version is %x",
+                                    __func__, START_TAG_VERSION, pFakeCamHw->_finfo.vesrion);
+                } else {
+                    LOGE_CAMHW("%s tag size error, block size %d, struct size %u, please check rkraw and aiq version",
+                                __func__, header.block_length, sizeof(pFakeCamHw->_finfo));
+                    fseek(fp, header.block_length, SEEK_CUR);
+                }
                 break;
             }
             case ISP_REG_FMT_TAG: {
@@ -587,6 +618,11 @@ static XCamReturn parse_rk_rawfile(AiqCamHwFake_t* pFakeCamHw, FILE* fp, struct 
 
     vbuf->frame_width  = pFakeCamHw->_rawfmt.width;
     vbuf->frame_height = pFakeCamHw->_rawfmt.height;
+    for (int i = 0; i < 3; i++) {
+        if (pFakeCamHw->_finfo.isp_dgain[i] < 1.0) {
+            pFakeCamHw->_finfo.isp_dgain[i] = 1.0;
+        }
+    }
     if (pFakeCamHw->_rawfmt.hdr_mode == 1) {
         LOGD_CAMHW_SUBM(FAKECAM_SUBM, "data_addr=%p,fd=%d,length=%d\n", vbuf->buf_info[0].data_addr,
                         vbuf->buf_info[0].data_fd, vbuf->buf_info[0].data_length);
@@ -594,6 +630,7 @@ static XCamReturn parse_rk_rawfile(AiqCamHwFake_t* pFakeCamHw, FILE* fp, struct 
         vbuf->buf_info[0].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[0].exp_gain     = (float)pFakeCamHw->_finfo.normal_gain;
         vbuf->buf_info[0].exp_time     = (float)pFakeCamHw->_finfo.normal_exp;
+        vbuf->buf_info[0].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[0];
         vbuf->buf_info[0].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.normal_gain_reg;
         vbuf->buf_info[0].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.normal_exp_reg;
         vbuf->buf_info[0].valid        = true;
@@ -604,6 +641,7 @@ static XCamReturn parse_rk_rawfile(AiqCamHwFake_t* pFakeCamHw, FILE* fp, struct 
         vbuf->buf_info[0].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[0].exp_gain     = (float)pFakeCamHw->_finfo.hdr_gain_s;
         vbuf->buf_info[0].exp_time     = (float)pFakeCamHw->_finfo.hdr_exp_s;
+        vbuf->buf_info[0].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[0];
         vbuf->buf_info[0].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.hdr_gain_s_reg;
         vbuf->buf_info[0].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.hdr_exp_s_reg;
         vbuf->buf_info[0].valid        = true;
@@ -617,6 +655,7 @@ static XCamReturn parse_rk_rawfile(AiqCamHwFake_t* pFakeCamHw, FILE* fp, struct 
         vbuf->buf_info[1].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[1].exp_gain     = (float)pFakeCamHw->_finfo.hdr_gain_m;
         vbuf->buf_info[1].exp_time     = (float)pFakeCamHw->_finfo.hdr_exp_m;
+        vbuf->buf_info[1].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[1];
         vbuf->buf_info[1].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.hdr_gain_m_reg;
         vbuf->buf_info[1].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.hdr_exp_m_reg;
         vbuf->buf_info[1].valid        = true;
@@ -630,6 +669,7 @@ static XCamReturn parse_rk_rawfile(AiqCamHwFake_t* pFakeCamHw, FILE* fp, struct 
         vbuf->buf_info[0].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[0].exp_gain     = (float)pFakeCamHw->_finfo.hdr_gain_s;
         vbuf->buf_info[0].exp_time     = (float)pFakeCamHw->_finfo.hdr_exp_s;
+        vbuf->buf_info[0].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[0];
         vbuf->buf_info[0].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.hdr_gain_s_reg;
         vbuf->buf_info[0].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.hdr_exp_s_reg;
         vbuf->buf_info[0].valid        = true;
@@ -643,6 +683,7 @@ static XCamReturn parse_rk_rawfile(AiqCamHwFake_t* pFakeCamHw, FILE* fp, struct 
         vbuf->buf_info[1].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[1].exp_gain     = (float)pFakeCamHw->_finfo.hdr_gain_m;
         vbuf->buf_info[1].exp_time     = (float)pFakeCamHw->_finfo.hdr_exp_m;
+        vbuf->buf_info[1].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[1];
         vbuf->buf_info[1].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.hdr_gain_m_reg;
         vbuf->buf_info[1].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.hdr_exp_m_reg;
         vbuf->buf_info[1].valid        = true;
@@ -656,6 +697,7 @@ static XCamReturn parse_rk_rawfile(AiqCamHwFake_t* pFakeCamHw, FILE* fp, struct 
         vbuf->buf_info[2].frame_id     = pFakeCamHw->_rawfmt.frame_id;
         vbuf->buf_info[2].exp_gain     = (float)pFakeCamHw->_finfo.hdr_gain_l;
         vbuf->buf_info[2].exp_time     = (float)pFakeCamHw->_finfo.hdr_exp_l;
+        vbuf->buf_info[2].exp_ispdgain = (float)pFakeCamHw->_finfo.isp_dgain[2];
         vbuf->buf_info[2].exp_gain_reg = (uint32_t)pFakeCamHw->_finfo.hdr_gain_l_reg;
         vbuf->buf_info[2].exp_time_reg = (uint32_t)pFakeCamHw->_finfo.hdr_exp_l_reg;
         vbuf->buf_info[2].valid        = true;

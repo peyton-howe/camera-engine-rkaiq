@@ -20,6 +20,7 @@
 
 #define AIBNR_MODEL_DIRNAME_LEN     128
 #define AIBNR_MODEL_FILENAME_LEN    64
+#define AIBNR_VALURENR_STRG_LEN     9
 
 typedef struct aibnr_param_calib_s {
     /* M4_GENERIC_DESC(
@@ -159,7 +160,7 @@ typedef struct aibnr_param_tunning_s {
         M4_ALIAS(sw_aiBnrT_motionGain_strg),
         M4_TYPE(f32),
         M4_SIZE_EX(1,1),
-        M4_RANGE_EX(0.0, 4.0),
+        M4_RANGE_EX(-4.0, 4.0),
         M4_DEFAULT(0),
         M4_DIGIT_EX(3),
         M4_HIDE_EX(0),
@@ -312,6 +313,19 @@ typedef struct aibnr_param_tunning_s {
         Freq of use: High))  */
     float sw_aiBnrT_nonLinear_adjust;
     /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aiBnrT_nonLinear_adjust),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,9),
+        M4_RANGE_EX(0.0, 4.0),
+        M4_DEFAULT([1, 1, 1, 1, 1, 1, 1, 1, 1]),
+        M4_DIGIT_EX(1),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(21),
+        M4_NOTES(Non linear ratio value.\n
+        Freq of use: High))  */
+    float sw_aiBnrT_bnrValueNr_strg[AIBNR_VALURENR_STRG_LEN];
+    /* M4_GENERIC_DESC(
         M4_ALIAS(sw_aiBnrT_model_file),
         M4_TYPE(string),
         M4_SIZE_EX(1,1),
@@ -319,7 +333,7 @@ typedef struct aibnr_param_tunning_s {
         M4_DEFAULT("iso50.bin"),
         M4_HIDE_EX(0),
         M4_RO(1),
-        M4_ORDER(21),
+        M4_ORDER(22),
         M4_NOTES(Model info file.\n
         Freq of use: High))  */
     char sw_aiBnrT_model_file[AIBNR_MODEL_FILENAME_LEN];
@@ -495,6 +509,38 @@ typedef struct aibnr_model_cfg_s {
     aiBnr_modelRunMode_t sw_aiBnrCfg_modelRun_mode;
 } aibnr_model_cfg_t;
 
+typedef enum aibnr_frmRate_mode_e {
+    aibnr_frmRate_auto_mode = 0,
+    aibnr_frmRate_fix_mode = 1,
+} aibnr_frmRate_mode_t;
+
+typedef struct aibnr_frmRate_s {
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aibnrT_frmRate_mode),
+        M4_TYPE(enum),
+        M4_ENUM_DEF(aibnr_frmRate_mode_t),
+        M4_DEFAULT(aibnr_frmRate_fix_mode),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(0),
+        M4_NOTES(The working mode of frame rate control.\n
+        Freq of use: high))  */
+    aibnr_frmRate_mode_t sw_aibnrT_frmRate_mode;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_aibnrT_frmRate_val),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,255),
+        M4_DEFAULT(10),
+        M4_DIGIT_EX(2),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(1),
+        M4_NOTES(The value of frame rate.\n
+        Freq of use: high))  */
+    float sw_aibnrT_frmRate_val;
+} aibnr_frmRate_t;
+
 typedef struct aibnr_params_static_s {
     /* M4_GENERIC_DESC(
         M4_ALIAS(debug),
@@ -541,6 +587,15 @@ typedef struct aibnr_params_static_s {
         M4_ORDER(4),
         M4_NOTES(TODO))  */
     aibnr_model_cfg_t model_cfg;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(frmRate),
+        M4_TYPE(struct),
+        M4_UI_MODULE(normal_ui_style),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(5),
+        M4_NOTES(TODO))  */
+	aibnr_frmRate_t frmRate;
 } aibnr_params_static_t;
 
 typedef struct aibnr_param_s {

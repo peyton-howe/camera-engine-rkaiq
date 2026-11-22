@@ -11,14 +11,13 @@ Json: sc450ai_CRK4F4209_styleTstP0
     1)
 */
 
-Json: sc200ai_CRK2F3537-V2_styleTstP0
-  CIS setting: 
-	1) 20fps
-  IQ style:
-    1) Tst
-  isp:
-    1)btnr log domain
-  other:
-    1) CRK2F3537-V2 模组硬件存在问题，更换后的模组PCB丝印号：CRK2F3537_v11_20240906lxF
+ainr/*.json: 
+    FPN OFF + BTNR1 + AINR
+
+btnr2:
+    FPN OFF + BTNR1 + BTNR2 + AINR
+
+btnr2Fpn:
+    FPN ON + BTNR1 + BTNR2 + AINR
     
 

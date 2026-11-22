@@ -64,6 +64,7 @@ typedef struct {
 
 typedef struct {
     btnr_stats_t mBtnrStats[RK_AIQ_BTNR_STATS_CNT];
+    btnr_stats_t mBtnr2Stats[RK_AIQ_BTNR_STATS_CNT];
 #if defined(RKAIQ_HAVE_SHARP_V40) || defined(RKAIQ_HAVE_SHARP_V41)
     sharp_stats_t mSharpStats[RK_AIQ_BTNR_STATS_CNT];
     uint16_t sharp_noise_curve_pre[17];
@@ -77,6 +78,9 @@ typedef struct {
     uint16_t stats_delay_cnt;
 
     void *btnr_attrib;
+    void *btnr_cis_info;
+
+    int _working_mode;
 } btnr_cvt_info_t;
 
 void bayertnr_logtrans_init(int bayertnr_trans_mode,  int bayertnr_trans_mode_scale, btnr_trans_params_t *pTransPrarms);

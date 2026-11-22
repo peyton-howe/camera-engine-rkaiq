@@ -45,6 +45,7 @@
 #include "newStruct/ldc/include/ldc_algo_api.h"
 #include "newStruct/airms/include/airms_algo_api.h"
 #include "newStruct/aiynr/include/aiynr_algo_api.h"
+#include "newStruct/asd/include/asd_algo_api.h"
 #if RKAIQ_HAVE_RGBIR_REMOSAIC
 #include "newStruct/rgbir/include/rgbir_algo_api.h"
 #endif
@@ -226,7 +227,6 @@ static struct RkAiqAlgoDesCommExt g_default_3a_des[] = {
 #endif
 #if (RKAIQ_HAVE_BAYERTNR_V42)
     { &g_RkIspAlgoDescBayertnr.common,     RK_AIQ_CORE_ANALYZE_GRP0,    0, 0, 0, grp0Conds          },
-    { &g_RkIspAlgoDescBayertnr2.common,     RK_AIQ_CORE_ANALYZE_GRP0,    0, 0, 0, grp0Conds          },
 #endif
 #if (RKAIQ_HAVE_CNR_V36)
     { &g_RkIspAlgoDescCnr.common,           RK_AIQ_CORE_ANALYZE_GRP0,    0,  1,  0, grp0Conds          },
@@ -250,6 +250,9 @@ static struct RkAiqAlgoDesCommExt g_default_3a_des[] = {
 #if defined(ISP_HW_V35)
 #if RKAIQ_HAVE_ASD_V10
     { &g_RkIspAlgoDescAsd.common,           RK_AIQ_CORE_ANALYZE_GRP0,   0, 0, 0,    grp0Conds          },
+#endif
+#if RKAIQ_HAVE_ASD_V11
+    { &g_RkIspAlgoDescAsd.common,         RK_AIQ_CORE_ANALYZE_OTHER,    0,  1,  0, otherGrpCondsV3x          },
 #endif
 #endif
 #if (RKAIQ_HAVE_AFD_V2)

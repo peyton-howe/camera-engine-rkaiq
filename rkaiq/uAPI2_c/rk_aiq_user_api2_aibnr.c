@@ -87,4 +87,20 @@ rk_aiq_user_api2_aibnr_QueryStatus(const rk_aiq_sys_ctx_t* sys_ctx, aibnr_status
     return ret;
 }
 
+XCamReturn rk_aiq_user_api2_aibnr_RecDefFps(const rk_aiq_sys_ctx_t* sys_ctx)
+{
+    XCamReturn ret = XCAM_RETURN_NO_ERROR;
+    ae_api_expSwAttr_t expSwAttr;
+    if (sys_ctx == NULL) {
+        ret = XCAM_RETURN_ERROR_PARAM;
+        return (ret);
+    }
+
+    if (rk_aiq_user_api2_ae_getExpSwAttr(sys_ctx, &expSwAttr) == XCAM_RETURN_NO_ERROR) {
+        // For call AibnrManager_setFrmRate to record default fps
+        ret = rk_aiq_user_api2_ae_setExpSwAttr(sys_ctx, expSwAttr);
+    }
+    return (ret);
+}
+
 RKAIQ_END_DECLARE

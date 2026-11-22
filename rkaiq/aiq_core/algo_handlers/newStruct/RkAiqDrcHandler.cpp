@@ -113,7 +113,6 @@ void RkAiqDrcHandleInt::DrcProchelper(RkAiqAlgoProcDrc* drc_proc_param) {
     RkAiqCore::RkAiqAlgosComShared_t* sharedCom = &mAiqCore->mAlogsComSharedParams;
 
     FrameNumber_t FrameNumber;
-    unsigned char compr_bit = sharedCom->snsDes.compr_bit;
     if (sharedCom->working_mode < RK_AIQ_WORKING_MODE_ISP_HDR2)
         FrameNumber = LINEAR_NUM;
     else if (sharedCom->working_mode < RK_AIQ_WORKING_MODE_ISP_HDR3 &&
@@ -121,19 +120,7 @@ void RkAiqDrcHandleInt::DrcProchelper(RkAiqAlgoProcDrc* drc_proc_param) {
         FrameNumber = HDR_2X_NUM;
     else
         FrameNumber = HDR_3X_NUM;
-    if (compr_bit) {
-        FrameNumber = SENSOR_MGE;
-        if (compr_bit > ISP_HDR_BIT_NUM_MAX)
-            LOGE_ATMO("%s:  SensorMgeBitNum(%d) > %d!!!\n", __FUNCTION__, compr_bit,
-                      ISP_HDR_BIT_NUM_MAX);
-        if (compr_bit < ISP_HDR_BIT_NUM_MIN)
-            LOGE_ATMO("%s:  SensorMgeBitNum(%d) < %d!!!\n", __FUNCTION__, compr_bit,
-                      ISP_HDR_BIT_NUM_MIN);
-        compr_bit =
-            CLIP(compr_bit, ISP_HDR_BIT_NUM_MAX, ISP_HDR_BIT_NUM_MIN);
-    }
     drc_proc_param->FrameNumber = FrameNumber;
-    shared->fullParams->mDrcParams->data()->result.compr_bit = compr_bit;
 
     drc_proc_param->NextData.AEData.LongFrmMode = drc_proc_param->LongFrmMode;
     if (FrameNumber == LINEAR_NUM) {
@@ -210,23 +197,6 @@ void RkAiqDrcHandleInt::DrcProchelper(RkAiqAlgoProcDrc* drc_proc_param) {
                 drc_proc_param->com.u.proc.curExp->HdrExp[2].exp_real_params.isp_dgain *
                 drc_proc_param->com.u.proc.curExp->HdrExp[2].exp_real_params.integration_time;
         }
-    } else if (FrameNumber == SENSOR_MGE) {
-        drc_proc_param->NextData.AEData.MExpo =
-            drc_proc_param->com.u.proc.nxtExp->LinearExp.exp_real_params.analog_gain *
-            drc_proc_param->com.u.proc.nxtExp->LinearExp.exp_real_params.digital_gain *
-            drc_proc_param->com.u.proc.nxtExp->LinearExp.exp_real_params.isp_dgain *
-            drc_proc_param->com.u.proc.nxtExp->LinearExp.exp_real_params.integration_time;
-        if (drc_proc_param->NextData.AEData.MExpo < FLT_EPSILON) {
-            drc_proc_param->NextData.AEData.MExpo =
-                drc_proc_param->com.u.proc.curExp->LinearExp.exp_real_params.analog_gain *
-                drc_proc_param->com.u.proc.curExp->LinearExp.exp_real_params.digital_gain *
-                drc_proc_param->com.u.proc.curExp->LinearExp.exp_real_params.isp_dgain *
-                drc_proc_param->com.u.proc.curExp->LinearExp.exp_real_params.integration_time;
-        }
-        drc_proc_param->NextData.AEData.LExpo = drc_proc_param->NextData.AEData.MExpo;
-        drc_proc_param->NextData.AEData.SExpo =
-            drc_proc_param->NextData.AEData.MExpo /
-            pow(2.0f, (float)(compr_bit - ISP_HDR_BIT_NUM_MIN));
     }
     if (drc_proc_param->NextData.AEData.SExpo > FLT_EPSILON) {
         drc_proc_param->NextData.AEData.L2S_Ratio =

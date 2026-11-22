@@ -44,6 +44,9 @@ XCamReturn rk_aiq_uapi_ae_getLinAeRouteAttr(RkAiqAlgoContext* ctx, Uapi_LinAeRou
 XCamReturn rk_aiq_uapi_ae_setHdrAeRouteAttr(RkAiqAlgoContext* ctx, const Uapi_HdrAeRouteAttr_t* pHdrAeRouteAttr, bool isGroupAe, bool need_sync);
 XCamReturn rk_aiq_uapi_ae_getHdrAeRouteAttr(RkAiqAlgoContext* ctx, Uapi_HdrAeRouteAttr_t* pHdrAeRouteAttr, bool isGroupAe);
 
+XCamReturn rk_aiq_uapi_ae_setFaceExpAttr(RkAiqAlgoContext* ctx, const Uapi_FaceCtrl_t* pFaceExpAttr, bool isGroupAe, bool need_sync);
+XCamReturn rk_aiq_uapi_ae_getFaceExpAttr(RkAiqAlgoContext* ctx, Uapi_FaceCtrl_t* pFaceExpAttr, bool isGroupAe);
+
 XCamReturn rk_aiq_uapi_ae_setLinExpAttr(RkAiqAlgoContext* ctx, const Uapi_LinExpAttrV2_t* pLinExpAttr, bool isGroupAe, bool need_sync);
 XCamReturn rk_aiq_uapi_ae_getLinExpAttr(RkAiqAlgoContext* ctx, Uapi_LinExpAttrV2_t* pLinExpAttr, bool isGroupAe);
 XCamReturn rk_aiq_uapi_ae_setHdrExpAttr(RkAiqAlgoContext* ctx, const Uapi_HdrExpAttrV2_t* pHdrExpAttr, bool isGroupAe, bool need_sync);
@@ -59,6 +62,9 @@ XCamReturn rk_aiq_uapi_ae_queryExpInfo(RkAiqAlgoContext* ctx, Uapi_ExpQueryInfo_
 #else
 XCamReturn rk_aiq_uapi_ae_setExpSwAttr(RkAiqAlgoContext* ctx, const ae_api_expSwAttr_t* pExpSwAttr, bool isGroupAe);
 XCamReturn rk_aiq_uapi_ae_getExpSwAttr(RkAiqAlgoContext* ctx, ae_api_expSwAttr_t* pExpSwAttr, bool isGroupAe);
+
+XCamReturn rk_aiq_uapi_ae_setFaceExpAttr(RkAiqAlgoContext* ctx, const ae_faceAeCtrl_t* pFaceExpAttr, bool isGroupAe);
+XCamReturn rk_aiq_uapi_ae_getFaceExpAttr(RkAiqAlgoContext* ctx, ae_faceAeCtrl_t* pFaceExpAttr, bool isGroupAe);
 
 XCamReturn rk_aiq_uapi_ae_setLinExpAttr(RkAiqAlgoContext* ctx, const ae_api_linExpAttr_t* pLinExpAttr, bool isGroupAe);
 XCamReturn rk_aiq_uapi_ae_getLinExpAttr(RkAiqAlgoContext* ctx, ae_api_linExpAttr_t* pLinExpAttr, bool isGroupAe);

@@ -42,10 +42,10 @@ static void convertAiqAeToIsp39Params(isp_params_t* isp_params, aeStats_cfg_t* a
             } else if(ae_meas->entityGroup.entities.entity0.hw_aeCfg_statsSrc_mode ==  aeStats_entity0_chl1DpcOut_mode) {
                 isp_params->isp_cfg->meas.rawae0.rawae_sel = 1;
             } else if(ae_meas->entityGroup.entities.entity0.hw_aeCfg_statsSrc_mode ==  aeStats_btnrOutLow_mode) {
-                isp_params->isp_cfg->meas.rawae0.rawae_sel = 0x20;
+                isp_params->isp_cfg->meas.rawae0.bnr2ae_sel = 1;
                 isp_params->isp_cfg->meas.rawae0.bnr_be_sel = 0;
             } else if(ae_meas->entityGroup.entities.entity0.hw_aeCfg_statsSrc_mode ==  aeStats_btnrBeOutLow_mode) {
-                isp_params->isp_cfg->meas.rawae0.rawae_sel = 0x20;
+                isp_params->isp_cfg->meas.rawae0.bnr2ae_sel = 1;
                 isp_params->isp_cfg->meas.rawae0.bnr_be_sel = 1;
             }
 
@@ -61,7 +61,6 @@ static void convertAiqAeToIsp39Params(isp_params_t* isp_params, aeStats_cfg_t* a
             isp_params->isp_cfg->meas.rawae0.win1_h_size = ae_meas->entityGroup.entities.entity0.subWin[0].hw_aeCfg_win_width;
             isp_params->isp_cfg->meas.rawae0.win1_v_size = ae_meas->entityGroup.entities.entity0.subWin[0].hw_aeCfg_win_height;
         }
-
         // rawae3
 
         if(ae_meas->hw_aeCfg_entityGroup_mode == aeStats_entity03_coWk_mode) {
@@ -98,9 +97,10 @@ static void convertAiqAeToIsp39Params(isp_params_t* isp_params, aeStats_cfg_t* a
                 isp_params->isp_cfg->meas.rawae3.rawae_sel = 3;
 
             } else if(ae_meas->entityGroup.entities.entity3.hw_aeCfg_statsSrc_mode ==  aeStats_btnrOutHigh_mode) {
-                isp_params->isp_cfg->meas.rawae3.rawae_sel = 0x10;
+                isp_params->isp_cfg->meas.rawae3.bnr2ae_sel = 1;
+                isp_params->isp_cfg->meas.rawae0.bnr_be_sel = 0;
             } else if(ae_meas->entityGroup.entities.entity3.hw_aeCfg_statsSrc_mode ==  aeStats_btnrBeOutHigh_mode) {
-                isp_params->isp_cfg->meas.rawae3.rawae_sel = 0x20;
+                isp_params->isp_cfg->meas.rawae3.bnr2ae_sel = 1;
                 isp_params->isp_cfg->meas.rawae3.bnr_be_sel = 1;
             }
 

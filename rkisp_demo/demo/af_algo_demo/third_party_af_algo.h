@@ -4,6 +4,7 @@
 #include "rkisp_demo.h"
 
 int32_t custom_af_run(rk_aiq_sys_ctx_t* ctx);
+int32_t custom_pdaf_run(rk_aiq_sys_ctx_t* ctx);
 
 #endif
 

@@ -77,15 +77,18 @@ LensHw::~LensHw()
 }
 
 XCamReturn
-LensHw::getOTPData()
+LensHw::setOTPData(struct rk_cam_otp_info *otp_info)
 {
     ENTER_CAMHW_FUNCTION();
 
-    _otp_valid = false;
-    _startCurrent = -1;
-    _endCurrent = -1;
-    _posture = -1;
-    _hysteresis = -1;
+    _otp_valid = otp_info->otp_valid;
+    _startCurrent = otp_info->startCurrent;
+    _endCurrent = otp_info->endCurrent;
+    _posture = otp_info->posture;
+    _hysteresis = otp_info->hysteresis;
+
+    LOGD_AF("%s: otp_valid %d, startCurrent %f, endCurrent %f, posture %f",
+            __func__, _otp_valid, _startCurrent, _endCurrent, _posture);
 
     return XCAM_RETURN_NO_ERROR;
 }
@@ -138,8 +141,6 @@ LensHw::queryLensSupport()
     } else {
         _zoom1_enable = true;
     }
-
-    getOTPData();
 
     EXIT_CAMHW_FUNCTION();
     return XCAM_RETURN_NO_ERROR;
@@ -1589,6 +1590,7 @@ LensHw::getAfInfoParams(SmartPtr<RkAiqAfInfoProxy>& afInfo, uint32_t frame_id)
     SmartLock locker (_mutex);
 
     int i;
+    int64_t frame_time = 0LL;
 
     afInfo = NULL;
     if (_afInfoPool->has_free_items()) {
@@ -1599,6 +1601,9 @@ LensHw::getAfInfoParams(SmartPtr<RkAiqAfInfoProxy>& afInfo, uint32_t frame_id)
     }
 
     for (i = 0; i < LENSHW_RECORD_SOF_NUM; i++) {
+        if (frame_time < _frame_time[i]) {
+            frame_time = _frame_time[i];
+        }
         if (frame_id == _frame_sequence[i])
             break;
     }
@@ -1615,8 +1620,9 @@ LensHw::getAfInfoParams(SmartPtr<RkAiqAfInfoProxy>& afInfo, uint32_t frame_id)
     if (i < LENSHW_RECORD_SOF_NUM) {
         afInfo->data()->sofTime = _frame_time[i];
     } else {
-        LOGE_CAMHW_SUBM(LENS_SUBM, "%s: frame_id %d, can not find sof time!\n", __FUNCTION__, frame_id);
-        return  XCAM_RETURN_ERROR_PARAM;
+        LOGW_AF("%s: frame_id %d, can not find sof time, use latest sof time!\n",
+            __FUNCTION__, frame_id);
+        afInfo->data()->sofTime = frame_time;
     }
 
     for (i = 0; i < LENSHW_RECORD_LOWPASSFV_NUM; i++) {

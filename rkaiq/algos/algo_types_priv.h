@@ -76,6 +76,9 @@
 #include "newStruct/aiynr/include/aiynr_algo_api.h"
 #include "c_base/aiq_list.h"
 
+#ifdef ISP_HW_V35
+#include "include/common/rk-isp35-config.h"
+#endif
 
 typedef struct Aynr_ProcResult_V3_s Aynr_ProcResult_V3_t;
 typedef struct Aynr_ProcResult_V22_s Aynr_ProcResult_V22_t;
@@ -178,10 +181,10 @@ typedef struct _RkAiqAlgoConfigAe {
     int                      RawHeight;
     rk_aiq_sensor_nr_switch_t nr_switch;
     rk_aiq_sensor_dcg_ratio_t dcg_ratio;
+    rk_aiq_sensor_dcg_ratio_t spd_ratio;
     float        LinePeriodsPerField;
     float        PixelClockFreqMHZ;
     float        PixelPeriodsPerLine;
-    int          compr_bit;
 } RkAiqAlgoConfigAe;
 
 typedef struct _RkAiqAlgoPreAe {
@@ -191,6 +194,7 @@ typedef struct _RkAiqAlgoPreAe {
         RKAiqAecStatsV25_t*     aecStatsV25Buf;
     };
     bool af_prior;
+    window_t         faceRect;
     AmtdProcResult_t amtdRes;
 } RkAiqAlgoPreAe;
 
@@ -356,6 +360,7 @@ typedef struct rk_aiq_isp_drc_v39_s {
     trans_api_attrib_t trans_attr;
     float L2S_Ratio;
     unsigned char compr_bit;
+    unsigned char compr_single_bit;
     bool *damping;
 } rk_aiq_isp_drc_v39_t;
 
@@ -612,6 +617,7 @@ typedef struct _RkAiqAlgoProcAf {
     RKAiqAecStats_t* xcam_aec_stats;
     rk_aiq_isp_pdaf_stats_t* xcam_pdaf_stats;
     bool ae_stable;
+    rk_aiq_face_roi_t selfaceinfo;
 } RkAiqAlgoProcAf;
 
 typedef struct _RkAiqAlgoProcResAf {
@@ -700,6 +706,9 @@ typedef struct rk_aiq_isp_aibnr_params_s {
     uint16_t sw_in_comp_y[33];
     uint16_t sw_out_decomp_y[33];
     int frameIso;
+#ifdef ISP_HW_V35
+    struct isp35_ai_cfg ai_cfg;
+#endif
 } rk_aiq_isp_aibnr_params_t;
 
 typedef struct {

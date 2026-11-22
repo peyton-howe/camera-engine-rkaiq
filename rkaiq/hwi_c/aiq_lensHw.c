@@ -217,15 +217,18 @@ XCamReturn AiqLensHw_deinit(AiqLensHw_t* pLensHw)
     return XCAM_RETURN_NO_ERROR;
 }
 
-XCamReturn AiqLensHw_getOTPData(AiqLensHw_t* pLensHw)
+XCamReturn AiqLensHw_setOTPData(AiqLensHw_t* pLensHw, struct rk_cam_otp_info *otp_info)
 {
     ENTER_CAMHW_FUNCTION();
 
-    pLensHw->_otp_valid = false;
-    pLensHw->_startCurrent = -1;
-    pLensHw->_endCurrent = -1;
-    pLensHw->_posture = -1;
-    pLensHw->_hysteresis = -1;
+    pLensHw->_otp_valid = otp_info->otp_valid;
+    pLensHw->_startCurrent = otp_info->startCurrent;
+    pLensHw->_endCurrent = otp_info->endCurrent;
+    pLensHw->_posture = otp_info->posture;
+    pLensHw->_hysteresis = otp_info->hysteresis;
+
+    LOGD_AF("%s: otp_valid %d, startCurrent %f, endCurrent %f, posture %f",
+            __func__, pLensHw->_otp_valid, pLensHw->_startCurrent, pLensHw->_endCurrent, pLensHw->_posture);
 
     return XCAM_RETURN_NO_ERROR;
 }
@@ -277,8 +280,6 @@ XCamReturn AiqLensHw_queryLensSupport(AiqLensHw_t* pLensHw)
     } else {
         pLensHw->_zoom1_enable = true;
     }
-
-    AiqLensHw_getOTPData(pLensHw);
 
     EXIT_CAMHW_FUNCTION();
     return XCAM_RETURN_NO_ERROR;
@@ -1757,8 +1758,12 @@ XCamReturn AiqLensHw_getAfInfoParams(AiqLensHw_t* pLensHw, uint32_t frame_id, Ai
     aiqMutex_lock(&pLensHw->_mutex);
 
     int i;
+    int64_t frame_time = 0LL;
 
     for (i = 0; i < LENSHW_RECORD_SOF_NUM; i++) {
+        if (frame_time < pLensHw->_frame_time[i]) {
+            frame_time = pLensHw->_frame_time[i];
+        }
         if (frame_id == pLensHw->_frame_sequence[i])
             break;
     }
@@ -1775,9 +1780,9 @@ XCamReturn AiqLensHw_getAfInfoParams(AiqLensHw_t* pLensHw, uint32_t frame_id, Ai
     if (i < LENSHW_RECORD_SOF_NUM) {
         pAfInfo->sofTime = pLensHw->_frame_time[i];
     } else {
-        LOGE_CAMHW_SUBM(LENS_SUBM, "%s: frame_id %d, can not find sof time!\n", __FUNCTION__, frame_id);
-        aiqMutex_unlock(&pLensHw->_mutex);
-        return  XCAM_RETURN_ERROR_PARAM;
+        LOGW_AF("%s: frame_id %d, can not find sof time, use latest sof time!\n",
+            __FUNCTION__, frame_id);
+        pAfInfo->sofTime = frame_time;
     }
 
     for (i = 0; i < LENSHW_RECORD_LOWPASSFV_NUM; i++) {

@@ -542,6 +542,7 @@ RkAiqUapiDesc_t rkaiq_uapidesc_list[] = {
     __RKAIQUAPI_DESC_DEF("/uapi/0/dm_uapi/info", dm_status_t, NULL, rk_aiq_user_api2_dm_QueryStatus),
     __RKAIQUAPI_DESC_DEF("/uapi/0/btnr_uapi/attr", btnr_api_attrib_t, rk_aiq_user_api2_btnr_SetAttrib, rk_aiq_user_api2_btnr_GetAttrib),
     __RKAIQUAPI_DESC_DEF("/uapi/0/btnr_uapi/info", btnr_status_t, NULL, rk_aiq_user_api2_btnr_QueryStatus),
+    __RKAIQUAPI_DESC_DEF("/uapi/0/btnr_uapi/stats", btnr_stats_cp_t, NULL, rk_aiq_user_api2_btnr_QueryStats),
     __RKAIQUAPI_DESC_DEF("/uapi/0/gamma_uapi/attr", gamma_api_attrib_t, rk_aiq_user_api2_gamma_SetAttrib, rk_aiq_user_api2_gamma_GetAttrib),
     __RKAIQUAPI_DESC_DEF("/uapi/0/gamma_uapi/info", gamma_status_t, NULL, rk_aiq_user_api2_gamma_QueryStatus),
     __RKAIQUAPI_DESC_DEF("/uapi/0/drc_uapi/attr", drc_api_attrib_t, rk_aiq_user_api2_drc_SetAttrib, rk_aiq_user_api2_drc_GetAttrib),
@@ -611,6 +612,10 @@ RkAiqUapiDesc_t rkaiq_uapidesc_list[] = {
     __RKAIQUAPI_DESC_DEF("/uapi/0/ccm_uapi/attr", ccm_api_attrib_t, rk_aiq_user_api2_ccm_SetAttrib, rk_aiq_user_api2_ccm_GetAttrib),
     __RKAIQUAPI_DESC_DEF("/uapi/0/ccm_uapi/calibdb", accm_ccmCalib_t, rk_aiq_user_api2_ccm_SetCalib, rk_aiq_user_api2_ccm_GetCalib),
     __RKAIQUAPI_DESC_DEF("/uapi/0/ccm_uapi/info", ccm_status_t, NULL, rk_aiq_user_api2_ccm_QueryStatus),
+#if RKAIQ_HAVE_ASD
+    __RKAIQUAPI_DESC_DEF("/uapi/0/asd_uapi/attr", asd_api_attrib_t, rk_aiq_user_api2_asd_SetAttrib, rk_aiq_user_api2_asd_GetAttrib),
+    __RKAIQUAPI_DESC_DEF("/uapi/0/asd_uapi/info", asd_status_t, NULL, rk_aiq_user_api2_asd_QueryStatus),
+#endif
 #endif
 #if defined(ISP_HW_V33) || defined(ISP_HW_V35)
     __RKAIQUAPI_DESC_DEF("/uapi/0/texEst_uapi/attr", texEst_api_attrib_t, rk_aiq_user_api2_texEst_SetAttrib, rk_aiq_user_api2_texEst_GetAttrib),
@@ -635,8 +640,6 @@ RkAiqUapiDesc_t rkaiq_uapidesc_list[] = {
 #endif
 #if defined(ISP_HW_V35)
     __RKAIQUAPI_DESC_DEF("/uapi/0/af_uapi/attr", af_param_t, rk_aiq_user_api2_af_SetCalib, rk_aiq_user_api2_af_GetCalib),
-    __RKAIQUAPI_DESC_DEF("/uapi/0/btnr2_uapi/attr", btnr_api_attrib_t, rk_aiq_user_api2_btnr2_SetAttrib, rk_aiq_user_api2_btnr2_GetAttrib),
-    __RKAIQUAPI_DESC_DEF("/uapi/0/btnr2_uapi/info", btnr_status_t, NULL, rk_aiq_user_api2_btnr2_QueryStatus),
 #endif
 #if RKAIQ_HAVE_AIBNR
     __RKAIQUAPI_DESC_DEF("/uapi/0/aibnr_uapi/attr", aibnr_api_attrib_t, rk_aiq_user_api2_aibnr_SetAttrib, rk_aiq_user_api2_aibnr_GetAttrib),

@@ -57,6 +57,8 @@ AiqMap_t* aiqMap_init(AiqMapConfig_t* config) {
         goto clean_up_name;
     }
 
+    config->_item_size = XCAM_ALIGN_UP(config->_item_size, 4);
+
     array_size = XCAM_ALIGN_UP(config->_item_size * config->_item_nums, 4);
     total_size = array_size + sizeof(AiqMapItem_t) * config->_item_nums;
 
@@ -466,7 +468,7 @@ AiqMapItem_t* aiqMap_rbegin(AiqMap_t* map) {
 
     while (pCurItem) {
         if (pCurItem->_pOrderNext == NULL) break;
-        pCurItem = pCurItem->_pNext;
+        pCurItem = pCurItem->_pOrderNext;
     }
 
     aiqMutex_unlock(&map->_mutex);

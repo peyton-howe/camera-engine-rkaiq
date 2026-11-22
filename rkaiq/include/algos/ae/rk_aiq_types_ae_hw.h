@@ -307,11 +307,14 @@ typedef struct RkAiqExpRealParam_s {
     // M4_NUMBER_DESC("CISTime", "f32", M4_RANGE(0,1), "0", M4_DIGIT(6))
     float integration_time;
 
-    // M4_NUMBER_DESC("CISGain", "f32", M4_RANGE(0,4096), "0", M4_DIGIT(3))
-    float analog_gain;
+    // M4_NUMBER_DESC("analog_gain", "f32", M4_RANGE(0,4096), "0", M4_DIGIT(3))
+    float analog_gain; //actually = cis again * dgain
 
     // M4_NUMBER_DESC("digital_gain", "f32", M4_RANGE(0,4096), "0", M4_DIGIT(3),M4_HIDE(1))
-    float digital_gain;
+    float digital_gain; //always = 1.0f
+
+    // M4_NUMBER_DESC("cis_total_gain", "f32", M4_RANGE(0,4096), "0", M4_DIGIT(3))
+    float cis_total_gain; // cis_total_gain = analog_gain * digital_gain * exp_mode_ratio
 
     // M4_NUMBER_DESC("isp_dgain", "f32", M4_RANGE(0,256), "0", M4_DIGIT(3),M4_HIDE(1))
     float isp_dgain;

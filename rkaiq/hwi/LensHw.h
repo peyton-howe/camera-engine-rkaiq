@@ -140,6 +140,13 @@ struct rk_cam_vcm_cfg {
     int step_mode;
 };
 
+struct rk_cam_otp_info {
+    bool otp_valid;
+    float posture;
+    float hysteresis;
+    float startCurrent;
+    float endCurrent;
+};
 
 #define LENSHW_RECORD_SOF_NUM   256
 
@@ -156,7 +163,7 @@ public:
     explicit LensHw(const char* name);
     virtual ~LensHw();
 
-    XCamReturn getOTPData();
+    XCamReturn setOTPData(struct rk_cam_otp_info *otp_info);
     XCamReturn start(bool prepared = false) override;
     XCamReturn stop() override;
     XCamReturn start_internal();

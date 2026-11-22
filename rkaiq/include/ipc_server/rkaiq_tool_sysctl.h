@@ -37,13 +37,21 @@ typedef struct RkToolExpParam_s {
     RkToolExpSensorParam_t exp_sensor_params;//reg value
 } RkToolExpParam_t;
 
+typedef struct RkToolAwbParam_s {
+    float awb_gain_r;
+    float awb_gain_gr;
+    float awb_gain_gb;
+    float awb_gain_b;
+} RkToolAwbParam_t;
+
 typedef struct rk_aiq_isp_tool_stats_s
 {
     uint16_t version; // 0x0100 = v1.0
     uint32_t frameID;
     RkToolExpParam_t linearExp; // from RKAiqAecStats_t::ae_exp.LinearExp.exp_real_params
     RkToolExpParam_t hdrExp[3];
-    uint8_t reserved[256];
+    RkToolAwbParam_t awbGain;
+    uint8_t reserved[240];
 }rk_aiq_isp_tool_stats_t;
 #pragma pack()
 

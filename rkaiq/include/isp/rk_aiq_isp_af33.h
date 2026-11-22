@@ -1092,7 +1092,7 @@ typedef struct af_pdafIsoPara_s {
         M4_ALIAS(sw_afT_inRoiBlkHor_num),
         M4_TYPE(u8),
         M4_SIZE_EX(1,1),
-        M4_RANGE_EX(1,10),
+        M4_RANGE_EX(1,15),
         M4_DEFAULT(3),
         M4_DIGIT_EX(0),
         M4_HIDE_EX(0),
@@ -1105,7 +1105,7 @@ typedef struct af_pdafIsoPara_s {
         M4_ALIAS(sw_afT_inRoiBlkVer_num),
         M4_TYPE(u8),
         M4_SIZE_EX(1,1),
-        M4_RANGE_EX(1,10),
+        M4_RANGE_EX(1,15),
         M4_DEFAULT(3),
         M4_DIGIT_EX(0),
         M4_HIDE_EX(0),
@@ -1115,12 +1115,38 @@ typedef struct af_pdafIsoPara_s {
         Freq of use: low))  */
     unsigned char sw_afT_inRoiBlkVer_num;
     /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_badPd_ratio),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(16),
+        M4_NOTES(Ratio value to judge bad pd pixel.\n
+        Freq of use: low))  */
+    float sw_afT_badPd_ratio;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdFlatRegion_ratio),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(17),
+        M4_NOTES(Ratio to detect flat region.\n
+        Freq of use: low))  */
+    float sw_afT_pdFlatRegion_ratio;
+    /* M4_GENERIC_DESC(
         M4_ALIAS(fineSearchTbl),
         M4_TYPE(struct),
         M4_UI_MODULE(array_table_ui),
         M4_HIDE_EX(0),
         M4_RO(0),
-        M4_ORDER(16),
+        M4_ORDER(18),
         M4_NOTES(Fine search table.\n
         Freq of use: low))  */
     af_pdafFineSearch_t fineSearchTbl;
@@ -1349,6 +1375,97 @@ typedef struct af_pdafStepRatio_s {
         Freq of use: high))  */
     float sw_afT_pdStepRatio_dot[AF_PDAF_STEP_RATIO_TBL_SIZE];
 } af_pdafStepRatio_t;
+
+typedef struct af_pdafFaceAf_s {
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdFaceAf_en),
+        M4_TYPE(bool),
+        M4_DEFAULT(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(0),
+        M4_NOTES(Enable pdaf faceaf function.\n
+        Freq of use: high))  */
+    bool sw_afT_pdFaceAf_en;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdFaceAfMaxWidth_ratio),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.5),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(1),
+        M4_NOTES(Max face roi width ratio.\n
+        Freq of use: high))  */
+    float sw_afT_pdFaceAfMaxWidth_ratio;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdFaceAfMaxHeight_ratio),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.5),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(2),
+        M4_NOTES(Max face roi height ratio.\n
+        Freq of use: high))  */
+    float sw_afT_pdFaceAfMaxHeight_ratio;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdFaceAfMinWidth_ratio),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.05),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(3),
+        M4_NOTES(Min face roi width ratio.\n
+        Freq of use: high))  */
+    float sw_afT_pdFaceAfMinWidth_ratio;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdFaceAfMinHeight_ratio),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.05),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(4),
+        M4_NOTES(Min face roi height ratio.\n
+        Freq of use: high))  */
+    float sw_afT_pdFaceAfMinHeight_ratio;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdFaceAfInRoiBlkHor_num),
+        M4_TYPE(u8),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(1,15),
+        M4_DEFAULT(3),
+        M4_DIGIT_EX(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(5),
+        M4_NOTES(Block count in roi at horizontal direction.\n
+        Freq of use: high))  */
+    unsigned char sw_afT_pdFaceAfInRoiBlkHor_num;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdFaceAfInRoiBlkVer_num),
+        M4_TYPE(u8),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(1,15),
+        M4_DEFAULT(3),
+        M4_DIGIT_EX(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(6),
+        M4_NOTES(Block count in roi at vertical direction.\n
+        Freq of use: high))  */
+    unsigned char sw_afT_pdFaceAfInRoiBlkVer_num;
+} af_pdafFaceAf_t;
 
 typedef struct af_pdaf_s {
     /* M4_GENERIC_DESC(
@@ -1752,12 +1869,74 @@ typedef struct af_pdaf_s {
         Freq of use: low))  */
     float sw_afT_pdHighlight_ratio;
     /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdUnStableCnt_thred),
+        M4_TYPE(u16),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,225),
+        M4_DEFAULT(10),
+        M4_DIGIT_EX(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(33),
+        M4_NOTES(Max unstable count in monitor.\n
+        Freq of use: low))  */
+    unsigned short sw_afT_pdUnStableCnt_thred;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdSearchCnt_thred),
+        M4_TYPE(u16),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,225),
+        M4_DEFAULT(4),
+        M4_DIGIT_EX(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(34),
+        M4_NOTES(Max search count in one search.\n
+        Freq of use: low))  */
+    unsigned short sw_afT_pdSearchCnt_thred;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdChgDirCnt_thred),
+        M4_TYPE(u16),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,225),
+        M4_DEFAULT(2),
+        M4_DIGIT_EX(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(35),
+        M4_NOTES(Max change direction count in one search.\n
+        Freq of use: low))  */
+    unsigned short sw_afT_pdChgDirCnt_thred;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdFocusNearObject_en),
+        M4_TYPE(bool),
+        M4_DEFAULT(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(36),
+        M4_NOTES(Weather focus to near object.\n
+        Freq of use: low))  */
+    bool sw_afT_pdFocusNearObject_en;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdNearObject_ratio),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.7),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(37),
+        M4_NOTES(Ratio of near object.\n
+        Freq of use: low))  */
+    float sw_afT_pdNearObject_ratio;
+    /* M4_GENERIC_DESC(
         M4_ALIAS(pdafStepRatio),
         M4_TYPE(struct),
         M4_UI_MODULE(normal_ui_style),
         M4_HIDE_EX(0),
         M4_RO(0),
-        M4_ORDER(33),
+        M4_ORDER(38),
         M4_NOTES(Pdaf step ratio.))  */
     af_pdafStepRatio_t pdafStepRatio;
     /* M4_GENERIC_DESC(
@@ -1768,7 +1947,7 @@ typedef struct af_pdaf_s {
         M4_HIDE_EX(0),
         M4_RO(0),
         M4_DYNAMIC_EX(1),
-        M4_ORDER(34),
+        M4_ORDER(39),
         M4_NOTES(Parameter table changed with iso.\n
         Freq of use: high))  */
     af_pdafIsoPara_t pdIsoParaTbl[AF_MAX_ISO_LEVEL];
@@ -1781,7 +1960,7 @@ typedef struct af_pdaf_s {
         M4_DIGIT_EX(0),
         M4_HIDE_EX(0),
         M4_RO(0),
-        M4_ORDER(35),
+        M4_ORDER(40),
         M4_NOTES(Length of parameter table changed with iso.\n
         Freq of use: high))  */
     int sw_afT_pdIsoParaTbl_len;
@@ -1793,7 +1972,7 @@ typedef struct af_pdaf_s {
         M4_HIDE_EX(0),
         M4_RO(0),
         M4_DYNAMIC_EX(1),
-        M4_ORDER(36),
+        M4_ORDER(41),
         M4_NOTES(Resolution information table.\n
         Freq of use: high))  */
     af_pdafResolution_t pdResoInfTbl[AF_PDAF_RESOLUTION_INFO_TBL_SIZE];
@@ -1806,10 +1985,84 @@ typedef struct af_pdaf_s {
         M4_DIGIT_EX(0),
         M4_HIDE_EX(0),
         M4_RO(0),
-        M4_ORDER(37),
+        M4_ORDER(42),
         M4_NOTES(Length of resolution information table.\n
         Freq of use: high))  */
     int sw_afT_pdResoInfTbl_len;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(faceAf),
+        M4_TYPE(struct),
+        M4_UI_MODULE(normal_ui_style),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(38),
+        M4_NOTES(Pdaf face af.))  */
+    af_pdafFaceAf_t pdFaceAf;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdBlkValidW_ratio),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(1.0),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(39),
+        M4_NOTES(Ratio of valid width in one block.\n
+        Freq of use: low))  */
+    float sw_afT_pdBlkValidW_ratio;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdBlkValidH_ratio),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(1.0),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(40),
+        M4_NOTES(Ratio of valid height in one block.\n
+        Freq of use: low))  */
+    float sw_afT_pdBlkValidH_ratio;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(pdLumaStableFrames),
+        M4_TYPE(u16),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1023),
+        M4_DEFAULT(3),
+        M4_DIGIT_EX(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(41),
+        M4_NOTES(Frame number to judge luma is stable.\n
+        Freq of use: low))  */
+    unsigned short sw_afT_pdLumaStableFrames_num;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdLumaStable_thred),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0.02),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(42),
+        M4_NOTES(Luma change threshold to judge luma is stable.\n
+        Freq of use: low))  */
+    float sw_afT_pdLumaStable_thred;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_pdMonitorFrmIntvl_num),
+        M4_TYPE(u16),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1023),
+        M4_DEFAULT(3),
+        M4_DIGIT_EX(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(43),
+        M4_NOTES(Frame number to caculate pd in monitor state.\n
+        Freq of use: low))  */
+    unsigned short sw_afT_pdMonitorFrmIntvl_num;
 } af_pdaf_t;
 
 typedef struct af_vcmCfg_s {
@@ -1879,7 +2132,7 @@ typedef struct af_vcmCfg_s {
         Freq of use: high))  */
     int sw_afT_extraDelay_val;
     /* M4_GENERIC_DESC(
-        M4_ALIAS(sw_afT_postureDiff_ratio),
+        M4_ALIAS(sw_afT_extendRange_ratio),
         M4_TYPE(f32),
         M4_SIZE_EX(1,1),
         M4_RANGE_EX(0,1),
@@ -1888,9 +2141,32 @@ typedef struct af_vcmCfg_s {
         M4_HIDE_EX(1),
         M4_RO(0),
         M4_ORDER(5),
+        M4_NOTES(Extend range ratio.\n
+        Freq of use: low))  */
+    float sw_afT_extendRange_ratio;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_postureDiff_ratio),
+        M4_TYPE(f32),
+        M4_SIZE_EX(1,1),
+        M4_RANGE_EX(0,1),
+        M4_DEFAULT(0),
+        M4_DIGIT_EX(3),
+        M4_HIDE_EX(1),
+        M4_RO(0),
+        M4_ORDER(6),
         M4_NOTES(Posture difference ratio.\n
         Freq of use: low))  */
     float sw_afT_postureDiff_ratio;
+    /* M4_GENERIC_DESC(
+        M4_ALIAS(sw_afT_useGsensor_en),
+        M4_TYPE(bool),
+        M4_DEFAULT(0),
+        M4_HIDE_EX(0),
+        M4_RO(0),
+        M4_ORDER(7),
+        M4_NOTES(Enable use gsensor to control posture difference.\n
+        Freq of use: low))  */
+    bool sw_afT_useGsensor_en;
 } af_vcmCfg_t;
 
 typedef struct af_zoomMoveTbl_s {

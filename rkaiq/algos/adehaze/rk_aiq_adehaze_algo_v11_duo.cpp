@@ -657,7 +657,9 @@ static void GetDehazeHistDuoISPSettingV11(RkAiqAdehazeProcResult_t* pProcRes,
                      pProcRes->ProcResV11duo.adp_wt_wr);
 
         LOGV_ADEHAZE("%s hist_wr:0x%x", __func__, pProcRes->ProcResV11duo.hist_wr[0]);
-        for (int i = 1; i < 63; i++) LOGV_ADEHAZE(" 0x%x", pProcRes->ProcResV11duo.hist_wr[i]);
+        for (int i = 1; i < 63; i++) {
+            LOGV_ADEHAZE(" 0x%x", pProcRes->ProcResV11duo.hist_wr[i]);
+        }
         LOGV_ADEHAZE(" 0x%x\n", pProcRes->ProcResV11duo.hist_wr[63]);
 #endif
         LOGD_ADEHAZE("%s DuoCamera:%d soft_wr_en:%d\n", __func__, DuoCamera,

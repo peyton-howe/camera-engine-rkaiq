@@ -117,6 +117,8 @@ typedef enum {
     UPDATE_AECSTATSCFG = 0x800, //including ae stats channel select, stats update flag
     UPDATE_EXPSUBWINATTR = 0x1000,
     UPDATE_FRAMEHDRATTR = 0x2000,
+    UPDATE_FACEEXPATTR = 0x4000,
+    UPDATE_CISATTR = 0x8000,
     UPDATE_CALIB = 0xffff,//update iq file
 } AecUpdateAttrMode_t;
 
@@ -472,6 +474,7 @@ typedef struct AecConfig_s {
 #ifdef USE_NEWSTRUCT
     //V3: newStruct json params
     ae_commCtrl_t CommCtrlV3;
+    ae_faceAeCtrl_t FaceAeCtrl;
     ae_linAeCtrl_t LinearAeCtrlV3;
     ae_hdrAeCtrl_t HdrAeCtrlV3;
     ae_irisCtrl_t IrisCtrlV3;
@@ -479,6 +482,7 @@ typedef struct AecConfig_s {
 #else
     //V2: json params
     CalibDb_AecCommon_AttrV2_t CommCtrlV2;
+    CalibDb_FaceAeCtrl_t      FaceAeCtrl;
     CalibDb_LinearAE_AttrV2_t LinearAeCtrlV2;
     CalibDb_HdrAE_AttrV2_t HdrAeCtrlV2;
     CalibDb_AecIrisCtrlV2_t IrisCtrlV2;
@@ -503,6 +507,7 @@ typedef struct AecConfig_s {
     float                         PixelPeriodsPerLine;
     Aec_Sensor_nr_switch_t        nr_switch;
     Aec_Sensor_dcg_ratio_t        dcg_ratio;
+    Aec_Sensor_dcg_ratio_t        spd_ratio;
 
     /*continue to use some old params to keep the same with AecConfig_t*/
     AecDampingMode_t              DampingMode;              /**< damping mode */
@@ -528,6 +533,7 @@ typedef struct AecConfig_s {
 
     /*update attr flag*/
     uint16_t                      IsReconfig;
+    uint16_t                      IsNewExpMode;
 } AecConfig_t;
 /*****************************************************************************/
 /**

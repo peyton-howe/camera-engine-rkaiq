@@ -33,20 +33,6 @@ static void _handlerBtnr_init(AiqAlgoHandler_t* pHdl) {
     EXIT_ANALYZER_FUNCTION();
 }
 
-static void _handlerBtnr2_init(AiqAlgoHandler_t* pHdl) {
-    ENTER_ANALYZER_FUNCTION();
-
-    AiqAlgoHandler_deinit(pHdl);
-    pHdl->mConfig       = (RkAiqAlgoCom*)(aiq_mallocz(sizeof(RkAiqAlgoCom)));
-    pHdl->mProcInParam  = (RkAiqAlgoCom*)(aiq_mallocz(sizeof(RkAiqAlgoProcBtnr)));
-    pHdl->mProcOutParam = (RkAiqAlgoResCom*)(aiq_mallocz(sizeof(RkAiqAlgoResCom)));
-
-    pHdl->mResultType = RESULT_TYPE_TNR2_PARAM;
-    pHdl->mResultSize = sizeof(btnr_param_t);
-
-    EXIT_ANALYZER_FUNCTION();
-}
-
 static XCamReturn _handlerBtnr_prepare(AiqAlgoHandler_t* pAlgoHandler) {
     ENTER_ANALYZER_FUNCTION();
 
@@ -104,25 +90,13 @@ static XCamReturn _handlerBtnr_processing(AiqAlgoHandler_t* pAlgoHandler) {
 AiqAlgoHandler_t* AiqAlgoHandlerBtnr_constructor(RkAiqAlgoDesComm* des, AiqCore_t* aiqCore) {
     AiqAlgoHandler_t* pHdl = (AiqAlgoHandler_t*)aiq_mallocz(sizeof(AiqAlgoHandler_t));
     if (!pHdl)
-		return NULL;
-	AiqAlgoHandler_constructor(pHdl, des, aiqCore);
+        return NULL;
+    AiqAlgoHandler_constructor(pHdl, des, aiqCore);
     pHdl->processing   = _handlerBtnr_processing;
     pHdl->genIspResult = AiqAlgoHandler_genIspResult_common;
     pHdl->prepare      = _handlerBtnr_prepare;
     pHdl->init         = _handlerBtnr_init;
-	return pHdl;
-}
-
-AiqAlgoHandler_t* AiqAlgoHandlerBtnr2_constructor(RkAiqAlgoDesComm* des, AiqCore_t* aiqCore) {
-    AiqAlgoHandler_t* pHdl = (AiqAlgoHandler_t*)aiq_mallocz(sizeof(AiqAlgoHandler_t));
-    if (!pHdl)
-		return NULL;
-	AiqAlgoHandler_constructor(pHdl, des, aiqCore);
-    pHdl->processing   = _handlerBtnr_processing;
-    pHdl->genIspResult = AiqAlgoHandler_genIspResult_common;
-    pHdl->prepare      = _handlerBtnr_prepare;
-    pHdl->init         = _handlerBtnr2_init;
-	return pHdl;
+    return pHdl;
 }
 
 #if 0
@@ -134,7 +108,7 @@ XCamReturn AiqBtnrHandler_setAttrib(AiqBtnrHandler_t* pHdlBtnr, btnr_api_attrib_
     aiqMutex_unlock(&pHdlBtnr->mCfgMutex);
 
     EXIT_ANALYZER_FUNCTION();
-	return ret;
+    return ret;
 }
 
 XCamReturn AiqBtnrHandler_getAttrib(AiqBtnrHandler_t* pHdlBtnr, btnr_api_attrib_t* attr)

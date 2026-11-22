@@ -45,6 +45,7 @@ class RkAiqAfHandleInt : virtual public RkAiqHandle {
     virtual XCamReturn processing();
     virtual XCamReturn postProcess();
     virtual XCamReturn genIspResult(RkAiqFullParams* params, RkAiqFullParams* cur_params);
+    virtual XCamReturn stop();
     // TODO add algo specific methords, this is a sample
     XCamReturn setCalib(void* calib);
     XCamReturn getCalib(void* calib);
@@ -65,6 +66,8 @@ class RkAiqAfHandleInt : virtual public RkAiqHandle {
     XCamReturn GetFocusRange(rk_aiq_af_focusrange* range);
     XCamReturn GetZoomRange(rk_aiq_af_zoomrange* range);
     XCamReturn setAeStable(bool ae_stable);
+    XCamReturn setPdafLibInput(rk_aiq_pdlib_input* pdlib_input);
+    XCamReturn getPdafLibOutput(rk_aiq_pdlib_output* pdlib_output, int timeout_ms);
 
  protected:
     virtual void init();
@@ -88,6 +91,9 @@ class RkAiqAfHandleInt : virtual public RkAiqHandle {
     bool mAeStable = false;
     uint32_t mAfMeasResSyncFalg{(uint32_t)(-1)};
     uint32_t mAfFocusResSyncFalg{(uint32_t)(-1)};
+
+    XCam::Mutex mPdLibOutputMutex;
+    XCam::Cond  mPdLibOutputCond;
  private:
     DECLARE_HANDLE_REGISTER_TYPE(RkAiqAfHandleInt);
 };

@@ -34,6 +34,8 @@ algo_histeq_SetAttrib
 #endif
 
 XCamReturn Ahisteq_processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams, int iso);
+XCamReturn algo_histeq_SetUsrCfgStrg(RkAiqAlgoContext* ctx, bool en, float strength);
+XCamReturn algo_histeq_GetUsrCfgStrg(RkAiqAlgoContext* ctx, bool *en, float *strength);
 
 extern RkAiqAlgoDescription g_RkIspAlgoDescHisteq;
 XCAM_END_DECLARE

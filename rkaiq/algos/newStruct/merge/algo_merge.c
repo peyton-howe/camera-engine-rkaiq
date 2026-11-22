@@ -148,12 +148,10 @@ static XCamReturn processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outp
         pMergeCtx->NextCtrlData.MoveCoef = 0;
         // expo para process
         pMergeCtx->NextCtrlData.ExpoData.SGain =
-            merge_proc_param->com.u.proc.nxtExp->HdrExp[0].exp_real_params.analog_gain *
-            merge_proc_param->com.u.proc.nxtExp->HdrExp[0].exp_real_params.digital_gain *
+            merge_proc_param->com.u.proc.nxtExp->HdrExp[0].exp_real_params.cis_total_gain *
             merge_proc_param->com.u.proc.nxtExp->HdrExp[0].exp_real_params.isp_dgain;
         pMergeCtx->NextCtrlData.ExpoData.MGain =
-            merge_proc_param->com.u.proc.nxtExp->HdrExp[1].exp_real_params.analog_gain *
-            merge_proc_param->com.u.proc.nxtExp->HdrExp[1].exp_real_params.digital_gain *
+            merge_proc_param->com.u.proc.nxtExp->HdrExp[1].exp_real_params.cis_total_gain *
             merge_proc_param->com.u.proc.nxtExp->HdrExp[1].exp_real_params.isp_dgain;
 
         pMergeCtx->NextCtrlData.ExpoData.SExpo =
@@ -164,12 +162,10 @@ static XCamReturn processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outp
             merge_proc_param->com.u.proc.nxtExp->HdrExp[1].exp_real_params.integration_time;
         if (pMergeCtx->NextCtrlData.ExpoData.SExpo < FLT_EPSILON) {
             pMergeCtx->NextCtrlData.ExpoData.SGain =
-                merge_proc_param->com.u.proc.curExp->HdrExp[0].exp_real_params.analog_gain *
-                merge_proc_param->com.u.proc.curExp->HdrExp[0].exp_real_params.digital_gain *
+                merge_proc_param->com.u.proc.curExp->HdrExp[0].exp_real_params.cis_total_gain *
                 merge_proc_param->com.u.proc.curExp->HdrExp[0].exp_real_params.isp_dgain;
             pMergeCtx->NextCtrlData.ExpoData.MGain =
-                merge_proc_param->com.u.proc.curExp->HdrExp[1].exp_real_params.analog_gain *
-                merge_proc_param->com.u.proc.curExp->HdrExp[1].exp_real_params.digital_gain *
+                merge_proc_param->com.u.proc.curExp->HdrExp[1].exp_real_params.cis_total_gain *
                 merge_proc_param->com.u.proc.curExp->HdrExp[1].exp_real_params.isp_dgain;
 
             pMergeCtx->NextCtrlData.ExpoData.SExpo =
@@ -183,14 +179,12 @@ static XCamReturn processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outp
             pMergeCtx->NextCtrlData.ExpoData.LExpo = pMergeCtx->NextCtrlData.ExpoData.MExpo;
         } else if (pMergeCtx->FrameNumber == HDR_3X_NUM) {
             pMergeCtx->NextCtrlData.ExpoData.LExpo =
-                merge_proc_param->com.u.proc.nxtExp->HdrExp[2].exp_real_params.analog_gain *
-                merge_proc_param->com.u.proc.nxtExp->HdrExp[2].exp_real_params.digital_gain *
+                merge_proc_param->com.u.proc.nxtExp->HdrExp[2].exp_real_params.cis_total_gain *
                 merge_proc_param->com.u.proc.nxtExp->HdrExp[2].exp_real_params.isp_dgain *
                 merge_proc_param->com.u.proc.nxtExp->HdrExp[2].exp_real_params.integration_time;
             if (pMergeCtx->NextCtrlData.ExpoData.SExpo < FLT_EPSILON) {
                 pMergeCtx->NextCtrlData.ExpoData.LExpo =
-                    merge_proc_param->com.u.proc.curExp->HdrExp[2].exp_real_params.analog_gain *
-                    merge_proc_param->com.u.proc.curExp->HdrExp[2].exp_real_params.digital_gain *
+                    merge_proc_param->com.u.proc.curExp->HdrExp[2].exp_real_params.cis_total_gain *
                     merge_proc_param->com.u.proc.curExp->HdrExp[2].exp_real_params.isp_dgain *
                     merge_proc_param->com.u.proc.curExp->HdrExp[2].exp_real_params.integration_time;
             }

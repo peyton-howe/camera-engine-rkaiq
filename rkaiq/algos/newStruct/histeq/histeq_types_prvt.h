@@ -41,6 +41,8 @@ typedef struct {
     uint32_t *iso_list;
     int iso;
     bool isReCal_;
+    float user_cfg_strg;
+    bool user_cfg_en;
 } HisteqContext_t;
 
 XCAM_BEGIN_DECLARE

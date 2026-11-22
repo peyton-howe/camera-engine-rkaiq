@@ -270,6 +270,7 @@ XCamReturn AccmAutoConfig(accm_handle_t hAccm) {
             if (flag) {
                 hAccm->accmRest.fScale = fScale;
                 hAccm->accmRest.color_saturation_level = flevel1;
+                memcpy(hAccm->accmRest.undampedCcmMatrix, hAccm->accmRest.undampedCcmMatrix0, sizeof(hAccm->accmRest.undampedCcmMatrix0));
                 Saturationadjust(fScale, flevel1, hAccm->accmRest.undampedCcmMatrix);
                 for (int i = 0; i < CCM_CURVE_DOT_NUM_V2; i++) {
                     hAccm->ccmHwConf_v2.alp_y[i] *= fScale;
@@ -420,7 +421,7 @@ XCamReturn AccmConfig(accm_handle_t hAccm) {
     }
 
     hAccm->asym_en_update = hAccm->ccmHwConf_v2.asym_adj_en != hAccm->pre_asym_en;
-    
+
     if (hAccm->asym_en_update) {
         hAccm->pre_asym_en = hAccm->ccmHwConf_v2.asym_adj_en;
     }

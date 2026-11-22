@@ -195,6 +195,7 @@ XCamReturn AccmAutoConfig
             if (flag) {
                 hAccm->accmRest.fScale = fScale;
                 hAccm->accmRest.color_saturation_level = saturation_level;
+                memcpy(hAccm->accmRest.undampedCcmMatrix, hAccm->accmRest.undampedCcmMatrix0, sizeof(hAccm->accmRest.undampedCcmMatrix0));
                 Saturationadjust(fScale, saturation_level, hAccm->accmRest.undampedCcmMatrix);
                 for(int i = 0; i < CCM_CURVE_DOT_NUM; i++) { //set to ic  to do bit check
                     hAccm->ccmHwConf.alp_y[i] *= fScale;

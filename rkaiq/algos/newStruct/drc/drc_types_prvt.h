@@ -52,8 +52,6 @@
 #define RATIO_DEFAULT                 (1.0f)
 #define RATIO_MAX                     (256.0f)
 #define INIT_CALC_PARAMS_NUM          (2)
-#define ISP_HDR_BIT_NUM_MAX           (20)
-#define ISP_HDR_BIT_NUM_MIN           (12)
 #define ISP_PREDGAIN_DEFAULT          (1.0f)
 #define GAS_L0_DEFAULT                (24)
 #define GAS_L1_DEFAULT                (10)

@@ -52,6 +52,7 @@ typedef struct AiqRawStreamCapUnit_s {
     AiqMutex_t _mipi_mutex;
     enum RawCapState _state;
     AiqPollCallback_t* _pcb[3];
+    bool _is_split;
 
     // AiqV4l2Buffer_t*
     AiqList_t* buf_list[3];
@@ -61,6 +62,7 @@ typedef struct AiqRawStreamCapUnit_s {
     AiqAiRmsStreamProcUnit_t* _pAirmsStream;
     void* _sw_stream_ctx;
     rawStream_send_sync_buf_func _send_sync_buf_func;
+    bool _single_buffer_async_mode;
 
 #if RKAIQ_HAVE_DUMPSYS
     FrameDumpInfo_t fe;
@@ -95,9 +97,7 @@ void AiqRawStreamCapUnit_skip_frames(AiqRawStreamCapUnit_t* pRawStrCapUnit, int 
 void AiqRawStreamCapUnit_setCamPhyId(AiqRawStreamCapUnit_t* pRawStrCapUnit, int phyId);
 void AiqRawStreamCapUnit_setSensorCategory(AiqRawStreamCapUnit_t* pRawStrCapUnit, bool sensorState);
 XCamReturn AiqRawStreamCapUnit_reset_hardware(AiqRawStreamCapUnit_t* pRawStrCapUnit);
-XCamReturn AiqRawStreamCapUnit_set_csi_mem_word_big_align(AiqRawStreamCapUnit_t* pRawStrCapUnit,
-                                                          uint32_t width, uint32_t height,
-                                                          uint32_t sns_v4l_pix_fmt, int8_t sns_bpp);
+XCamReturn AiqRawStreamCapUnit_set_csi_mem_word_align_mode(AiqRawStreamCapUnit_t* pRawStrCapUnit, int mode);
 XCamReturn AiqRawStreamCapUnit_setVicapStreamMode(AiqRawStreamCapUnit_t* pRawStrCapUnit, int mode,
                                                   uint32_t* frameId, bool isSingleMode);
 void AiqRawStreamCapUnit_setPollCallback(AiqRawStreamCapUnit_t* pRawStrCapUnit,
@@ -111,6 +111,8 @@ void AiqRawStreamCapUnit_stop_vicap_stream_only(AiqRawStreamCapUnit_t* pRawStrCa
 void AiqRawStreamCapUnit_skip_frame_and_restart_vicap_stream(AiqRawStreamCapUnit_t* pRawStrCapUnit, int skip_frm_cnt);
 void AiqRawStreamCapUnit_setTxBufferCnt(AiqRawStreamCapUnit_t* pRawStrCapUnit, uint16_t buf_num);
 XCamReturn AiqRawStreamCapUnit_setSwStreamInfo(AiqRawStreamCapUnit_t* pRawStrCapUnit, void* sw_stream_ctx, rawStream_send_sync_buf_func send_sync_buf_func);
+XCamReturn AiqRawStreamCapUnit_setSingleBufAsyncMode(AiqRawStreamCapUnit_t* pRawStrCapUnit, bool async);
+bool AiqRawStreamCapUnit_getStreamOnStatus(AiqRawStreamCapUnit_t* pRawStrCapUnit);
 
 #if RKAIQ_HAVE_DUMPSYS
 int AiqRawStreamCapUnit_dump(void* dumper, st_string* result, int argc, void* argv[]);

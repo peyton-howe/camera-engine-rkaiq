@@ -53,6 +53,11 @@ XCamReturn
 rk_aiq_uapi_af_getZoomRange(const RkAiqAlgoContext *ctx, rk_aiq_af_zoomrange* range);
 XCamReturn
 rk_aiq_uapi_af_resetZoom(const RkAiqAlgoContext *ctx);
+XCamReturn
+rk_aiq_uapi_af_setPdafLibInput(const RkAiqAlgoContext *ctx, rk_aiq_pdlib_input* pdlib_input);
+XCamReturn
+rk_aiq_uapi_af_getPdafLibOutput(const RkAiqAlgoContext *ctx, rk_aiq_pdlib_output* pdlib_output);
+
 #endif
 XCAM_END_DECLARE
 

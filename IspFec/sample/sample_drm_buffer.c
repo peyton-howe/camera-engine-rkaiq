@@ -18,14 +18,15 @@
 #include "sample_drm_buffer.h"
 
 #include <drm/drm_mode.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <rockchip_drm.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <xf86drm.h>
-#include <errno.h>
 
 #define DRM_CARD_PATH "/dev/dri/card0"
 
@@ -59,7 +60,7 @@ int alloc_drm_buffer(int fd, uint32_t size, struct rkfec_buffer* buf) {
 
     ret = drmIoctl(fd, DRM_IOCTL_ROCKCHIP_GEM_CREATE, &req);
     if (ret) {
-        printf("failed to GEM_CREATE req.size %d\n", req.size);
+        printf("failed to GEM_CREATE req.size %" PRId64 "\n", req.size);
         return -1;
     }
 
@@ -76,17 +77,17 @@ int alloc_drm_buffer(int fd, uint32_t size, struct rkfec_buffer* buf) {
         goto error;
     }
 
-    printf("handle = %u, dma_fd = %d, alloc_size = %u, real_size = %u\n", req.handle,
+    printf("handle = %u, dma_fd = %d, alloc_size = %u, real_size = %" PRId64 "\n", req.handle,
            buf->dmabuf_fd, size, req.size);
 
 #ifdef __ANDROID__
-    buf->map = mmap64(0, req.size, PROT_READ | PROT_WRITE, MAP_SHARED, dma_node_fd, map_req.offset);
+    buf->map = mmap64(0, req.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, map_req.offset);
 #else
     buf->map = mmap(0, req.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, map_req.offset);
 #endif
     if (buf->map == MAP_FAILED) {
-	printf("failed to mmap buffer. offset = %d, reason: %s\n",
-		map_req.offset, strerror(errno));
+        printf("failed to mmap buffer. offset = %" PRId64 ", reason: %s\n", map_req.offset,
+               strerror(errno));
         ret = -1;
         goto error;
     }

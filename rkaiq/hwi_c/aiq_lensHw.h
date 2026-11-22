@@ -120,6 +120,14 @@ struct rk_cam_vcm_cfg {
     int step_mode;
 };
 
+struct rk_cam_otp_info {
+    bool otp_valid;
+    float posture;
+    float hysteresis;
+    float startCurrent;
+    float endCurrent;
+};
+
 #define LENSHW_RECORD_SOF_NUM 256
 
 #define LENS_SUBM (0x10)
@@ -194,7 +202,7 @@ struct AiqLensHw_s {
 };
 
 XCamReturn AiqLensHw_queryLensSupport(AiqLensHw_t* pLensHw);
-XCamReturn AiqLensHw_getOTPData(AiqLensHw_t* pLensHw);
+XCamReturn AiqLensHw_setOTPData(AiqLensHw_t* pLensHw, struct rk_cam_otp_info *otp_info);
 XCamReturn AiqLensHw_getLensModeData(AiqLensHw_t* pLensHw, rk_aiq_lens_descriptor* lens_des);
 XCamReturn AiqLensHw_getLensVcmCfg(AiqLensHw_t* pLensHw, rk_aiq_lens_vcmcfg* lens_cfg);
 XCamReturn AiqLensHw_setLensVcmCfg(AiqLensHw_t* pLensHw, rk_aiq_lens_vcmcfg* lens_cfg);

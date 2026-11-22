@@ -93,20 +93,6 @@ prepare(RkAiqAlgoCom* params)
         pAdrcCtx->FrameNumber = HDR_2X_NUM;
     else
         pAdrcCtx->FrameNumber = HDR_3X_NUM;
-#if RKAIQ_HAVE_DRC_V12 || RKAIQ_HAVE_DRC_V12_LITE || RKAIQ_HAVE_DRC_V20
-    if (AdrcCfgParam->compr_bit) {
-        pAdrcCtx->FrameNumber = SENSOR_MGE;
-        pAdrcCtx->compr_bit   = AdrcCfgParam->compr_bit;
-        if (pAdrcCtx->compr_bit > ISP_HDR_BIT_NUM_MAX)
-            LOGE_ATMO("%s:  SensorMgeBitNum(%d) > %d!!!\n", __FUNCTION__, pAdrcCtx->compr_bit,
-                      ISP_HDR_BIT_NUM_MAX);
-        if (pAdrcCtx->compr_bit < ISP_HDR_BIT_NUM_MIN)
-            LOGE_ATMO("%s:  SensorMgeBitNum(%d) < %d!!!\n", __FUNCTION__, pAdrcCtx->compr_bit,
-                      ISP_HDR_BIT_NUM_MIN);
-        pAdrcCtx->compr_bit =
-            LIMIT_VALUE(pAdrcCtx->compr_bit, ISP_HDR_BIT_NUM_MAX, ISP_HDR_BIT_NUM_MIN);
-    }
-#endif
 
     if(!!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB )) {
         LOGI_ATMO("%s: Adrc Reload Para!\n", __FUNCTION__);
@@ -290,33 +276,6 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
                     pAdrcParams->com.u.proc.curExp->HdrExp[1].exp_real_params.digital_gain *
                     pAdrcParams->com.u.proc.curExp->HdrExp[1].exp_real_params.isp_dgain * ISOMIN;
             }
-        } else if (pAdrcCtx->FrameNumber == SENSOR_MGE) {
-#if RKAIQ_HAVE_DRC_V12 || RKAIQ_HAVE_DRC_V12_LITE || RKAIQ_HAVE_DRC_V20
-            pAdrcCtx->NextData.AEData.MExpo =
-                pAdrcParams->com.u.proc.nxtExp->LinearExp.exp_real_params.analog_gain *
-                pAdrcParams->com.u.proc.nxtExp->LinearExp.exp_real_params.digital_gain *
-                pAdrcParams->com.u.proc.nxtExp->LinearExp.exp_real_params.isp_dgain *
-                pAdrcParams->com.u.proc.nxtExp->LinearExp.exp_real_params.integration_time;
-            pAdrcCtx->NextData.AEData.ISO =
-                pAdrcParams->com.u.proc.nxtExp->LinearExp.exp_real_params.analog_gain *
-                pAdrcParams->com.u.proc.nxtExp->LinearExp.exp_real_params.digital_gain *
-                pAdrcParams->com.u.proc.nxtExp->LinearExp.exp_real_params.isp_dgain * ISOMIN;
-            if (pAdrcCtx->NextData.AEData.MExpo < FLT_EPSILON) {
-                pAdrcCtx->NextData.AEData.MExpo =
-                    pAdrcParams->com.u.proc.curExp->LinearExp.exp_real_params.analog_gain *
-                    pAdrcParams->com.u.proc.curExp->LinearExp.exp_real_params.digital_gain *
-                    pAdrcParams->com.u.proc.curExp->LinearExp.exp_real_params.isp_dgain *
-                    pAdrcParams->com.u.proc.curExp->LinearExp.exp_real_params.integration_time;
-                pAdrcCtx->NextData.AEData.ISO =
-                    pAdrcParams->com.u.proc.curExp->LinearExp.exp_real_params.analog_gain *
-                    pAdrcParams->com.u.proc.curExp->LinearExp.exp_real_params.digital_gain *
-                    pAdrcParams->com.u.proc.curExp->LinearExp.exp_real_params.isp_dgain * ISOMIN;
-            }
-            pAdrcCtx->NextData.AEData.LExpo = pAdrcCtx->NextData.AEData.MExpo;
-            pAdrcCtx->NextData.AEData.SExpo =
-                pAdrcCtx->NextData.AEData.MExpo /
-                pow(2.0f, float(pAdrcCtx->compr_bit - ISP_HDR_BIT_NUM_MIN));
-#endif
         }
         pAdrcCtx->NextData.AEData.ISO = LIMIT_VALUE(pAdrcCtx->NextData.AEData.ISO, ISOMAX, ISOMIN);
         if (pAdrcCtx->FrameNumber == HDR_2X_NUM || pAdrcCtx->FrameNumber == HDR_2X_NUM) {
@@ -346,7 +305,7 @@ processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outparams)
                           pAdrcParams->com.u.proc.curExp->HdrExp[2].exp_real_params.digital_gain *
                           pAdrcParams->com.u.proc.curExp->HdrExp[2].exp_real_params.isp_dgain,
                       pAdrcParams->com.u.proc.curExp->HdrExp[2].exp_real_params.integration_time);
-        } else if (pAdrcCtx->FrameNumber == LINEAR_NUM || pAdrcCtx->FrameNumber == SENSOR_MGE) {
+        } else if (pAdrcCtx->FrameNumber == LINEAR_NUM) {
             LOGV_ATMO("%s: nextFrame: exp: %f-%f CurrFrame: exp: %f-%f\n", __FUNCTION__,
                       pAdrcParams->com.u.proc.nxtExp->LinearExp.exp_real_params.analog_gain *
                           pAdrcParams->com.u.proc.nxtExp->LinearExp.exp_real_params.digital_gain *

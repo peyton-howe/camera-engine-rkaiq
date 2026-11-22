@@ -206,6 +206,8 @@ prepare(RkAiqAlgoCom* params)
     LOGD_ALDCH("is_multi_isp %d, multi_isp_extended_pixel %d\n", ldchCtx->is_multi_isp,
                ldchCtx->multi_isp_extended_pixel);
 
+    ldchCtx->hasAllocShareMem.store(false, std::memory_order_release);
+
     bool config_calib = !!(params->u.prepare.conf_type & RK_AIQ_ALGO_CONFTYPE_UPDATECALIB);
     if (config_calib) {
         // just update calib ptr

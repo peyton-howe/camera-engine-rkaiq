@@ -68,5 +68,6 @@ void AiqPdafStreamProcUnit_stop(AiqPdafStreamProcUnit_t* pProcUnit);
 XCamReturn AiqPdafStreamProcUnit_preapre(AiqPdafStreamProcUnit_t* pProcUnit,
                                          rk_sensor_pdaf_info_t* pdaf_inf);
 void AiqPdafStreamProcUnit_set_devices(AiqPdafStreamProcUnit_t* pProcUnit, AiqCamHwBase_t* camHw);
+void AiqPdafStreamProcUnit_notify_sof(AiqPdafStreamProcUnit_t* pProcUnit);
 
 #endif  // _AIQ_PDAF_STREAM_PROC_UNIT_H_

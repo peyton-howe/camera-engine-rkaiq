@@ -134,8 +134,7 @@ static XCamReturn processing(const RkAiqAlgoCom* inparams, RkAiqAlgoResCom* outp
         return XCAM_RETURN_NO_ERROR;
     }
 
-    if (drc_proc_param->FrameNumber == HDR_2X_NUM || drc_proc_param->FrameNumber == HDR_3X_NUM ||
-        drc_proc_param->FrameNumber == SENSOR_MGE)
+    if (drc_proc_param->FrameNumber == HDR_2X_NUM || drc_proc_param->FrameNumber == HDR_3X_NUM)
         outparams->en = true;
     else if (drc_proc_param->FrameNumber == LINEAR_NUM) {
         if (drc_attrib->opMode == RK_AIQ_OP_MODE_AUTO) {
@@ -289,19 +288,6 @@ XCamReturn DrcSelectParam(DrcContext_t* pDrcCtx, drc_param_t* out, int iso) {
             else
                 out->dyn.DrcGain.DrcGain = MAX(MAX_AE_DRC_GAIN / pDrcCtx->isp_ob_predgain, GAINMIN);
             LOGI_ATMO("%s:  predgain*DrcGain > 256x, DrcGain clip to %f!!!\n", __FUNCTION__,
-                      out->dyn.DrcGain.DrcGain);
-        }
-    } else if (pDrcCtx->FrameNumber == SENSOR_MGE) {
-        if (pow(2.0f, (float)(pDrcCtx->compr_bit - ISP_HDR_BIT_NUM_MIN)) *
-                out->dyn.DrcGain.DrcGain >
-            MAX_AE_DRC_GAIN) {
-            if (pow(2.0f, (float)(pDrcCtx->compr_bit - ISP_HDR_BIT_NUM_MIN)) > MAX_AE_DRC_GAIN)
-                LOGE_ATMO("%s:  SensorMgeRatio > 256x!!!\n", __FUNCTION__);
-            else
-                out->dyn.DrcGain.DrcGain = MAX(
-                    MAX_AE_DRC_GAIN / pow(2.0f, (float)(pDrcCtx->compr_bit - ISP_HDR_BIT_NUM_MIN)),
-                    GAINMIN);
-            LOGI_ATMO("%s:  SensorMgeRatio*DrcGain > 256x, DrcGain clip to %f!!!\n", __FUNCTION__,
                       out->dyn.DrcGain.DrcGain);
         }
     }

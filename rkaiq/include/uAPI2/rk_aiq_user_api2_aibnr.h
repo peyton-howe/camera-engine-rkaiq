@@ -36,6 +36,9 @@ rk_aiq_user_api2_aibnr_GetAttrib(const rk_aiq_sys_ctx_t* sys_ctx, aibnr_api_attr
 XCamReturn
 rk_aiq_user_api2_aibnr_QueryStatus(const rk_aiq_sys_ctx_t* sys_ctx, aibnr_status_t* status);
 
+XCamReturn
+rk_aiq_user_api2_aibnr_RecDefFps(const rk_aiq_sys_ctx_t* sys_ctx);
+
 RKAIQ_END_DECLARE
 
 #endif

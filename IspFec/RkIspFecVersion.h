@@ -54,6 +54,9 @@
  * v4.0.4
  * - install FEC calibration ini files to /usr/share/fec_calib
  *
+ * v4.0.5
+ * - fix mesh sampling step selection based on resolution
+ *
  */
 
 #define RK_ISP_FEC_RELEASE_DATE "2025-05-15"
